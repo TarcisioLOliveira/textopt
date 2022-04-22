@@ -1,0 +1,23 @@
+# C extensions
+*.so
+
+# Distribution
+build/
+debug/
+release/
+tmp/
+
+# MSVS
+*.pyproj
+*.user
+*.suo
+
+# VSCode
+.vscode/
+
+# Vim
+*.swp
+.ycm*
+
+# Results
+/*.step
