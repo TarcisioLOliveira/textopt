@@ -28,6 +28,7 @@
 #include <cmath>
 #include <iostream>
 #include <initializer_list>
+#include <numeric>
 
 size_t tex_width = 300;
 size_t tex_height = 300;
@@ -54,23 +55,22 @@ void texture_map(double*& map_z, double f, double ap, double vc){
     // double p4 = tex_height/2 + dp1;
 
     // std::cout << p1 << " " << p4 << std::endl;
+    double line_root = ap - std::tan(alpha)*f/2;
     for(size_t x = 0; x < tex_width; ++x){
         size_t mult = 1;
         for(size_t y = 0; y < tex_height; ++y){
             double& z = map_z[tex_width*y + x];
-            // if(y >= p1 && y <= p4){
             if(y < mult*f){
                 if(y <= (mult-1)*f + f/2){
-                    z = smooth_min({z, -std::tan(alpha)*(y - (mult-1)*f)});
+                    z = smooth_min({z, -std::tan(alpha)*(y - (mult-1)*f) - line_root});
                 } else {
-                    z = smooth_min({z, std::tan(alpha)*(y - ((mult-1)*f + f))});
+                    z = smooth_min({z, std::tan(alpha)*(y - ((mult-1)*f + f)) - line_root});
                 }
             } else {
                 ++mult;
                 --y;
                 continue;
             }
-            //}
         }
     }
 }
@@ -89,6 +89,13 @@ void draw_texture(sf::Uint8*& img, double* map_z, double ap, size_t w, size_t h)
     }
 }
 
+double Sa(double*& map_z){
+    size_t area = tex_width*tex_height;
+    double sum = std::abs(std::accumulate(map_z, map_z+area, 0.0, std::plus<double>()));
+
+    return sum/area;
+}
+
 int main(int argc, char* argv[]){
 
     size_t window_width = 800;
@@ -105,9 +112,10 @@ int main(int argc, char* argv[]){
     double* map_z = new double[tex_width*tex_height]();
 
     double f = 30;
-    double ap = std::tan(alpha)*f/2;
+    double ap = 40;
     texture_map(map_z, f, ap, 10);
     draw_texture(px, map_z, ap, tex_width, tex_height);
+    std::cout << Sa(map_z) << std::endl;
 
     while(window.isOpen()){
         sf::Event event;
