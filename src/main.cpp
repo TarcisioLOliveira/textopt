@@ -35,6 +35,8 @@ size_t tex_height = 300;
 
 double alpha = 60*M_PI/180;
 double r = 2; // um
+double max_z = 0; // Used to calculate Sa, so uses smooth_min
+double min_z = 0; // Used only for texture display, so uses std::min()
 
 double smooth_min(std::initializer_list<double> x){
     double mult = -8;
@@ -56,6 +58,9 @@ void texture_map(double*& map_z, double f, double ap, double vc){
 
     // std::cout << p1 << " " << p4 << std::endl;
     double line_root = ap - std::tan(alpha)*f/2;
+    max_z = smooth_min({0, -line_root});
+    std::cout << max_z << std::endl;
+    min_z = 0;
     for(size_t x = 0; x < tex_width; ++x){
         size_t mult = 1;
         for(size_t y = 0; y < tex_height; ++y){
@@ -69,8 +74,8 @@ void texture_map(double*& map_z, double f, double ap, double vc){
             } else {
                 ++mult;
                 --y;
-                continue;
             }
+            min_z = std::min(min_z, z);
         }
     }
 }
@@ -80,7 +85,7 @@ void draw_texture(sf::Uint8*& img, double* map_z, double ap, size_t w, size_t h)
         for(size_t y = 0; y < tex_height; ++y){
             double& z = map_z[tex_width*y + x];
 
-            sf::Uint8 rgb = (sf::Uint8)std::round(255*(1 + z/ap));
+            sf::Uint8 rgb = (sf::Uint8)std::round(255*(1 + (z-max_z)/(max_z - min_z)));
             img[(tex_width*y + x)*4+0] = rgb;
             img[(tex_width*y + x)*4+1] = rgb;
             img[(tex_width*y + x)*4+2] = rgb;
