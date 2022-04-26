@@ -35,20 +35,28 @@ double alpha = 60*M_PI/180;
 double r = 2; // um
 
 void texture_map(double*& map_z, double f, double ap, double vc){
-    double dp1 = ap/std::tan(alpha);
-    double p1 = tex_height/2 - dp1;
-    double p4 = tex_height/2 + dp1;
-    std::cout << p1 << " " << p4 << std::endl;
+    // double dp1 = ap/std::tan(alpha);
+    // double p1 = tex_height/2 - dp1;
+    // double p4 = tex_height/2 + dp1;
+
+    // std::cout << p1 << " " << p4 << std::endl;
     for(size_t x = 0; x < tex_width; ++x){
+        size_t mult = 1;
         for(size_t y = 0; y < tex_height; ++y){
             double& z = map_z[tex_width*y + x];
-            if(y >= p1 && y <= p4){
-                if(y <= tex_height/2){
-                    z = std::tan(alpha)*(y - p1);
+            // if(y >= p1 && y <= p4){
+            if(y < mult*f){
+                if(y <= (mult-1)*f + f/2){
+                    z = -std::tan(alpha)*(y - (mult-1)*f);
                 } else {
-                    z = -std::tan(alpha)*(y - tex_height/2);
+                    z = std::tan(alpha)*(y - ((mult-1)*f + f/2));
                 }
+            } else {
+                ++mult;
+                --y;
+                continue;
             }
+            //}
         }
     }
 }
@@ -58,7 +66,7 @@ void draw_texture(sf::Uint8*& img, double* map_z, double ap, size_t w, size_t h)
         for(size_t y = 0; y < tex_height; ++y){
             double& z = map_z[tex_width*y + x];
 
-            sf::Uint8 rgb = (sf::Uint8)std::round(255*(1 - z/ap));
+            sf::Uint8 rgb = (sf::Uint8)std::round(255*(1 + z/ap));
             img[(tex_width*y + x)*4+0] = rgb;
             img[(tex_width*y + x)*4+1] = rgb;
             img[(tex_width*y + x)*4+2] = rgb;
@@ -82,8 +90,9 @@ int main(int argc, char* argv[]){
     sf::Uint8* px = new sf::Uint8[tex_width*tex_height*4]();
     double* map_z = new double[tex_width*tex_height]();
 
-    double ap = 30;
-    texture_map(map_z, 5, ap, 10);
+    double f = 30;
+    double ap = std::tan(alpha)*f/2;
+    texture_map(map_z, f, ap, 10);
     draw_texture(px, map_z, ap, tex_width, tex_height);
 
     while(window.isOpen()){
@@ -98,13 +107,6 @@ int main(int argc, char* argv[]){
             }
         }
         window.clear(sf::Color::Black);
-        // for(size_t i = 0; i < 300*300; ++i){
-        //     sf::Uint8 p = rand(generator);
-        //     px[4*i+0] = p;
-        //     px[4*i+1] = p;
-        //     px[4*i+2] = p;
-        //     px[4*i+3] = 255;
-        // }
 
         img.update(px);
         auto wsize = window.getSize();
