@@ -118,5 +118,7 @@ int main(int argc, char* argv[]){
         window.display();
     }
 
+    img.copyToImage().saveToFile("result.png");
+
     return 0;
 }
