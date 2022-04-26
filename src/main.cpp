@@ -59,7 +59,6 @@ void texture_map(double*& map_z, double f, double ap, double vc){
     // std::cout << p1 << " " << p4 << std::endl;
     double line_root = ap - std::tan(alpha)*f/2;
     max_z = smooth_min({0, -line_root});
-    std::cout << max_z << std::endl;
     min_z = 0;
     for(size_t x = 0; x < tex_width; ++x){
         size_t mult = 1;
@@ -97,6 +96,7 @@ void draw_texture(sf::Uint8*& img, double* map_z, double ap, size_t w, size_t h)
 double Sa(double*& map_z){
     size_t area = tex_width*tex_height;
     double sum = std::abs(std::accumulate(map_z, map_z+area, 0.0, std::plus<double>()));
+    sum += area*max_z; // Depth correction
 
     return sum/area;
 }
