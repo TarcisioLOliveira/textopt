@@ -27,12 +27,26 @@
 #include <random>
 #include <cmath>
 #include <iostream>
+#include <initializer_list>
 
 size_t tex_width = 300;
 size_t tex_height = 300;
 
 double alpha = 60*M_PI/180;
 double r = 2; // um
+
+double smooth_min(std::initializer_list<double> x){
+    double mult = -8;
+    double frac_top = 0;
+    double frac_bot = 0;
+    for(double xi : x){
+        double exp = std::exp(mult*xi);
+        frac_top += xi*exp;
+        frac_bot += exp;
+    }
+
+    return frac_top/frac_bot;
+};
 
 void texture_map(double*& map_z, double f, double ap, double vc){
     // double dp1 = ap/std::tan(alpha);
@@ -47,9 +61,9 @@ void texture_map(double*& map_z, double f, double ap, double vc){
             // if(y >= p1 && y <= p4){
             if(y < mult*f){
                 if(y <= (mult-1)*f + f/2){
-                    z = -std::tan(alpha)*(y - (mult-1)*f);
+                    z = smooth_min({z, -std::tan(alpha)*(y - (mult-1)*f)});
                 } else {
-                    z = std::tan(alpha)*(y - ((mult-1)*f + f/2));
+                    z = smooth_min({z, std::tan(alpha)*(y - ((mult-1)*f + f))});
                 }
             } else {
                 ++mult;
