@@ -37,6 +37,14 @@ double alpha = 60*M_PI/180;
 double r = 2; // um
 double max_z = 0; // Used to calculate Sa, so uses smooth_min
 double min_z = 0; // Used only for texture display, so uses std::min()
+                  
+struct Point{
+    double x, y, z;
+};
+
+struct Vector{
+    double x, y, z;
+};
 
 double smooth_min(std::initializer_list<double> x){
     double mult = -8;
