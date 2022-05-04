@@ -33,6 +33,10 @@
 size_t tex_width = 300;
 size_t tex_height = 300;
 
+double dimx = 1;
+double dimy = 1;
+double dimz = 1;
+
 double alpha = 60*M_PI/180;
 double r = 2; // um
 double max_z = 0; // Used to calculate Sa, so uses smooth_min
@@ -122,6 +126,48 @@ double Sa(double*& map_z){
     return sum/area;
 }
 
+double surface_area(double*& map_z){
+    // For a N*M matrix of points, the actual projected surface area is (dimx*dimy)*((N-1)*(M-1))
+    double A = 0;
+    for(size_t x = 0; x < tex_width; x+=2){
+        for(size_t y = 0; y < tex_height; y+=2){
+            Point p[9];
+            size_t blockw = std::min(3ul, tex_width-x);
+            size_t blockh = std::min(3ul, tex_height-y);
+            if(blockw <= 1 || blockh <= 1){
+                continue;
+            }
+            for(size_t i = 0; i < blockw; ++i){
+                for(size_t j = 0; j < blockh; ++j){
+                    p[i*3+j] = Point{
+                        dimx*(x+i),
+                        dimy*(y+j),
+                        dimz*map_z[tex_width*(y+j) + (x+i)]
+                    };
+                }
+            }
+
+            A += triangle_area({p[0], p[1], p[4]});
+            A += triangle_area({p[0], p[3], p[4]});
+
+            if(blockw == 3){
+                A += triangle_area({p[1], p[2], p[4]});
+                A += triangle_area({p[2], p[4], p[5]});
+            }
+            if(blockh == 3){
+                A += triangle_area({p[3], p[4], p[6]});
+                A += triangle_area({p[4], p[6], p[7]});
+            }
+            if(blockw == 3 && blockh == 3){
+                A += triangle_area({p[4], p[5], p[8]});
+                A += triangle_area({p[4], p[7], p[8]});
+            }
+        }
+    }
+
+    return A;
+}
+
 int main(int argc, char* argv[]){
 
     size_t window_width = 800;
@@ -142,6 +188,7 @@ int main(int argc, char* argv[]){
     texture_map(map_z, f, ap, 10);
     draw_texture(px, map_z, ap, tex_width, tex_height);
     std::cout << Sa(map_z) << std::endl;
+    std::cout << surface_area(map_z) << std::endl;
 
     while(window.isOpen()){
         sf::Event event;
