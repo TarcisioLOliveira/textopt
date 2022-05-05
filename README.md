@@ -4,3 +4,5 @@ Optimizes machining parameters to maximize surface area while minimizing surface
 
 Dependency:
 - SFML
+
+Contains code from [jdumas/mma](https://github.com/jdumas/mma).
