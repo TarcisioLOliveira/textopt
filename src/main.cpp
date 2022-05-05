@@ -51,6 +51,11 @@ struct Vector{
     double x, y, z;
 };
 
+enum Colorscheme{
+    GRAYSCALE,
+    HSV
+};
+
 double triangle_area(std::array<Point, 3> p){
     Vector v1{p[1].x - p[0].x, p[1].y - p[0].y, p[1].z - p[0].z};
     Vector v2{p[2].x - p[0].x, p[2].y - p[0].y, p[2].z - p[0].z};
@@ -171,17 +176,51 @@ void dzdf(double*& map_z, double f, double ap, double vc, double*& dzdf){
     }
 }
 
-void draw_texture(sf::Uint8*& img, double* map_z, double ap, size_t w, size_t h){
-    for(size_t x = 0; x < tex_width; ++x){
-        for(size_t y = 0; y < tex_height; ++y){
-            double& z = map_z[tex_width*y + x];
+void draw_texture(sf::Uint8*& img, double* map_z, double ap, size_t w, size_t h, Colorscheme colorscheme){
+    if(colorscheme == Colorscheme::GRAYSCALE){
+        for(size_t x = 0; x < tex_width; ++x){
+            for(size_t y = 0; y < tex_height; ++y){
+                double& z = map_z[tex_width*y + x];
 
-            sf::Uint8 rgb = (sf::Uint8)std::round(255*(1 + (z-max_z)/(max_z - min_z)));
-            img[(tex_width*y + x)*4+0] = rgb;
-            img[(tex_width*y + x)*4+1] = rgb;
-            img[(tex_width*y + x)*4+2] = rgb;
-            img[(tex_width*y + x)*4+3] = 255;
+                sf::Uint8 rgb = (sf::Uint8)std::round(255*(1 + (z-max_z)/(max_z - min_z)));
+                img[(tex_width*y + x)*4+0] = rgb;
+                img[(tex_width*y + x)*4+1] = rgb;
+                img[(tex_width*y + x)*4+2] = rgb;
+                img[(tex_width*y + x)*4+3] = 255;
+            }
         }
+    } else if(colorscheme == Colorscheme::HSV){
+        for(size_t x = 0; x < tex_width; ++x){
+            for(size_t y = 0; y < tex_height; ++y){
+                double& z = map_z[tex_width*y + x];
+
+                double norm = (1 + (z-max_z)/(max_z - min_z));
+                double r, g, b;
+                if(norm <= 0.25){
+                    r = 1;
+                    g = norm*4;
+                    b = 0;
+                } else if(norm <= 0.5){
+                    r = 1 - (norm-0.25)*4;
+                    g = 1;
+                    b = 0;
+                } else if(norm <= 0.75){
+                    r = 0;
+                    g = 1;
+                    b = (norm-0.5)*4;
+                } else {
+                    r = 0;
+                    g = 1 - (norm-0.75)*4;
+                    b = 1;
+                }
+
+                img[(tex_width*y + x)*4+0] = (sf::Uint8)std::round(255*r);
+                img[(tex_width*y + x)*4+1] = (sf::Uint8)std::round(255*g);
+                img[(tex_width*y + x)*4+2] = (sf::Uint8)std::round(255*b);
+                img[(tex_width*y + x)*4+3] = 255;
+            }
+        }
+
     }
 }
 
@@ -306,7 +345,7 @@ int main(int argc, char* argv[]){
     double f = 30;
     double ap = 40;
     texture_map(map_z, f, ap, 10);
-    draw_texture(px, map_z, ap, tex_width, tex_height);
+    draw_texture(px, map_z, ap, tex_width, tex_height, Colorscheme::HSV);
     std::cout << Sa(map_z) << std::endl;
     std::cout << surface_area(map_z) << std::endl;
 
