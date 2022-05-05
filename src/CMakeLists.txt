@@ -2,6 +2,7 @@ set(PROJECT_NAME textopt)
 
 set(SOURCES
     main.cpp
+    MMASolver.cpp
 )
 
 add_executable(${PROJECT_NAME} ${SOURCES})
