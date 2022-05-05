@@ -232,9 +232,9 @@ double Sa(double*& map_z){
     return sum/area;
 }
 
-double dSadf(double*& map_z, double* dzdf){
+double dSa(double*& map_z, double* dzd){
     size_t area = tex_width*tex_height;
-    double sum = std::abs(std::accumulate(dzdf, dzdf+area, 0.0, std::plus<double>()));
+    double sum = std::abs(std::accumulate(dzd, dzd+area, 0.0, std::plus<double>()));
     sum += area*dmax_zdf; // Depth correction
 
     return sum/area;
@@ -282,7 +282,7 @@ double surface_area(double*& map_z){
     return A;
 }
 
-double surface_area_df(double*& map_z, double* dzdf){
+double surface_area_dz(double*& map_z, double* dzd){
     double A = 0;
     for(size_t x = 0; x < tex_width; x+=2){
         for(size_t y = 0; y < tex_height; y+=2){
@@ -300,7 +300,7 @@ double surface_area_df(double*& map_z, double* dzdf){
                         dimy*(y+j),
                         dimz*map_z[tex_width*(y+j) + (x+i)]
                     };
-                    dz[i*3+j] = dzdf[tex_width*(y+j) + (x+i)];
+                    dz[i*3+j] = dzd[tex_width*(y+j) + (x+i)];
                 }
             }
 
