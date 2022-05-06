@@ -29,6 +29,8 @@
 #include <iostream>
 #include <initializer_list>
 #include <numeric>
+#include <MMASolver.hpp>
+#include <algorithm>
 
 size_t tex_width = 300;
 size_t tex_height = 300;
@@ -130,11 +132,11 @@ void texture_map(double*& map_z, double* orig_z, double f, double ap, double vc)
                 } else {
                     z = smooth_min({oz, std::tan(alpha)*(y - ((mult-1)*f + f)) - line_root});
                 }
+                min_z = std::min(min_z, z);
             } else {
                 ++mult;
                 --y;
             }
-            min_z = std::min(min_z, z);
         }
     }
 }
@@ -330,6 +332,9 @@ int main(int argc, char* argv[]){
 
     size_t window_width = 800;
     size_t window_height = 600;
+
+    double max_roughness = 6;
+
     sf::RenderWindow window(sf::VideoMode(window_width, window_height), "textopt");
     sf::Texture img;
     img.create(tex_width, tex_height);
@@ -340,15 +345,22 @@ int main(int argc, char* argv[]){
     // std::uniform_int_distribution<sf::Uint8> rand(0);
     sf::Uint8* px = new sf::Uint8[tex_width*tex_height*4]();
     double* map_z = new double[tex_width*tex_height]();
-    double* dzdf = new double[tex_width*tex_height]();
     double* orig_z = new double[tex_width*tex_height]();
+    double* df = new double[tex_width*tex_height]();
 
-    double f = 30;
-    double ap = 40;
-    texture_map(map_z, orig_z, f, ap, 10);
-    draw_texture(px, map_z, ap, tex_width, tex_height, Colorscheme::HSV);
-    std::cout << Sa(map_z) << std::endl;
-    std::cout << surface_area(map_z) << std::endl;
+    double ch = 1;
+    size_t it = 1;
+    double old_surarea = 1;
+
+    const size_t N = 3;
+    double x[N] = {30, 40, 10};
+    double xmax[N] = {100, 100, 100};
+    double xmin[N] = {0.001, 0.001, 0.001};
+    double dSa_vec[N] = {0, 0, 0};
+    double dsurarea_vec[N] = {0, 0, 0};
+
+    MMASolver mma(1, 1, 0, 1e4, 1);
+    mma.SetAsymptotes(0.001, 0.7, 1.001);
 
     while(window.isOpen()){
         sf::Event event;
@@ -362,6 +374,39 @@ int main(int argc, char* argv[]){
             }
         }
         window.clear(sf::Color::Black);
+
+        if(ch > 1e-8){
+            double f = x[0];
+            double ap = x[1];
+            double vc = x[2];
+            texture_map(map_z, orig_z, f, ap, vc);
+            draw_texture(px, map_z, ap, tex_width, tex_height, Colorscheme::HSV);
+            double surarea = -surface_area(map_z);
+            double roughness = Sa(map_z) - max_roughness;
+
+            dzdf(map_z, orig_z, f, ap, vc, df);
+            double dsurareadf = -surface_area_dz(map_z, df);
+            double dSadf = dSa(map_z, df);
+            std::cout << dsurareadf << " " << dSadf << std::endl;
+
+            dsurarea_vec[0] = dsurareadf;
+            dSa_vec[0] = dSadf;
+
+            mma.Update(x, dsurarea_vec, &roughness, dSa_vec, xmin, xmax); 
+
+            ch = std::abs(1 - surarea/old_surarea);
+            old_surarea = surarea;
+
+            std::cout << std::endl;
+            std::cout << "Iteration: " << it << std::endl;
+            std::cout << "Surface area: " << -surarea << std::endl;
+            std::cout << "Roughness: " << roughness + max_roughness << std::endl;
+            std::cout << "f: " << f << std::endl;
+            std::cout << "ap: " << ap << std::endl;
+            std::cout << "vc: " << vc << std::endl;
+            std::cout << "Change: " << ch << std::endl;
+            ++it;
+        }
 
         img.update(px);
         auto wsize = window.getSize();
