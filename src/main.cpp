@@ -102,7 +102,7 @@ double smooth_min(std::initializer_list<double> x){
     return frac_top/frac_bot;
 };
 
-double smooth_min_deriv(std::initializer_list<double> x, double xi){
+double smooth_min_deriv(std::initializer_list<double> x, double xx){
     double frac_top = 0;
     double frac_bot = 0;
     for(double xi : x){
@@ -113,7 +113,7 @@ double smooth_min_deriv(std::initializer_list<double> x, double xi){
 
     double sm = frac_top/frac_bot;
 
-    return (xi/frac_bot)*(1+MULT*(xi-sm));
+    return (xx/frac_bot)*(1+MULT*(xx-sm));
 };
 
 void texture_map(double*& map_z, double* orig_z, double f, double ap, double vc){
