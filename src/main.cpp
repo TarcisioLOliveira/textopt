@@ -126,6 +126,7 @@ void texture_map(double*& map_z, double* orig_z, double f, double ap, double vc)
         for(size_t y = 0; y < tex_height; ++y){
             double& z = map_z[tex_width*y + x];
             double oz = orig_z[tex_width*y + x];
+            z = oz;
             if(y < mult*f){
                 if(y <= (mult-1)*f + f/2){
                     z = smooth_min({oz, -std::tan(alpha)*(y - (mult-1)*f) - line_root});
@@ -154,6 +155,7 @@ void dzdf(double*& map_z, double* orig_z, double f, double ap, double vc, double
             double& z = map_z[tex_width*y + x];
             double oz = orig_z[tex_width*y + x];
             double& dz = dzdf[tex_width*y + x];
+            dz = 0;
             if(y < mult*f){
                 if(y <= (mult-1)*f + f/2){
                     // z = smooth_min({z, -std::tan(alpha)*(y - (mult-1)*f) - line_root});
