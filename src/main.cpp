@@ -80,7 +80,7 @@ double triangle_area_deriv(std::array<Point, 3> p, std::array<double, 3> dz){
     double dv1 = dz[1] - dz[0];
     double dv2 = dz[2] - dz[0];
 
-    double A = (0.5/std::sqrt(
+    double A = (0.25/std::sqrt(
         std::pow(v1.y*v2.z - v2.y*v1.z, 2) +
         std::pow(v1.x*v2.z - v2.x*v1.z, 2) +
         std::pow(v1.y*v2.x - v2.y*v1.x, 2)
