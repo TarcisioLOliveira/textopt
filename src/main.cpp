@@ -102,21 +102,20 @@ double smooth_min(std::initializer_list<double> x){
 };
 
 double smooth_min_deriv(std::initializer_list<double> x, double xi){
-    double mult = -8;
     double frac_top = 0;
     double frac_bot = 0;
     for(double xi : x){
-        double exp = std::exp(mult*xi);
+        double exp = std::exp(MULT*xi);
         frac_top += xi*exp;
         frac_bot += exp;
     }
 
     double sm = frac_top/frac_bot;
 
-    return (xi/frac_bot)*(1+mult*(xi-sm));
+    return (xi/frac_bot)*(1+MULT*(xi-sm));
 };
 
-void texture_map(double*& map_z, double f, double ap, double vc){
+void texture_map(double*& map_z, double* orig_z, double f, double ap, double vc){
     // double dp1 = ap/std::tan(alpha);
     // double p1 = tex_height/2 - dp1;
     // double p4 = tex_height/2 + dp1;
@@ -129,11 +128,12 @@ void texture_map(double*& map_z, double f, double ap, double vc){
         size_t mult = 1;
         for(size_t y = 0; y < tex_height; ++y){
             double& z = map_z[tex_width*y + x];
+            double oz = orig_z[tex_width*y + x];
             if(y < mult*f){
                 if(y <= (mult-1)*f + f/2){
-                    z = smooth_min({z, -std::tan(alpha)*(y - (mult-1)*f) - line_root});
+                    z = smooth_min({oz, -std::tan(alpha)*(y - (mult-1)*f) - line_root});
                 } else {
-                    z = smooth_min({z, std::tan(alpha)*(y - ((mult-1)*f + f)) - line_root});
+                    z = smooth_min({oz, std::tan(alpha)*(y - ((mult-1)*f + f)) - line_root});
                 }
             } else {
                 ++mult;
@@ -145,7 +145,7 @@ void texture_map(double*& map_z, double f, double ap, double vc){
 }
 
 
-void dzdf(double*& map_z, double f, double ap, double vc, double*& dzdf){
+void dzdf(double*& map_z, double* orig_z, double f, double ap, double vc, double*& dzdf){
     double line_root = ap - std::tan(alpha)*f/2;
     double dlrdf = -std::tan(alpha)/2;
     max_z = smooth_min({0, -line_root});
@@ -155,18 +155,23 @@ void dzdf(double*& map_z, double f, double ap, double vc, double*& dzdf){
         size_t mult = 1;
         for(size_t y = 0; y < tex_height; ++y){
             double& z = map_z[tex_width*y + x];
+            double oz = orig_z[tex_width*y + x];
             double& dz = dzdf[tex_width*y + x];
             if(y < mult*f){
                 if(y <= (mult-1)*f + f/2){
                     // z = smooth_min({z, -std::tan(alpha)*(y - (mult-1)*f) - line_root});
                     double znew = -std::tan(alpha)*(y - (mult-1)*f) - line_root;
                     double dznewdf = std::tan(alpha)*(mult-1) - dlrdf;
-                    dz = smooth_min_deriv({z, znew}, znew)*dznewdf;
+                    dz = smooth_min_deriv({oz, znew}, znew)*dznewdf;
                 } else {
                     // z = smooth_min({z, std::tan(alpha)*(y - ((mult-1)*f + f)) - line_root});
                     double znew = -std::tan(alpha)*(y - (mult-1)*f + f) - line_root;
                     double dznewdf = std::tan(alpha)*mult - dlrdf;
-                    dz = smooth_min_deriv({z, znew}, znew)*dznewdf;
+                    dz = smooth_min_deriv({oz, znew}, znew)*dznewdf;
+                    if(std::isnan(dz)){
+                        std::cout << "here" << std::endl;
+                        dz = smooth_min_deriv({oz, znew}, znew)*dznewdf;
+                    }
                 }
             } else {
                 ++mult;
@@ -341,10 +346,11 @@ int main(int argc, char* argv[]){
     sf::Uint8* px = new sf::Uint8[tex_width*tex_height*4]();
     double* map_z = new double[tex_width*tex_height]();
     double* dzdf = new double[tex_width*tex_height]();
+    double* orig_z = new double[tex_width*tex_height]();
 
     double f = 30;
     double ap = 40;
-    texture_map(map_z, f, ap, 10);
+    texture_map(map_z, orig_z, f, ap, 10);
     draw_texture(px, map_z, ap, tex_width, tex_height, Colorscheme::HSV);
     std::cout << Sa(map_z) << std::endl;
     std::cout << surface_area(map_z) << std::endl;
