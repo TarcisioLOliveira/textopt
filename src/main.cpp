@@ -33,6 +33,8 @@
 size_t tex_width = 300;
 size_t tex_height = 300;
 
+const double MULT = -4;
+
 double dimx = 1;
 double dimy = 1;
 double dimz = 1;
@@ -89,11 +91,10 @@ double triangle_area_deriv(std::array<Point, 3> p, std::array<double, 3> dz){
 }
 
 double smooth_min(std::initializer_list<double> x){
-    double mult = -8;
     double frac_top = 0;
     double frac_bot = 0;
     for(double xi : x){
-        double exp = std::exp(mult*xi);
+        double exp = std::exp(MULT*xi);
         frac_top += xi*exp;
         frac_bot += exp;
     }
