@@ -302,7 +302,7 @@ double surface_area_dz(double*& map_z, double* dzd){
                         dimy*(y+j),
                         dimz*map_z[tex_width*(y+j) + (x+i)]
                     };
-                    dz[i*3+j] = dzd[tex_width*(y+j) + (x+i)];
+                    dz[i*3+j] = dimz*dzd[tex_width*(y+j) + (x+i)];
                 }
             }
 
