@@ -98,7 +98,7 @@ double smooth_min(std::initializer_list<double> x){
         sum += std::pow(-xi, EXP);
     }
 
-    return -std::pow(sum, 1.0/EXP);
+    return -std::pow(sum/x.size(), 1.0/EXP);
 };
 
 double smooth_min_deriv(std::initializer_list<double> x, double xx){
@@ -106,8 +106,8 @@ double smooth_min_deriv(std::initializer_list<double> x, double xx){
     for(double xi : x){
         sum += std::pow(-xi, EXP);
     }
-    double result = -std::pow(sum, 1.0/EXP - 1);
-    result *= -std::pow(-xx, EXP-1);
+    double result = -std::pow(sum/x.size(), 1.0/EXP - 1);
+    result *= -std::pow(-xx, EXP-1)/x.size();
 
     return result;
 };
