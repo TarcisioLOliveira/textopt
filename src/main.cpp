@@ -378,6 +378,11 @@ int main(int argc, char* argv[]){
         window.display();
     }
 
+    delete[] px;
+    delete[] map_z;
+    delete[] orig_z;
+    delete[] df;
+
     img.copyToImage().saveToFile("result.png");
 
     return 0;
