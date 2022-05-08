@@ -230,16 +230,16 @@ void draw_texture(sf::Uint8*& img, double* map_z, double ap, size_t w, size_t h,
 
 double Sa(double*& map_z){
     size_t area = tex_width*tex_height;
-    double sum = std::abs(std::accumulate(map_z, map_z+area, 0.0, std::plus<double>()));
-    sum += area*max_z; // Depth correction
+    double sum = -std::accumulate(map_z, map_z+area, 0.0, std::plus<double>());
+    sum -= area*max_z; // Depth correction
 
     return sum/area;
 }
 
 double dSa(double*& map_z, double* dzd){
     size_t area = tex_width*tex_height;
-    double sum = std::abs(std::accumulate(dzd, dzd+area, 0.0, std::plus<double>()));
-    sum += area*dmax_zdf; // Depth correction
+    double sum = -std::accumulate(dzd, dzd+area, 0.0, std::plus<double>());
+    sum -= area*dmax_zdf; // Depth correction
 
     return sum/area;
 }
