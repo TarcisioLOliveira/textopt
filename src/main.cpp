@@ -162,7 +162,7 @@ void dzdf(double*& map_z, double* orig_z, double f, double ap, double vc, double
                     double znew = -std::tan(alpha)*(y - (mult-1)*f) - line_root;
                     double dznewdf = std::tan(alpha)*(mult-1) - dlrdf;
                     dz = smooth_min_deriv({oz, znew}, znew)*dznewdf;
-                } else if(y <= (mult-1)*f + f/2) {
+                } else if(y <= (mult-1)*f + f) {
                     // z = smooth_min({z, std::tan(alpha)*(y - ((mult-1)*f + f)) - line_root});
                     double znew = -std::tan(alpha)*(y - (mult-1)*f + f) - line_root;
                     double dznewdf = std::tan(alpha)*mult - dlrdf;
