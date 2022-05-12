@@ -35,7 +35,7 @@
 size_t tex_width = 300;
 size_t tex_height = 300;
 
-const double EXP = 100;
+const double MULT = -1;
 
 double dimx = 1;
 double dimy = 1;
@@ -93,23 +93,29 @@ double triangle_area_deriv(std::array<Point, 3> p, std::array<double, 3> dz){
 }
 
 double smooth_min(std::initializer_list<double> x){
-    double sum = 0;
+    double frac_top = 0;
+    double frac_bot = 0;
     for(double xi : x){
-        sum += std::pow(-xi, EXP);
+        double exp = std::exp(MULT*xi);
+        frac_top += xi*exp;
+        frac_bot += exp;
     }
 
-    return -std::pow(sum/x.size(), 1.0/EXP);
+    return frac_top/frac_bot;
 };
 
 double smooth_min_deriv(std::initializer_list<double> x, double xx){
-    double sum = 0;
+    double frac_top = 0;
+    double frac_bot = 0;
     for(double xi : x){
-        sum += std::pow(-xi, EXP);
+        double exp = std::exp(MULT*xi);
+        frac_top += xi*exp;
+        frac_bot += exp;
     }
-    double result = -std::pow(sum/x.size(), 1.0/EXP - 1);
-    result *= -std::pow(-xx, EXP-1)/x.size();
 
-    return result;
+    double sm = frac_top/frac_bot;
+
+    return (xx/frac_bot)*(1+MULT*(xx-sm));
 };
 
 void texture_map(double*& map_z, double* orig_z, double f, double ap, double vc){
