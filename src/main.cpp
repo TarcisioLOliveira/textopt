@@ -345,7 +345,7 @@ int main(int argc, char* argv[]){
     size_t window_width = 800;
     size_t window_height = 600;
 
-    double max_roughness = 6;
+    double max_roughness = 20;
 
     sf::RenderWindow window(sf::VideoMode(window_width, window_height), "textopt");
     sf::Texture img;
@@ -365,14 +365,14 @@ int main(int argc, char* argv[]){
     double old_surarea = 1;
 
     const size_t N = 3;
-    double x[N] = {30, 40, 10};
+    double x[N] = {20, 40, 10};
     double xmax[N] = {100, 100, 100};
     double xmin[N] = {0.001, 0.001, 0.001};
     double dSa_vec[N] = {0, 0, 0};
     double dsurarea_vec[N] = {0, 0, 0};
 
-    MMASolver mma(1, 1, 0, 1e4, 1);
-    mma.SetAsymptotes(0.001, 0.7, 1.001);
+    MMASolver mma(1, 1, 0, 1e6, 1);
+    mma.SetAsymptotes(0.001, 0.3, 1.001);
 
     while(window.isOpen()){
         sf::Event event;
