@@ -134,9 +134,11 @@ void texture_map(double*& map_z, double* orig_z, double f, double ap, double vc)
             double oz = orig_z[tex_width*y + x];
             z = oz;
             if(y <= mult*f){
-                if(y <= (mult-1)*f + f/2){
+                if(y < -line_root/std::tan(alpha) + (mult-1)*f){
+                    continue;
+                } else if(y <= (mult-1)*f + f/2){
                     z = smooth_min({oz, -std::tan(alpha)*(y - (mult-1)*f) - line_root});
-                } else if(y <= (mult-1)*f + f) {
+                } else if(y <= (mult-1)*f + f + line_root/std::tan(alpha)) {
                     z = smooth_min({oz, std::tan(alpha)*(y - ((mult-1)*f + f)) - line_root});
                 }
                 min_z = std::min(min_z, z);
@@ -163,14 +165,16 @@ void dzdf(double*& map_z, double* orig_z, double f, double ap, double vc, double
             double& dz = dzdf[tex_width*y + x];
             dz = 0;
             if(y <= mult*f){
-                if(y <= (mult-1)*f + f/2){
+                if(y < -line_root/std::tan(alpha) + (mult-1)*f){
+                    continue;
+                } else if(y <= (mult-1)*f + f/2){
                     // z = smooth_min({z, -std::tan(alpha)*(y - (mult-1)*f) - line_root});
                     double znew = -std::tan(alpha)*(y - (mult-1)*f) - line_root;
                     double dznewdf = std::tan(alpha)*(mult-1) - dlrdf;
                     dz = smooth_min_deriv({oz, znew}, znew)*dznewdf;
-                } else if(y <= (mult-1)*f + f) {
+                } else if(y <= (mult-1)*f + f + line_root/std::tan(alpha)) {
                     // z = smooth_min({z, std::tan(alpha)*(y - ((mult-1)*f + f)) - line_root});
-                    double znew = -std::tan(alpha)*(y - (mult-1)*f + f) - line_root;
+                    double znew = -std::tan(alpha)*(y - ((mult-1)*f + f)) - line_root;
                     double dznewdf = std::tan(alpha)*mult - dlrdf;
                     dz = smooth_min_deriv({oz, znew}, znew)*dznewdf;
                     if(std::isnan(dz)){
