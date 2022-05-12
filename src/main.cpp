@@ -115,7 +115,7 @@ double smooth_min_deriv(std::initializer_list<double> x, double xx){
 
     double sm = frac_top/frac_bot;
 
-    return (xx/frac_bot)*(1+MULT*(xx-sm));
+    return (std::exp(MULT*xx)/frac_bot)*(1+MULT*(xx-sm));
 };
 
 void texture_map(double*& map_z, double* orig_z, double f, double ap, double vc){
