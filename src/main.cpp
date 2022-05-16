@@ -284,7 +284,7 @@ double surface_area(double*& map_z){
             }
             for(size_t i = 0; i < blockw; ++i){
                 for(size_t j = 0; j < blockh; ++j){
-                    p[i*3+j] = Point{
+                    p[j*3+i] = Point{
                         dimx*(x+i),
                         dimy*(y+j),
                         dimz*map_z[tex_width*(y+j) + (x+i)]
@@ -326,12 +326,12 @@ double surface_area_dz(double*& map_z, double* dzd){
             }
             for(size_t i = 0; i < blockw; ++i){
                 for(size_t j = 0; j < blockh; ++j){
-                    p[i*3+j] = Point{
+                    p[j*3+i] = Point{
                         dimx*(x+i),
                         dimy*(y+j),
                         dimz*map_z[tex_width*(y+j) + (x+i)]
                     };
-                    dz[i*3+j] = dimz*dzd[tex_width*(y+j) + (x+i)];
+                    dz[j*3+i] = dimz*dzd[tex_width*(y+j) + (x+i)];
                 }
             }
 
