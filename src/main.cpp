@@ -41,7 +41,8 @@ double dimx = 1;
 double dimy = 1;
 double dimz = 1;
 
-double alpha = 60*M_PI/180;
+double alpha1 = 60*M_PI/180;
+double alpha2 = 60*M_PI/180;
 double r = 2; // um
 double max_z = 0; // Used to calculate Sa, so uses smooth_min
 double min_z = 0; // Used only for texture display, so uses std::min()
@@ -119,13 +120,22 @@ double smooth_min_deriv(std::initializer_list<double> x, double xx){
 };
 
 void texture_map(double*& map_z, double* orig_z, double f, double ap, double vc){
-    // double dp1 = ap/std::tan(alpha);
-    // double p1 = tex_height/2 - dp1;
-    // double p4 = tex_height/2 + dp1;
+    double line_root1 = -ap + std::tan(alpha1)*f/2;
+    double line_root2 = -ap - std::tan(alpha2)*f/2;
 
-    // std::cout << p1 << " " << p4 << std::endl;
-    double line_root = ap - std::tan(alpha)*f/2;
-    max_z = smooth_min({0, -line_root});
+    // Calculate whether the angles of the cutting tool intercept the surface
+    // first or are stopped by the feed rate.
+    //
+    // Check the intersection with the feed rate edges. If they're greater than
+    // zero, the cut line is narrower than the feed line, so max height is
+    // zero. Otherwise, it's the height at the intersection
+    double intersec1 = smooth_min({0, line_root1});
+    double intersec2 = smooth_min({0, line_root2 + std::tan(alpha2)*f});
+    // Check if one of them is greater than zero
+    double max_intersec = -smooth_min({-intersec1, -intersec2});
+    // Check if one is greater than zero, max_z must be zero. Otherwise, it's
+    // the lesser one.
+    max_z = smooth_min({0, max_intersec});
     min_z = 0;
     for(size_t x = 0; x < tex_width; ++x){
         size_t mult = 1;
@@ -134,12 +144,14 @@ void texture_map(double*& map_z, double* orig_z, double f, double ap, double vc)
             double oz = orig_z[tex_width*y + x];
             z = oz;
             if(y <= mult*f){
-                if(y < -line_root/std::tan(alpha) + (mult-1)*f){
-                    continue;
-                } else if(y <= (mult-1)*f + f/2){
-                    z = smooth_min({oz, -std::tan(alpha)*(y - (mult-1)*f) - line_root});
-                } else if(y <= (mult-1)*f + f + line_root/std::tan(alpha)) {
-                    z = smooth_min({oz, std::tan(alpha)*(y - ((mult-1)*f + f)) - line_root});
+                // If it's within the area that's actually cut
+                if(y >=  line_root1/std::tan(alpha1) + (mult-1)*f &&
+                   y <= -line_root2/std::tan(alpha2) + (mult-1)*f){
+                    if(y <= (mult-1)*f + f/2){
+                        z = smooth_min({oz, -std::tan(alpha1)*(y - (mult-1)*f) + line_root1});
+                    } else {
+                        z = smooth_min({oz,  std::tan(alpha2)*(y - (mult-1)*f) + line_root2});
+                    }
                 }
                 min_z = std::min(min_z, z);
             } else {
@@ -152,10 +164,20 @@ void texture_map(double*& map_z, double* orig_z, double f, double ap, double vc)
 
 
 void dzdf(double*& map_z, double* orig_z, double f, double ap, double vc, double*& dzdf){
-    double line_root = ap - std::tan(alpha)*f/2;
-    double dlrdf = -std::tan(alpha)/2;
-    max_z = smooth_min({0, -line_root});
-    dmax_zdf = smooth_min_deriv({0, -line_root}, -line_root)*dlrdf;
+    double line_root1 = -ap + std::tan(alpha1)*f/2;
+    double line_root2 = -ap - std::tan(alpha2)*f/2;
+    double dlrdf1 =  std::tan(alpha1)/2;
+    double dlrdf2 = -std::tan(alpha2)/2;
+
+    double intersec1 = smooth_min({0, line_root1});
+    double intersec2 = smooth_min({0, line_root2 + std::tan(alpha2)*f});
+    double max_intersec = -smooth_min({-intersec1, -intersec2});
+    max_z = smooth_min({0, max_intersec});
+
+    double di1 = smooth_min_deriv({0, line_root1}, line_root1)*dlrdf1;
+    double di2 = smooth_min_deriv({0, line_root2 + std::tan(alpha2)*f}, line_root2 + std::tan(alpha2)*f)*(dlrdf2 + std::tan(alpha2));
+    double dmi = -smooth_min_deriv({-intersec1, -intersec2}, -intersec1)*(-di1) - smooth_min_deriv({-intersec1, -intersec2}, -intersec2)*(-di2);
+    dmax_zdf = smooth_min_deriv({0, max_intersec}, max_intersec)*dmi;
     min_z = 0;
     for(size_t x = 0; x < tex_width; ++x){
         size_t mult = 1;
@@ -165,20 +187,15 @@ void dzdf(double*& map_z, double* orig_z, double f, double ap, double vc, double
             double& dz = dzdf[tex_width*y + x];
             dz = 0;
             if(y <= mult*f){
-                if(y < -line_root/std::tan(alpha) + (mult-1)*f){
-                    continue;
-                } else if(y <= (mult-1)*f + f/2){
-                    // z = smooth_min({z, -std::tan(alpha)*(y - (mult-1)*f) - line_root});
-                    double znew = -std::tan(alpha)*(y - (mult-1)*f) - line_root;
-                    double dznewdf = std::tan(alpha)*(mult-1) - dlrdf;
-                    dz = smooth_min_deriv({oz, znew}, znew)*dznewdf;
-                } else if(y <= (mult-1)*f + f + line_root/std::tan(alpha)) {
-                    // z = smooth_min({z, std::tan(alpha)*(y - ((mult-1)*f + f)) - line_root});
-                    double znew = -std::tan(alpha)*(y - ((mult-1)*f + f)) - line_root;
-                    double dznewdf = std::tan(alpha)*mult - dlrdf;
-                    dz = smooth_min_deriv({oz, znew}, znew)*dznewdf;
-                    if(std::isnan(dz)){
-                        std::cout << "here" << std::endl;
+                if(y >=  line_root1/std::tan(alpha1) + (mult-1)*f &&
+                   y <= -line_root2/std::tan(alpha2) + (mult-1)*f){
+                    if(y <= (mult-1)*f + f/2){
+                        double znew = -std::tan(alpha1)*(y - (mult-1)*f) + line_root1;
+                        double dznewdf = -std::tan(alpha1)*(mult-1) + dlrdf1;
+                        dz = smooth_min_deriv({oz, znew}, znew)*dznewdf;
+                    } else {
+                        double znew =  std::tan(alpha2)*(y - (mult-1)*f) + line_root2;
+                        double dznewdf =  std::tan(alpha2)*mult + dlrdf2;
                         dz = smooth_min_deriv({oz, znew}, znew)*dznewdf;
                     }
                 }
@@ -365,14 +382,14 @@ int main(int argc, char* argv[]){
     double old_surarea = 1;
 
     const size_t N = 3;
-    double x[N] = {20, 40, 10};
+    double x[N] = {50, 40, 10};
     double xmax[N] = {100, 100, 100};
     double xmin[N] = {0.001, 0.001, 0.001};
     double dSa_vec[N] = {0, 0, 0};
     double dsurarea_vec[N] = {0, 0, 0};
 
     MMASolver mma(1, 1, 0, 1e6, 1);
-    mma.SetAsymptotes(0.001, 0.3, 1.001);
+    mma.SetAsymptotes(0.001, 0.1, 1.001);
 
     while(window.isOpen()){
         sf::Event event;
