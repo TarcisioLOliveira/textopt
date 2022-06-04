@@ -44,7 +44,7 @@ double dimz = dim;
 
 double alpha1 = 60*M_PI/180;
 double alpha2 = 60*M_PI/180;
-double r = 20; // um
+double r = 20/dim; // um
 double max_z = 0; // Used to calculate Sa, so uses smooth_min
 double min_z = 0; // Used only for texture display, so uses std::min()
 double dmax_zdf = 0; 
