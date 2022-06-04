@@ -37,9 +37,10 @@ size_t tex_height = 300;
 
 const double MULT = -1;
 
-double dimx = 1;
-double dimy = 1;
-double dimz = 1;
+double dim = 1;
+double dimx = dim;
+double dimy = dim;
+double dimz = dim;
 
 double alpha1 = 60*M_PI/180;
 double alpha2 = 60*M_PI/180;
