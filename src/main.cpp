@@ -37,6 +37,7 @@ size_t tex_height = 300;
 
 const double MULT = -1;
 
+double dim_scale = 1e6; // m to um
 double dim = 1;
 double dimx = dim;
 double dimy = dim;
@@ -48,6 +49,22 @@ double r = 20/dim; // um
 double max_z = 0; // Used to calculate Sa, so uses smooth_min
 double min_z = 0; // Used only for texture display, so uses std::min()
 double dmax_zdf = 0; 
+
+// Tool vibration
+// Y-axis vibration is not currently implemented
+
+// Amplitude [dim], e.g. [um]
+double Ax = 10;
+double Ay = 0;
+double Az = 5;
+// Frequency [Hz]
+double fx = 15*dim_scale/10;
+double fy = 0;
+double fz = 20*dim_scale/10;
+// Phase [rad]
+double phix = 20*M_PI/180;
+double phiy = 0;
+double phiz = 0;
                   
 struct Point{
     double x, y, z;
@@ -159,17 +176,18 @@ void texture_map(double*& map_z, double* orig_z, double f, double ap, double vc)
         for(size_t y = 0; y < tex_height; ++y){
             double& z = map_z[tex_width*y + x];
             double oz = orig_z[tex_width*y + x];
+            double newx = x + Ax*std::sin(2*M_PI*fx*x*dimx/(vc*dim_scale) + phix);
             z = oz;
             if(y <= mult*f){
                 // If it's within the area that's actually cut
                 if(y >=  line_root1/std::tan(alpha1) + (mult-1)*f &&
                    y <= -line_root2/std::tan(alpha2) + (mult-1)*f){
                     if(y <= y1 + (mult-1)*f + f/2){
-                        z = smooth_min({oz, -std::tan(alpha1)*((double)y - (mult-1)*f) + line_root1});
+                        z = smooth_min({oz, -std::tan(alpha1)*((double)y - (mult-1)*f) + line_root1 + Az*std::sin(2*M_PI*fz*newx*dimx/(vc*dim_scale) + phiz)});
                     } else if(y <= y2 + (mult-1)*f + f/2){
-                        z = smooth_min({oz, -std::sqrt(r*r - std::pow((double)y - (mult-1)*f - f/2, 2)) + r - ap});
+                        z = smooth_min({oz, -std::sqrt(r*r - std::pow((double)y - (mult-1)*f - f/2, 2)) + r - ap + Az*std::sin(2*M_PI*fz*newx*dimx/(vc*dim_scale) + phiz)});
                     } else {
-                        z = smooth_min({oz,  std::tan(alpha2)*((double)y - (mult-1)*f) + line_root2});
+                        z = smooth_min({oz,  std::tan(alpha2)*((double)y - (mult-1)*f) + line_root2 + Az*std::sin(2*M_PI*fz*newx*dimx/(vc*dim_scale) + phiz)});
                     }
                 }
                 min_z = std::min(min_z, z);
@@ -222,20 +240,21 @@ void dzdf(double*& map_z, double* orig_z, double f, double ap, double vc, double
             double& z = map_z[tex_width*y + x];
             double oz = orig_z[tex_width*y + x];
             double& dz = dzdf[tex_width*y + x];
+            double newx = x + Ax*std::sin(2*M_PI*fx*x*dimx/(vc*dim_scale) + phix);
             dz = 0;
             if(y <= mult*f){
                 if(y >=  line_root1/std::tan(alpha1) + (mult-1)*f &&
                    y <= -line_root2/std::tan(alpha2) + (mult-1)*f){
                     if(y <= y1 + (mult-1)*f + f/2){
-                        double znew = -std::tan(alpha1)*(y - (mult-1)*f) + line_root1;
+                        double znew = -std::tan(alpha1)*(y - (mult-1)*f) + line_root1 + Az*std::sin(2*M_PI*fz*newx*dimx/(vc*dim_scale) + phiz);
                         double dznewdf = -std::tan(alpha1)*(mult-1) + dlrdf1;
                         dz = smooth_min_deriv({oz, znew}, znew)*dznewdf;
                     } else if(y <= y2 + (mult-1)*f + f/2){
-                        double znew = -std::sqrt(r*r - std::pow((double)y - (mult-1)*f - f/2, 2)) + r - ap;
+                        double znew = -std::sqrt(r*r - std::pow((double)y - (mult-1)*f - f/2, 2)) + r - ap + Az*std::sin(2*M_PI*fz*newx*dimx/(vc*dim_scale) + phiz);
                         double dznewdf = ((mult-1)+0.5)/std::sqrt(r*r - std::pow((double)y - (mult-1)*f - f/2, 2));
                         dz = smooth_min_deriv({oz, znew}, znew)*dznewdf;
                     } else {
-                        double znew =  std::tan(alpha2)*(y - (mult-1)*f) + line_root2;
+                        double znew =  std::tan(alpha2)*(y - (mult-1)*f) + line_root2 + Az*std::sin(2*M_PI*fz*newx*dimx/(vc*dim_scale) + phiz);
                         double dznewdf =  std::tan(alpha2)*mult + dlrdf2;
                         dz = smooth_min_deriv({oz, znew}, znew)*dznewdf;
                     }
@@ -403,7 +422,7 @@ int main(int argc, char* argv[]){
     size_t window_width = 800;
     size_t window_height = 600;
 
-    double max_roughness = 20;
+    double max_roughness = 60;
 
     sf::RenderWindow window(sf::VideoMode(window_width, window_height), "textopt");
     sf::Texture img;
