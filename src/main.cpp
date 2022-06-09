@@ -54,14 +54,16 @@ double dmax_zdf = 0;
 // Models height variation along the tool path
 
 // Amplitude [dim], e.g. [um]
-double Ax = 10;
-double Az = 5;
+double Ax = 0.5;
+double Az = 0.1;
 // Frequency [Hz]
-double fx = 15*dim_scale/10;
-double fz = 20*dim_scale/10;
+double fx = 19*dim_scale/10;
+double fz = 51*dim_scale/10;
 // Phase [rad]
 double phix = 20*M_PI/180;
 double phiz = 0;
+
+double cylinder_radius = 6*1e-3; // m
                   
 struct Point{
     double x, y, z;
@@ -168,29 +170,40 @@ void texture_map(double*& map_z, double* orig_z, double f, double ap, double vc)
     // the lesser one.
     max_z = smooth_min({0, max_intersec});
     min_z = 0;
+    // For updating phase along Y
+    double phix_cur = phix;
+    double phiz_cur = phiz;
     for(size_t x = 0; x < tex_width; ++x){
         size_t mult = 1;
+        phix_cur = phix;
+        phiz_cur = phiz;
         for(size_t y = 0; y < tex_height; ++y){
             double& z = map_z[tex_width*y + x];
             double oz = orig_z[tex_width*y + x];
-            double newx = x + Ax*std::sin(2*M_PI*fx*x*dimx/(vc*dim_scale) + phix);
+            double newx = x + Ax*std::sin(2*M_PI*fx*x*dimx/(vc*dim_scale) + phix_cur);
             z = oz;
             if(y <= mult*f){
                 // If it's within the area that's actually cut
                 if(y >=  line_root1/std::tan(alpha1) + (mult-1)*f &&
                    y <= -line_root2/std::tan(alpha2) + (mult-1)*f){
                     if(y <= y1 + (mult-1)*f + f/2){
-                        z = smooth_min({oz, -std::tan(alpha1)*((double)y - (mult-1)*f) + line_root1 + Az*std::sin(2*M_PI*fz*newx*dimx/(vc*dim_scale) + phiz)});
+                        z = smooth_min({oz, -std::tan(alpha1)*((double)y - (mult-1)*f) + line_root1 + Az*std::sin(2*M_PI*fz*newx*dimx/(vc*dim_scale) + phiz_cur)});
                     } else if(y <= y2 + (mult-1)*f + f/2){
-                        z = smooth_min({oz, -std::sqrt(r*r - std::pow((double)y - (mult-1)*f - f/2, 2)) + r - ap + Az*std::sin(2*M_PI*fz*newx*dimx/(vc*dim_scale) + phiz)});
+                        z = smooth_min({oz, -std::sqrt(r*r - std::pow((double)y - (mult-1)*f - f/2, 2)) + r - ap + Az*std::sin(2*M_PI*fz*newx*dimx/(vc*dim_scale) + phiz_cur)});
                     } else {
-                        z = smooth_min({oz,  std::tan(alpha2)*((double)y - (mult-1)*f) + line_root2 + Az*std::sin(2*M_PI*fz*newx*dimx/(vc*dim_scale) + phiz)});
+                        z = smooth_min({oz,  std::tan(alpha2)*((double)y - (mult-1)*f) + line_root2 + Az*std::sin(2*M_PI*fz*newx*dimx/(vc*dim_scale) + phiz_cur)});
                     }
                 }
                 min_z = std::min(min_z, z);
             } else {
                 ++mult;
                 --y;
+
+                double perimeter = 2*M_PI*cylinder_radius;
+                double phase_diff_x = 2*M_PI*fx*perimeter*dimx/(vc*dim_scale) + phix_cur;
+                double phase_diff_z = 2*M_PI*fz*perimeter*dimx/(vc*dim_scale) + phiz_cur;
+                phix_cur = phase_diff_x - std::floor((phase_diff_x)/(2*M_PI))*2*M_PI;
+                phiz_cur = phase_diff_z - std::floor((phase_diff_z)/(2*M_PI))*2*M_PI;
             }
         }
     }
@@ -231,27 +244,31 @@ void dzdf(double*& map_z, double* orig_z, double f, double ap, double vc, double
     double dmi = -smooth_min_deriv({-intersec1, -intersec2}, -intersec1)*(-di1) - smooth_min_deriv({-intersec1, -intersec2}, -intersec2)*(-di2);
     dmax_zdf = smooth_min_deriv({0, max_intersec}, max_intersec)*dmi;
     min_z = 0;
+    double phix_cur = phix;
+    double phiz_cur = phiz;
     for(size_t x = 0; x < tex_width; ++x){
         size_t mult = 1;
+        phix_cur = phix;
+        phiz_cur = phiz;
         for(size_t y = 0; y < tex_height; ++y){
             double& z = map_z[tex_width*y + x];
             double oz = orig_z[tex_width*y + x];
             double& dz = dzdf[tex_width*y + x];
-            double newx = x + Ax*std::sin(2*M_PI*fx*x*dimx/(vc*dim_scale) + phix);
+            double newx = x + Ax*std::sin(2*M_PI*fx*x*dimx/(vc*dim_scale) + phix_cur);
             dz = 0;
             if(y <= mult*f){
                 if(y >=  line_root1/std::tan(alpha1) + (mult-1)*f &&
                    y <= -line_root2/std::tan(alpha2) + (mult-1)*f){
                     if(y <= y1 + (mult-1)*f + f/2){
-                        double znew = -std::tan(alpha1)*(y - (mult-1)*f) + line_root1 + Az*std::sin(2*M_PI*fz*newx*dimx/(vc*dim_scale) + phiz);
+                        double znew = -std::tan(alpha1)*(y - (mult-1)*f) + line_root1 + Az*std::sin(2*M_PI*fz*newx*dimx/(vc*dim_scale) + phiz_cur);
                         double dznewdf = -std::tan(alpha1)*(mult-1) + dlrdf1;
                         dz = smooth_min_deriv({oz, znew}, znew)*dznewdf;
                     } else if(y <= y2 + (mult-1)*f + f/2){
-                        double znew = -std::sqrt(r*r - std::pow((double)y - (mult-1)*f - f/2, 2)) + r - ap + Az*std::sin(2*M_PI*fz*newx*dimx/(vc*dim_scale) + phiz);
+                        double znew = -std::sqrt(r*r - std::pow((double)y - (mult-1)*f - f/2, 2)) + r - ap + Az*std::sin(2*M_PI*fz*newx*dimx/(vc*dim_scale) + phiz_cur);
                         double dznewdf = ((mult-1)+0.5)/std::sqrt(r*r - std::pow((double)y - (mult-1)*f - f/2, 2));
                         dz = smooth_min_deriv({oz, znew}, znew)*dznewdf;
                     } else {
-                        double znew =  std::tan(alpha2)*(y - (mult-1)*f) + line_root2 + Az*std::sin(2*M_PI*fz*newx*dimx/(vc*dim_scale) + phiz);
+                        double znew =  std::tan(alpha2)*(y - (mult-1)*f) + line_root2 + Az*std::sin(2*M_PI*fz*newx*dimx/(vc*dim_scale) + phiz_cur);
                         double dznewdf =  std::tan(alpha2)*mult + dlrdf2;
                         dz = smooth_min_deriv({oz, znew}, znew)*dznewdf;
                     }
@@ -259,6 +276,12 @@ void dzdf(double*& map_z, double* orig_z, double f, double ap, double vc, double
             } else {
                 ++mult;
                 --y;
+
+                double perimeter = 2*M_PI*cylinder_radius;
+                double phase_diff_x = 2*M_PI*fx*perimeter*dimx/(vc*dim_scale) + phix_cur;
+                double phase_diff_z = 2*M_PI*fz*perimeter*dimx/(vc*dim_scale) + phiz_cur;
+                phix_cur = phase_diff_x - std::floor((phase_diff_x)/(2*M_PI))*2*M_PI;
+                phiz_cur = phase_diff_z - std::floor((phase_diff_z)/(2*M_PI))*2*M_PI;
             }
         }
     }
