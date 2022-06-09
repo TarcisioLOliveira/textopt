@@ -50,20 +50,17 @@ double max_z = 0; // Used to calculate Sa, so uses smooth_min
 double min_z = 0; // Used only for texture display, so uses std::min()
 double dmax_zdf = 0; 
 
-// Tool vibration
-// Y-axis vibration is not currently implemented
+// "Random" oscillation
+// Models height variation along the tool path
 
 // Amplitude [dim], e.g. [um]
 double Ax = 10;
-double Ay = 0;
 double Az = 5;
 // Frequency [Hz]
 double fx = 15*dim_scale/10;
-double fy = 0;
 double fz = 20*dim_scale/10;
 // Phase [rad]
 double phix = 20*M_PI/180;
-double phiy = 0;
 double phiz = 0;
                   
 struct Point{
