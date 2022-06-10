@@ -63,7 +63,7 @@ double fz = 51*1e5;
 double phix = 20*M_PI/180;
 double phiz = 0;
 
-double cylinder_radius = 6*1e-3; // [m]
+double cylinder_radius = 6*1e-3*dim_scale; // [um]
 
 // Ultrasonic elliptical turning
 double f_uet = 80000; // [Hz]
