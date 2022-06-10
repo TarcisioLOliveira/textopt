@@ -57,14 +57,19 @@ double dmax_zdf = 0;
 double Ax = 0.5;
 double Az = 0.1;
 // Frequency [Hz]
-double fx = 19*dim_scale/10;
-double fz = 51*dim_scale/10;
+double fx = 19*1e5;
+double fz = 51*1e5;
 // Phase [rad]
 double phix = 20*M_PI/180;
 double phiz = 0;
 
-double cylinder_radius = 6*1e-3; // m
-                  
+double cylinder_radius = 6*1e-3; // [m]
+
+// Ultrasonic elliptical turning
+double f_uet = 80000; // [Hz]
+double Ax_uet = 1; // [um]
+double Az_uet = 2; // [um]
+
 struct Point{
     double x, y, z;
 };
@@ -173,6 +178,8 @@ void texture_map(double*& map_z, double* orig_z, double f, double ap, double vc)
     // For updating phase along Y
     double phix_cur = phix;
     double phiz_cur = phiz;
+
+    double delta_uet = vc*dim_scale/f_uet;
     for(size_t x = 0; x < tex_width; ++x){
         size_t mult = 1;
         phix_cur = phix;
@@ -186,13 +193,22 @@ void texture_map(double*& map_z, double* orig_z, double f, double ap, double vc)
                 // If it's within the area that's actually cut
                 if(y >=  line_root1/std::tan(alpha1) + (mult-1)*f &&
                    y <= -line_root2/std::tan(alpha2) + (mult-1)*f){
+                    double oscillation = Az*std::sin(2*M_PI*fz*newx*dimx/(vc*dim_scale) + phiz_cur);
+
+                    size_t mult_uet = std::floor((double)x / delta_uet);
+                    double x_uet = ((double)x - mult_uet*delta_uet)*Ax_uet/delta_uet - Ax_uet/2;
+                    double uet_effect = Az_uet*(1 - std::sqrt(1 - std::pow(x_uet/Ax_uet, 2)));
+
+                    double newz = 0;
                     if(y <= y1 + (mult-1)*f + f/2){
-                        z = smooth_min({oz, -std::tan(alpha1)*((double)y - (mult-1)*f) + line_root1 + Az*std::sin(2*M_PI*fz*newx*dimx/(vc*dim_scale) + phiz_cur)});
+                        newz = -std::tan(alpha1)*((double)y - (mult-1)*f) + line_root1;
                     } else if(y <= y2 + (mult-1)*f + f/2){
-                        z = smooth_min({oz, -std::sqrt(r*r - std::pow((double)y - (mult-1)*f - f/2, 2)) + r - ap + Az*std::sin(2*M_PI*fz*newx*dimx/(vc*dim_scale) + phiz_cur)});
+                        newz = -std::sqrt(r*r - std::pow((double)y - (mult-1)*f - f/2, 2)) + r - ap;
                     } else {
-                        z = smooth_min({oz,  std::tan(alpha2)*((double)y - (mult-1)*f) + line_root2 + Az*std::sin(2*M_PI*fz*newx*dimx/(vc*dim_scale) + phiz_cur)});
+                        newz = std::tan(alpha2)*((double)y - (mult-1)*f) + line_root2;
                     }
+                    newz += oscillation + uet_effect;
+                    z = smooth_min({oz, newz});
                 }
                 min_z = std::min(min_z, z);
             } else {
@@ -246,6 +262,8 @@ void dzdf(double*& map_z, double* orig_z, double f, double ap, double vc, double
     min_z = 0;
     double phix_cur = phix;
     double phiz_cur = phiz;
+
+    double delta_uet = vc*dim_scale/f_uet;
     for(size_t x = 0; x < tex_width; ++x){
         size_t mult = 1;
         phix_cur = phix;
@@ -259,19 +277,26 @@ void dzdf(double*& map_z, double* orig_z, double f, double ap, double vc, double
             if(y <= mult*f){
                 if(y >=  line_root1/std::tan(alpha1) + (mult-1)*f &&
                    y <= -line_root2/std::tan(alpha2) + (mult-1)*f){
+                    double oscillation = Az*std::sin(2*M_PI*fz*newx*dimx/(vc*dim_scale) + phiz_cur);
+
+                    size_t mult_uet = std::floor((double)x / delta_uet);
+                    double x_uet = ((double)x - mult_uet*delta_uet)*Ax_uet/delta_uet - Ax_uet/2;
+                    double uet_effect = Az_uet*(1 - std::sqrt(1 - std::pow(x_uet/Ax_uet, 2)));
+
+                    double newz = 0;
+                    double dznewdf = 0;
                     if(y <= y1 + (mult-1)*f + f/2){
-                        double znew = -std::tan(alpha1)*(y - (mult-1)*f) + line_root1 + Az*std::sin(2*M_PI*fz*newx*dimx/(vc*dim_scale) + phiz_cur);
-                        double dznewdf = -std::tan(alpha1)*(mult-1) + dlrdf1;
-                        dz = smooth_min_deriv({oz, znew}, znew)*dznewdf;
+                        newz = -std::tan(alpha1)*(y - (mult-1)*f) + line_root1;
+                        dznewdf = -std::tan(alpha1)*(mult-1) + dlrdf1;
                     } else if(y <= y2 + (mult-1)*f + f/2){
-                        double znew = -std::sqrt(r*r - std::pow((double)y - (mult-1)*f - f/2, 2)) + r - ap + Az*std::sin(2*M_PI*fz*newx*dimx/(vc*dim_scale) + phiz_cur);
-                        double dznewdf = ((mult-1)+0.5)/std::sqrt(r*r - std::pow((double)y - (mult-1)*f - f/2, 2));
-                        dz = smooth_min_deriv({oz, znew}, znew)*dznewdf;
+                        newz = -std::sqrt(r*r - std::pow((double)y - (mult-1)*f - f/2, 2)) + r - ap;
+                        dznewdf = ((mult-1)+0.5)/std::sqrt(r*r - std::pow((double)y - (mult-1)*f - f/2, 2));
                     } else {
-                        double znew =  std::tan(alpha2)*(y - (mult-1)*f) + line_root2 + Az*std::sin(2*M_PI*fz*newx*dimx/(vc*dim_scale) + phiz_cur);
-                        double dznewdf =  std::tan(alpha2)*mult + dlrdf2;
-                        dz = smooth_min_deriv({oz, znew}, znew)*dznewdf;
+                        newz =  std::tan(alpha2)*(y - (mult-1)*f) + line_root2;
+                        dznewdf =  std::tan(alpha2)*mult + dlrdf2;
                     }
+                    newz += oscillation + uet_effect;
+                    dz = smooth_min_deriv({oz, newz}, newz)*dznewdf;
                 }
             } else {
                 ++mult;
