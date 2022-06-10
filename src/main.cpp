@@ -184,6 +184,7 @@ void texture_map(double*& map_z, double* orig_z, double f, double ap, double vc)
         size_t mult = 1;
         phix_cur = phix;
         phiz_cur = phiz;
+        double xoffset_uet = 0;
         for(size_t y = 0; y < tex_height; ++y){
             double& z = map_z[tex_width*y + x];
             double oz = orig_z[tex_width*y + x];
@@ -195,8 +196,9 @@ void texture_map(double*& map_z, double* orig_z, double f, double ap, double vc)
                    y <= -line_root2/std::tan(alpha2) + (mult-1)*f){
                     double oscillation = Az*std::sin(2*M_PI*fz*newx*dimx/(vc*dim_scale) + phiz_cur);
 
-                    size_t mult_uet = std::floor((double)x / delta_uet);
-                    double x_uet = ((double)x - mult_uet*delta_uet)*Ax_uet/delta_uet - Ax_uet/2;
+                    double xcirc = x + xoffset_uet;
+                    size_t mult_uet = std::floor(xcirc / delta_uet);
+                    double x_uet = (xcirc - mult_uet*delta_uet)*Ax_uet/delta_uet - Ax_uet/2;
                     double uet_effect = Az_uet*(1 - std::sqrt(1 - std::pow(x_uet/Ax_uet, 2)));
 
                     double newz = 0;
@@ -220,6 +222,8 @@ void texture_map(double*& map_z, double* orig_z, double f, double ap, double vc)
                 double phase_diff_z = 2*M_PI*fz*perimeter*dimx/(vc*dim_scale) + phiz_cur;
                 phix_cur = phase_diff_x - std::floor((phase_diff_x)/(2*M_PI))*2*M_PI;
                 phiz_cur = phase_diff_z - std::floor((phase_diff_z)/(2*M_PI))*2*M_PI;
+
+                xoffset_uet += perimeter;
             }
         }
     }
@@ -268,6 +272,7 @@ void dzdf(double*& map_z, double* orig_z, double f, double ap, double vc, double
         size_t mult = 1;
         phix_cur = phix;
         phiz_cur = phiz;
+        double xoffset_uet = 0;
         for(size_t y = 0; y < tex_height; ++y){
             double& z = map_z[tex_width*y + x];
             double oz = orig_z[tex_width*y + x];
@@ -279,8 +284,9 @@ void dzdf(double*& map_z, double* orig_z, double f, double ap, double vc, double
                    y <= -line_root2/std::tan(alpha2) + (mult-1)*f){
                     double oscillation = Az*std::sin(2*M_PI*fz*newx*dimx/(vc*dim_scale) + phiz_cur);
 
-                    size_t mult_uet = std::floor((double)x / delta_uet);
-                    double x_uet = ((double)x - mult_uet*delta_uet)*Ax_uet/delta_uet - Ax_uet/2;
+                    double xcirc = x + xoffset_uet;
+                    size_t mult_uet = std::floor(xcirc / delta_uet);
+                    double x_uet = (xcirc - mult_uet*delta_uet)*Ax_uet/delta_uet - Ax_uet/2;
                     double uet_effect = Az_uet*(1 - std::sqrt(1 - std::pow(x_uet/Ax_uet, 2)));
 
                     double newz = 0;
@@ -307,6 +313,8 @@ void dzdf(double*& map_z, double* orig_z, double f, double ap, double vc, double
                 double phase_diff_z = 2*M_PI*fz*perimeter*dimx/(vc*dim_scale) + phiz_cur;
                 phix_cur = phase_diff_x - std::floor((phase_diff_x)/(2*M_PI))*2*M_PI;
                 phiz_cur = phase_diff_z - std::floor((phase_diff_z)/(2*M_PI))*2*M_PI;
+
+                xoffset_uet += perimeter;
             }
         }
     }
