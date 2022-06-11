@@ -66,7 +66,7 @@ double phiz = 0;
 double cylinder_radius = 6*1e-3*dim_scale; // [um]
 
 // Ultrasonic elliptical turning
-double f_uet = 80000; // [Hz]
+double f_uet = 20000; // [Hz]
 double Ax_uet = 1; // [um]
 double Az_uet = 2; // [um]
 
@@ -229,6 +229,97 @@ void texture_map(double*& map_z, double* orig_z, double f, double ap, double vc)
     }
 }
 
+void dzdap(double*& map_z, double* orig_z, double f, double ap, double vc, double*& dzdap){
+    double y1 = -std::sqrt((std::pow(std::tan(alpha1)*r, 2))/(std::pow(std::tan(alpha1), 2)+1));
+    double y2 =  std::sqrt((std::pow(std::tan(alpha2)*r, 2))/(std::pow(std::tan(alpha2), 2)+1));
+
+    double line_root1 = -std::sqrt(r*r - y1*y1) + r - ap + std::tan(alpha1)*(y1+f/2);//-ap + std::tan(alpha1)*f/2;
+    double line_root2 = -std::sqrt(r*r - y2*y2) + r - ap - std::tan(alpha2)*(y2+f/2); //-ap - std::tan(alpha2)*f/2;
+
+    double dlrdap1 = -1;
+    double dlrdap2 = -1;
+
+    double intersec1 = 0;
+    double intersec2 = 0;
+    double di1 = 0;
+    double di2 = 0;
+    if(y1 + f/2 > 0){
+        intersec1 = smooth_min({0, line_root1});
+        di1 = smooth_min_deriv({0, line_root1}, line_root1)*dlrdap1;
+    } else {
+        intersec1 = smooth_min({0, -std::sqrt(r*r - f*f/4) + r - ap});
+        di1 = smooth_min_deriv({0, -std::sqrt(r*r - f*f/4) + r - ap},-std::sqrt(r*r - f*f/4) + r - ap)*(-1);
+    }
+    if(y2 + f/2 < f){
+        intersec2 = smooth_min({0, line_root2 + std::tan(alpha2)*f});
+        di2 = smooth_min_deriv({0, line_root2 + std::tan(alpha2)*f}, line_root2 + std::tan(alpha2)*f)*dlrdap2;
+    } else {
+        intersec2 = smooth_min({0, -std::sqrt(r*r - f*f/4) + r - ap});
+        di2 = smooth_min_deriv({0, -std::sqrt(r*r - f*f/4) + r - ap},-std::sqrt(r*r - f*f/4) + r - ap)*(-1);
+    }
+    double max_intersec = -smooth_min({-intersec1, -intersec2});
+    max_z = smooth_min({0, max_intersec});
+
+    double dmi = -smooth_min_deriv({-intersec1, -intersec2}, -intersec1)*(-di1) - smooth_min_deriv({-intersec1, -intersec2}, -intersec2)*(-di2);
+    dmax_zdf = smooth_min_deriv({0, max_intersec}, max_intersec)*dmi;
+    min_z = 0;
+    double phix_cur = phix;
+    double phiz_cur = phiz;
+
+    double delta_uet = vc*dim_scale/f_uet;
+    for(size_t x = 0; x < tex_width; ++x){
+        size_t mult = 1;
+        phix_cur = phix;
+        phiz_cur = phiz;
+        double xoffset_uet = 0;
+        for(size_t y = 0; y < tex_height; ++y){
+            double& z = map_z[tex_width*y + x];
+            double oz = orig_z[tex_width*y + x];
+            double& dz = dzdap[tex_width*y + x];
+            double newx = x + Ax*std::sin(2*M_PI*fx*x*dimx/(vc*dim_scale) + phix_cur);
+            z = oz;
+            if(y <= mult*f){
+                // If it's within the area that's actually cut
+                if(y >=  line_root1/std::tan(alpha1) + (mult-1)*f &&
+                   y <= -line_root2/std::tan(alpha2) + (mult-1)*f){
+                    double oscillation = Az*std::sin(2*M_PI*fz*newx*dimx/(vc*dim_scale) + phiz_cur);
+
+                    double xcirc = x + xoffset_uet;
+                    size_t mult_uet = std::floor(xcirc / delta_uet);
+                    double x_uet = (xcirc - mult_uet*delta_uet)*Ax_uet/delta_uet - Ax_uet/2;
+                    double uet_effect = Az_uet*(1 - std::sqrt(1 - std::pow(x_uet/Ax_uet, 2)));
+
+                    double newz = 0;
+                    double dznewdap = 0;
+                    if(y <= y1 + (mult-1)*f + f/2){
+                        newz = -std::tan(alpha1)*(y - (mult-1)*f) + line_root1;
+                        dznewdap = dlrdap1;
+                    } else if(y <= y2 + (mult-1)*f + f/2){
+                        newz = -std::sqrt(r*r - std::pow((double)y - (mult-1)*f - f/2, 2)) + r - ap;
+                        dznewdap = -1;
+                    } else {
+                        newz =  std::tan(alpha2)*(y - (mult-1)*f) + line_root2;
+                        dznewdap = dlrdap2;
+                    }
+                    newz += oscillation + uet_effect;
+                    dz = smooth_min_deriv({oz, newz}, newz)*dznewdap;
+                }
+                min_z = std::min(min_z, z);
+            } else {
+                ++mult;
+                --y;
+
+                double perimeter = 2*M_PI*cylinder_radius;
+                double phase_diff_x = 2*M_PI*fx*perimeter*dimx/(vc*dim_scale) + phix_cur;
+                double phase_diff_z = 2*M_PI*fz*perimeter*dimx/(vc*dim_scale) + phiz_cur;
+                phix_cur = phase_diff_x - std::floor((phase_diff_x)/(2*M_PI))*2*M_PI;
+                phiz_cur = phase_diff_z - std::floor((phase_diff_z)/(2*M_PI))*2*M_PI;
+
+                xoffset_uet += perimeter;
+            }
+        }
+    }
+}
 
 void dzdf(double*& map_z, double* orig_z, double f, double ap, double vc, double*& dzdf){
     double y1 = -std::sqrt((std::pow(std::tan(alpha1)*r, 2))/(std::pow(std::tan(alpha1), 2)+1));
@@ -489,6 +580,7 @@ int main(int argc, char* argv[]){
     double* map_z = new double[tex_width*tex_height]();
     double* orig_z = new double[tex_width*tex_height]();
     double* df = new double[tex_width*tex_height]();
+    double* dap = new double[tex_width*tex_height]();
 
     double ch = 1;
     size_t it = 1;
@@ -501,7 +593,7 @@ int main(int argc, char* argv[]){
     double dSa_vec[N] = {0, 0, 0};
     double dsurarea_vec[N] = {0, 0, 0};
 
-    MMASolver mma(1, 1, 0, 1e6, 1);
+    MMASolver mma(2, 1, 0, 1e6, 1);
     mma.SetAsymptotes(0.001, 0.1, 1.001);
 
     while(window.isOpen()){
@@ -527,12 +619,21 @@ int main(int argc, char* argv[]){
             double roughness = Sa(map_z) - max_roughness;
 
             dzdf(map_z, orig_z, f, ap, vc, df);
+            dzdap(map_z, orig_z, f, ap, vc, dap);
+
             double dsurareadf = -surface_area_dz(map_z, df);
             double dSadf = dSa(map_z, df);
+            double dsurareadap = -surface_area_dz(map_z, dap);
+            double dSadap = dSa(map_z, dap);
+
+            std::cout << std::endl;
             std::cout << dsurareadf << " " << dSadf << std::endl;
+            std::cout << dsurareadap << " " << dSadap << std::endl;
 
             dsurarea_vec[0] = dsurareadf;
             dSa_vec[0] = dSadf;
+            dsurarea_vec[1] = dsurareadap;
+            dSa_vec[1] = dSadap;
 
             mma.Update(x, dsurarea_vec, &roughness, dSa_vec, xmin, xmax); 
 
@@ -564,6 +665,7 @@ int main(int argc, char* argv[]){
     delete[] map_z;
     delete[] orig_z;
     delete[] df;
+    delete[] dap;
 
     img.copyToImage().saveToFile("result.png");
 
