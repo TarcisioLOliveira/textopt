@@ -229,7 +229,7 @@ void texture_map(double*& map_z, double* orig_z, double f, double ap, double vc)
     }
 }
 
-void dzdap(double*& map_z, double* orig_z, double f, double ap, double vc, double*& dzdap){
+void dzdap(double* orig_z, double f, double ap, double vc, double*& dzdap){
     double y1 = -std::sqrt((std::pow(std::tan(alpha1)*r, 2))/(std::pow(std::tan(alpha1), 2)+1));
     double y2 =  std::sqrt((std::pow(std::tan(alpha2)*r, 2))/(std::pow(std::tan(alpha2), 2)+1));
 
@@ -273,7 +273,6 @@ void dzdap(double*& map_z, double* orig_z, double f, double ap, double vc, doubl
         phiz_cur = phiz;
         double xoffset_uet = 0;
         for(size_t y = 0; y < tex_height; ++y){
-            double& z = map_z[tex_width*y + x];
             double oz = orig_z[tex_width*y + x];
             double& dz = dzdap[tex_width*y + x];
             double newx = x + Ax*std::sin(2*M_PI*fx*x*dimx/(vc*dim_scale) + phix_cur);
@@ -303,7 +302,6 @@ void dzdap(double*& map_z, double* orig_z, double f, double ap, double vc, doubl
                     newz += oscillation + uet_effect;
                     dz = smooth_min_deriv({oz, newz}, newz)*dznewdap;
                 }
-                min_z = std::min(min_z, z);
             } else {
                 ++mult;
                 --y;
@@ -320,7 +318,7 @@ void dzdap(double*& map_z, double* orig_z, double f, double ap, double vc, doubl
     }
 }
 
-void dzdf(double*& map_z, double* orig_z, double f, double ap, double vc, double*& dzdf){
+void dzdf(double* orig_z, double f, double ap, double vc, double*& dzdf){
     double y1 = -std::sqrt((std::pow(std::tan(alpha1)*r, 2))/(std::pow(std::tan(alpha1), 2)+1));
     double y2 =  std::sqrt((std::pow(std::tan(alpha2)*r, 2))/(std::pow(std::tan(alpha2), 2)+1));
 
@@ -364,7 +362,6 @@ void dzdf(double*& map_z, double* orig_z, double f, double ap, double vc, double
         phiz_cur = phiz;
         double xoffset_uet = 0;
         for(size_t y = 0; y < tex_height; ++y){
-            double& z = map_z[tex_width*y + x];
             double oz = orig_z[tex_width*y + x];
             double& dz = dzdf[tex_width*y + x];
             double newx = x + Ax*std::sin(2*M_PI*fx*x*dimx/(vc*dim_scale) + phix_cur);
@@ -617,8 +614,8 @@ int main(int argc, char* argv[]){
             double surarea = -surface_area(map_z);
             double roughness = Sa(map_z) - max_roughness;
 
-            dzdf(map_z, orig_z, f, ap, vc, df);
-            dzdap(map_z, orig_z, f, ap, vc, dap);
+            dzdf(orig_z, f, ap, vc, df);
+            dzdap(orig_z, f, ap, vc, dap);
 
             double dsurareadf = -surface_area_dz(map_z, df);
             double dSadf = dSa(map_z, df);
