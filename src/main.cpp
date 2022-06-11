@@ -277,7 +277,6 @@ void dzdap(double*& map_z, double* orig_z, double f, double ap, double vc, doubl
             double oz = orig_z[tex_width*y + x];
             double& dz = dzdap[tex_width*y + x];
             double newx = x + Ax*std::sin(2*M_PI*fx*x*dimx/(vc*dim_scale) + phix_cur);
-            z = oz;
             if(y <= mult*f){
                 // If it's within the area that's actually cut
                 if(y >=  line_root1/std::tan(alpha1) + (mult-1)*f &&
