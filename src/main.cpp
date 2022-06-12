@@ -258,7 +258,6 @@ void dzdap(double* orig_z, double f, double ap, double vc, double*& dzdap){
         di2 = smooth_min_deriv({0, -std::sqrt(r*r - f*f/4) + r - ap},-std::sqrt(r*r - f*f/4) + r - ap)*(-1);
     }
     double max_intersec = -smooth_min({-intersec1, -intersec2});
-    max_z = smooth_min({0, max_intersec});
 
     double dmi = -smooth_min_deriv({-intersec1, -intersec2}, -intersec1)*(-di1) - smooth_min_deriv({-intersec1, -intersec2}, -intersec2)*(-di2);
     dmax_zdf = smooth_min_deriv({0, max_intersec}, max_intersec)*dmi;
@@ -346,7 +345,6 @@ void dzdf(double* orig_z, double f, double ap, double vc, double*& dzdf){
         di2 = smooth_min_deriv({0, -std::sqrt(r*r - f*f/4) + r - ap},-std::sqrt(r*r - f*f/4) + r - ap)*f/(4*std::sqrt(r*r-f*f/4));
     }
     double max_intersec = -smooth_min({-intersec1, -intersec2});
-    max_z = smooth_min({0, max_intersec});
 
     double dmi = -smooth_min_deriv({-intersec1, -intersec2}, -intersec1)*(-di1) - smooth_min_deriv({-intersec1, -intersec2}, -intersec2)*(-di2);
     dmax_zdf = smooth_min_deriv({0, max_intersec}, max_intersec)*dmi;
