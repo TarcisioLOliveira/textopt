@@ -36,6 +36,7 @@ size_t tex_width = 300;
 size_t tex_height = 300;
 
 const double MULT = -1;
+const double FLOORD = 0.005;
 
 double dim_scale = 1e6; // m to um
 double dim = 1;
@@ -142,6 +143,45 @@ double smooth_min_deriv(std::initializer_list<double> x, double xx){
 
     return (std::exp(MULT*xx)/frac_bot)*(1+MULT*(xx-sm));
 };
+
+double smooth_floor(double v){
+    // https://math.stackexchange.com/questions/2746958/smooth-floor-function
+    //
+    // δ = 0.01;
+    // trg[x_] := 1 - 2 ArcCos[(1 - δ) Sin[2 π x]]/π;
+    // sqr[x_] := 2 ArcTan[Sin[2 π x]/δ]/π;
+    // swt[x_] := (1 + trg[(2 x - 1)/4] sqr[x/2])/2;
+    // flr[x_] := x-swt[x]
+
+    double p1x = (1.0 - FLOORD)*std::sin(2*M_PI*((2*v-1)/4));
+    double p2x = std::sin(2*M_PI*(v/2))/FLOORD;
+
+    double p1 = 1 - 2*std::acos(p1x)/M_PI;
+    double p2 = 2 * std::atan(p2x)/M_PI;
+    double sawtooth = (1 + p1 * p2)/2;
+
+    double result = v - sawtooth;
+
+    return result;
+}
+
+double smooth_floor_deriv(double v){
+    double p1x = (1.0 - FLOORD)*std::sin(2*M_PI*((2*v-1)/4));
+    double dp1x = (1.0 - FLOORD)*std::cos(2*M_PI*((2*v-1)/4))*2*M_PI*2/4;
+
+    double p2x = std::sin(2*M_PI*(v/2))/FLOORD;
+    double dp2x = (std::cos(2*M_PI*(v/2))/FLOORD)*2*M_PI/2;
+
+    double p1 = 1 - 2*std::acos(p1x)/M_PI;
+    double dp1 = (2.0/(std::sqrt(1 - p1x*p1x)*M_PI))*dp1x;
+    double p2 = 2 * std::atan(p2x)/M_PI;
+    double dp2 = (2.0/((p2x*p2x + 1)*M_PI))*dp2x;
+    double dsawtooth = (1 + dp1 * p2 + p1 * dp2)/2;
+
+    double result = 1.0 - dsawtooth;
+    
+    return result;
+}
 
 void texture_map(double*& map_z, double* orig_z, double f, double ap, double vc){
     vc *= dim_scale;
