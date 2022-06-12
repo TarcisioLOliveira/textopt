@@ -262,7 +262,6 @@ void dzdap(double* orig_z, double f, double ap, double vc, double*& dzdap){
 
     double dmi = -smooth_min_deriv({-intersec1, -intersec2}, -intersec1)*(-di1) - smooth_min_deriv({-intersec1, -intersec2}, -intersec2)*(-di2);
     dmax_zdf = smooth_min_deriv({0, max_intersec}, max_intersec)*dmi;
-    min_z = 0;
     double phix_cur = phix;
     double phiz_cur = phiz;
 
@@ -351,7 +350,6 @@ void dzdf(double* orig_z, double f, double ap, double vc, double*& dzdf){
 
     double dmi = -smooth_min_deriv({-intersec1, -intersec2}, -intersec1)*(-di1) - smooth_min_deriv({-intersec1, -intersec2}, -intersec2)*(-di2);
     dmax_zdf = smooth_min_deriv({0, max_intersec}, max_intersec)*dmi;
-    min_z = 0;
     double phix_cur = phix;
     double phiz_cur = phiz;
 
