@@ -240,7 +240,7 @@ void texture_map(double*& map_z, double* orig_z, double f, double ap, double vc)
                     double oscillation = Az*std::sin(2*M_PI*fz*newx*dimx/vc + phiz_cur);
 
                     double xcirc = x + xoffset_uet;
-                    size_t mult_uet = std::floor(xcirc / delta_uet);
+                    double mult_uet = smooth_floor(xcirc / delta_uet);
                     double x_uet = (xcirc - mult_uet*delta_uet)*Ax_uet/delta_uet - Ax_uet/2;
                     double uet_effect = Az_uet*(1 - std::sqrt(1 - std::pow(x_uet/Ax_uet, 2)));
 
@@ -326,8 +326,8 @@ void dzdvc(double* orig_z, double f, double ap, double vc, double*& dzdvc){
 
                     double xcirc = x + xoffset_uet;
 
-                    size_t mult_uet = std::floor(xcirc / delta_uet);
-                    double dmult_uet = 0;
+                    double mult_uet = smooth_floor(xcirc / delta_uet);
+                    double dmult_uet = -(smooth_floor_deriv(xcirc / delta_uet)*xcirc/(std::pow(delta_uet, 2)))*dduetdvc;
 
                     double x_uet = (xcirc - mult_uet*delta_uet)*Ax_uet/delta_uet - Ax_uet/2;
                     double dx_uet = -xcirc/std::pow(delta_uet, 2)*dduetdvc - Ax_uet*dmult_uet;
@@ -420,7 +420,7 @@ void dzdap(double* orig_z, double f, double ap, double vc, double*& dzdap){
                     double oscillation = Az*std::sin(2*M_PI*fz*newx*dimx/vc + phiz_cur);
 
                     double xcirc = x + xoffset_uet;
-                    size_t mult_uet = std::floor(xcirc / delta_uet);
+                    double mult_uet = smooth_floor(xcirc / delta_uet);
                     double x_uet = (xcirc - mult_uet*delta_uet)*Ax_uet/delta_uet - Ax_uet/2;
                     double uet_effect = Az_uet*(1 - std::sqrt(1 - std::pow(x_uet/Ax_uet, 2)));
 
@@ -508,7 +508,7 @@ void dzdf(double* orig_z, double f, double ap, double vc, double*& dzdf){
                     double oscillation = Az*std::sin(2*M_PI*fz*newx*dimx/vc + phiz_cur);
 
                     double xcirc = x + xoffset_uet;
-                    size_t mult_uet = std::floor(xcirc / delta_uet);
+                    double mult_uet = smooth_floor(xcirc / delta_uet);
                     double x_uet = (xcirc - mult_uet*delta_uet)*Ax_uet/delta_uet - Ax_uet/2;
                     double uet_effect = Az_uet*(1 - std::sqrt(1 - std::pow(x_uet/Ax_uet, 2)));
 
