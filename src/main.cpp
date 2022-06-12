@@ -50,6 +50,7 @@ double max_z = 0; // Used to calculate Sa, so uses smooth_min
 double min_z = 0; // Used only for texture display, so uses std::min()
 double dmax_zdf = 0; 
 double dmax_zdap = 0; 
+double dmax_zdvc = 0; 
 
 // "Random" oscillation
 // Models height variation along the tool path
@@ -220,8 +221,103 @@ void texture_map(double*& map_z, double* orig_z, double f, double ap, double vc)
                 --y;
 
                 double perimeter = 2*M_PI*cylinder_radius;
-                double phase_diff_x = 2*M_PI*fx*perimeter*dimx/(vc*dim_scale) + phix_cur;
-                double phase_diff_z = 2*M_PI*fz*perimeter*dimx/(vc*dim_scale) + phiz_cur;
+                double phase_diff_x = 2*M_PI*fx*perimeter*dimx/vc + phix_cur;
+                double phase_diff_z = 2*M_PI*fz*perimeter*dimx/vc + phiz_cur;
+                phix_cur = phase_diff_x - std::floor((phase_diff_x)/(2*M_PI))*2*M_PI;
+                phiz_cur = phase_diff_z - std::floor((phase_diff_z)/(2*M_PI))*2*M_PI;
+
+                xoffset_uet += perimeter;
+            }
+        }
+    }
+}
+
+void dzdvc(double* orig_z, double f, double ap, double vc, double*& dzdvc){
+    vc *= dim_scale;
+    double y1 = -std::sqrt((std::pow(std::tan(alpha1)*r, 2))/(std::pow(std::tan(alpha1), 2)+1));
+    double y2 =  std::sqrt((std::pow(std::tan(alpha2)*r, 2))/(std::pow(std::tan(alpha2), 2)+1));
+
+    double line_root1 = -std::sqrt(r*r - y1*y1) + r - ap + std::tan(alpha1)*(y1+f/2);//-ap + std::tan(alpha1)*f/2;
+    double line_root2 = -std::sqrt(r*r - y2*y2) + r - ap - std::tan(alpha2)*(y2+f/2); //-ap - std::tan(alpha2)*f/2;
+                                                                                      //
+    double dlrdvc1 = 0;
+    double dlrdvc2 = 0;
+
+    double intersec1 = 0;
+    double intersec2 = 0;
+    // always zero
+    double di1 = 0;
+    double di2 = 0;
+    if(y1 + f/2 > 0){
+        intersec1 = smooth_min({0, line_root1});
+    } else {
+        intersec1 = smooth_min({0, -std::sqrt(r*r - f*f/4) + r - ap});
+    }
+    if(y2 + f/2 < f){
+        intersec2 = smooth_min({0, line_root2 + std::tan(alpha2)*f});
+    } else {
+        intersec2 = smooth_min({0, -std::sqrt(r*r - f*f/4) + r - ap});
+    }
+    double max_intersec = -smooth_min({-intersec1, -intersec2});
+
+    double dmi = 0;//-smooth_min_deriv({-intersec1, -intersec2}, -intersec1)*(-di1) - smooth_min_deriv({-intersec1, -intersec2}, -intersec2)*(-di2);
+    dmax_zdvc = 0;//smooth_min_deriv({0, max_intersec}, max_intersec)*dmi;
+    double phix_cur = phix;
+    double phiz_cur = phiz;
+
+    double delta_uet = vc/f_uet;
+    double dduetdvc = 1.0/f_uet;
+    for(size_t x = 0; x < tex_width; ++x){
+        size_t mult = 1;
+        phix_cur = phix;
+        phiz_cur = phiz;
+        double xoffset_uet = 0;
+        for(size_t y = 0; y < tex_height; ++y){
+            double oz = orig_z[tex_width*y + x];
+            double& dz = dzdvc[tex_width*y + x];
+            double newx = x + Ax*std::sin(2*M_PI*fx*x*dimx/vc + phix_cur);
+            double dnewxdvc = Ax*std::cos(2*M_PI*fx*x*dimx/vc + phix_cur)*(-2)*M_PI*fx*x*dimx/std::pow(vc, 2);
+            if(y <= mult*f){
+                // If it's within the area that's actually cut
+                if(y >=  line_root1/std::tan(alpha1) + (mult-1)*f &&
+                   y <= -line_root2/std::tan(alpha2) + (mult-1)*f){
+                    double oscillation = Az*std::sin(2*M_PI*fz*newx*dimx/vc + phiz_cur);
+                    double doscilldvc = Az*std::cos(2*M_PI*fz*newx*dimx/vc + phiz_cur)*2*M_PI*fz*(dnewxdvc*dimx*vc - newx*dimx)/std::pow(vc, 2);
+
+                    double xcirc = x + xoffset_uet;
+
+                    size_t mult_uet = std::floor(xcirc / delta_uet);
+                    double dmult_uet = 0;
+
+                    double x_uet = (xcirc - mult_uet*delta_uet)*Ax_uet/delta_uet - Ax_uet/2;
+                    double dx_uet = -xcirc/std::pow(delta_uet, 2)*dduetdvc - Ax_uet*dmult_uet;
+
+                    double uet_effect = Az_uet*(1 - std::sqrt(1 - std::pow(x_uet/Ax_uet, 2)));
+                    double duet = -0.5*(Az_uet/std::sqrt(1 - std::pow(x_uet/Ax_uet, 2)))*(-2)*(dx_uet/Ax_uet);
+
+                    double newz = 0;
+                    double dznewdap = 0;
+                    if(y <= y1 + (mult-1)*f + f/2){
+                        newz = -std::tan(alpha1)*(y - (mult-1)*f) + line_root1;
+                        dznewdap = dlrdvc1;
+                    } else if(y <= y2 + (mult-1)*f + f/2){
+                        newz = -std::sqrt(r*r - std::pow((double)y - (mult-1)*f - f/2, 2)) + r - ap;
+                        dznewdap = 0;
+                    } else {
+                        newz =  std::tan(alpha2)*(y - (mult-1)*f) + line_root2;
+                        dznewdap = dlrdvc2;
+                    }
+                    newz += oscillation + uet_effect;
+                    dznewdap += doscilldvc + duet;
+                    dz = smooth_min_deriv({oz, newz}, newz)*dznewdap;
+                }
+            } else {
+                ++mult;
+                --y;
+
+                double perimeter = 2*M_PI*cylinder_radius;
+                double phase_diff_x = 2*M_PI*fx*perimeter*dimx/vc + phix_cur;
+                double phase_diff_z = 2*M_PI*fz*perimeter*dimx/vc + phiz_cur;
                 phix_cur = phase_diff_x - std::floor((phase_diff_x)/(2*M_PI))*2*M_PI;
                 phiz_cur = phase_diff_z - std::floor((phase_diff_z)/(2*M_PI))*2*M_PI;
 
@@ -577,19 +673,20 @@ int main(int argc, char* argv[]){
     double* orig_z = new double[tex_width*tex_height]();
     double* df = new double[tex_width*tex_height]();
     double* dap = new double[tex_width*tex_height]();
+    double* dvc = new double[tex_width*tex_height]();
 
     double ch = 1;
     size_t it = 1;
     double old_surarea = 1;
 
     const size_t N = 3;
-    double x[N] = {20, 40, 10};
+    double x[N] = {20, 40, 70};
     double xmax[N] = {100, 100, 100};
     double xmin[N] = {0.001, 0.001, 0.001};
     double dSa_vec[N] = {0, 0, 0};
     double dsurarea_vec[N] = {0, 0, 0};
 
-    MMASolver mma(2, 1, 0, 1e6, 1);
+    MMASolver mma(N, 1, 0, 1e6, 1);
     mma.SetAsymptotes(0.001, 0.1, 1.001);
 
     while(window.isOpen()){
@@ -616,20 +713,26 @@ int main(int argc, char* argv[]){
 
             dzdf(orig_z, f, ap, vc, df);
             dzdap(orig_z, f, ap, vc, dap);
+            dzdvc(orig_z, f, ap, vc, dvc);
 
             double dsurareadf = -surface_area_dz(map_z, df);
             double dSadf = dSa(map_z, df, dmax_zdf);
             double dsurareadap = -surface_area_dz(map_z, dap);
             double dSadap = dSa(map_z, dap, dmax_zdap);
+            double dsurareadvc = -surface_area_dz(map_z, dvc);
+            double dSadvc = dSa(map_z, dvc, dmax_zdvc);
 
             std::cout << std::endl;
             std::cout << dsurareadf << " " << dSadf << std::endl;
             std::cout << dsurareadap << " " << dSadap << std::endl;
+            std::cout << dsurareadvc << " " << dSadvc << std::endl;
 
             dsurarea_vec[0] = dsurareadf;
             dSa_vec[0] = dSadf;
             dsurarea_vec[1] = dsurareadap;
             dSa_vec[1] = dSadap;
+            dsurarea_vec[2] = dsurareadvc;
+            dSa_vec[2] = dSadvc;
 
             mma.Update(x, dsurarea_vec, &roughness, dSa_vec, xmin, xmax); 
 
@@ -662,6 +765,7 @@ int main(int argc, char* argv[]){
     delete[] orig_z;
     delete[] df;
     delete[] dap;
+    delete[] dvc;
 
     img.copyToImage().saveToFile("result.png");
 
