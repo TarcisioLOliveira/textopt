@@ -143,6 +143,7 @@ double smooth_min_deriv(std::initializer_list<double> x, double xx){
 };
 
 void texture_map(double*& map_z, double* orig_z, double f, double ap, double vc){
+    vc *= dim_scale;
     double y1 = -std::sqrt((std::pow(std::tan(alpha1)*r, 2))/(std::pow(std::tan(alpha1), 2)+1));
     double y2 =  std::sqrt((std::pow(std::tan(alpha2)*r, 2))/(std::pow(std::tan(alpha2), 2)+1));
 
@@ -180,7 +181,7 @@ void texture_map(double*& map_z, double* orig_z, double f, double ap, double vc)
     double phix_cur = phix;
     double phiz_cur = phiz;
 
-    double delta_uet = vc*dim_scale/f_uet;
+    double delta_uet = vc/f_uet;
     for(size_t x = 0; x < tex_width; ++x){
         size_t mult = 1;
         phix_cur = phix;
@@ -189,13 +190,13 @@ void texture_map(double*& map_z, double* orig_z, double f, double ap, double vc)
         for(size_t y = 0; y < tex_height; ++y){
             double& z = map_z[tex_width*y + x];
             double oz = orig_z[tex_width*y + x];
-            double newx = x + Ax*std::sin(2*M_PI*fx*x*dimx/(vc*dim_scale) + phix_cur);
+            double newx = x + Ax*std::sin(2*M_PI*fx*x*dimx/vc + phix_cur);
             z = oz;
             if(y <= mult*f){
                 // If it's within the area that's actually cut
                 if(y >=  line_root1/std::tan(alpha1) + (mult-1)*f &&
                    y <= -line_root2/std::tan(alpha2) + (mult-1)*f){
-                    double oscillation = Az*std::sin(2*M_PI*fz*newx*dimx/(vc*dim_scale) + phiz_cur);
+                    double oscillation = Az*std::sin(2*M_PI*fz*newx*dimx/vc + phiz_cur);
 
                     double xcirc = x + xoffset_uet;
                     size_t mult_uet = std::floor(xcirc / delta_uet);
@@ -231,6 +232,7 @@ void texture_map(double*& map_z, double* orig_z, double f, double ap, double vc)
 }
 
 void dzdap(double* orig_z, double f, double ap, double vc, double*& dzdap){
+    vc *= dim_scale;
     double y1 = -std::sqrt((std::pow(std::tan(alpha1)*r, 2))/(std::pow(std::tan(alpha1), 2)+1));
     double y2 =  std::sqrt((std::pow(std::tan(alpha2)*r, 2))/(std::pow(std::tan(alpha2), 2)+1));
 
@@ -265,7 +267,7 @@ void dzdap(double* orig_z, double f, double ap, double vc, double*& dzdap){
     double phix_cur = phix;
     double phiz_cur = phiz;
 
-    double delta_uet = vc*dim_scale/f_uet;
+    double delta_uet = vc/f_uet;
     for(size_t x = 0; x < tex_width; ++x){
         size_t mult = 1;
         phix_cur = phix;
@@ -274,12 +276,12 @@ void dzdap(double* orig_z, double f, double ap, double vc, double*& dzdap){
         for(size_t y = 0; y < tex_height; ++y){
             double oz = orig_z[tex_width*y + x];
             double& dz = dzdap[tex_width*y + x];
-            double newx = x + Ax*std::sin(2*M_PI*fx*x*dimx/(vc*dim_scale) + phix_cur);
+            double newx = x + Ax*std::sin(2*M_PI*fx*x*dimx/vc + phix_cur);
             if(y <= mult*f){
                 // If it's within the area that's actually cut
                 if(y >=  line_root1/std::tan(alpha1) + (mult-1)*f &&
                    y <= -line_root2/std::tan(alpha2) + (mult-1)*f){
-                    double oscillation = Az*std::sin(2*M_PI*fz*newx*dimx/(vc*dim_scale) + phiz_cur);
+                    double oscillation = Az*std::sin(2*M_PI*fz*newx*dimx/vc + phiz_cur);
 
                     double xcirc = x + xoffset_uet;
                     size_t mult_uet = std::floor(xcirc / delta_uet);
@@ -306,8 +308,8 @@ void dzdap(double* orig_z, double f, double ap, double vc, double*& dzdap){
                 --y;
 
                 double perimeter = 2*M_PI*cylinder_radius;
-                double phase_diff_x = 2*M_PI*fx*perimeter*dimx/(vc*dim_scale) + phix_cur;
-                double phase_diff_z = 2*M_PI*fz*perimeter*dimx/(vc*dim_scale) + phiz_cur;
+                double phase_diff_x = 2*M_PI*fx*perimeter*dimx/vc + phix_cur;
+                double phase_diff_z = 2*M_PI*fz*perimeter*dimx/vc + phiz_cur;
                 phix_cur = phase_diff_x - std::floor((phase_diff_x)/(2*M_PI))*2*M_PI;
                 phiz_cur = phase_diff_z - std::floor((phase_diff_z)/(2*M_PI))*2*M_PI;
 
@@ -318,6 +320,7 @@ void dzdap(double* orig_z, double f, double ap, double vc, double*& dzdap){
 }
 
 void dzdf(double* orig_z, double f, double ap, double vc, double*& dzdf){
+    vc *= dim_scale;
     double y1 = -std::sqrt((std::pow(std::tan(alpha1)*r, 2))/(std::pow(std::tan(alpha1), 2)+1));
     double y2 =  std::sqrt((std::pow(std::tan(alpha2)*r, 2))/(std::pow(std::tan(alpha2), 2)+1));
 
@@ -352,7 +355,7 @@ void dzdf(double* orig_z, double f, double ap, double vc, double*& dzdf){
     double phix_cur = phix;
     double phiz_cur = phiz;
 
-    double delta_uet = vc*dim_scale/f_uet;
+    double delta_uet = vc/f_uet;
     for(size_t x = 0; x < tex_width; ++x){
         size_t mult = 1;
         phix_cur = phix;
@@ -361,12 +364,12 @@ void dzdf(double* orig_z, double f, double ap, double vc, double*& dzdf){
         for(size_t y = 0; y < tex_height; ++y){
             double oz = orig_z[tex_width*y + x];
             double& dz = dzdf[tex_width*y + x];
-            double newx = x + Ax*std::sin(2*M_PI*fx*x*dimx/(vc*dim_scale) + phix_cur);
+            double newx = x + Ax*std::sin(2*M_PI*fx*x*dimx/vc + phix_cur);
             dz = 0;
             if(y <= mult*f){
                 if(y >=  line_root1/std::tan(alpha1) + (mult-1)*f &&
                    y <= -line_root2/std::tan(alpha2) + (mult-1)*f){
-                    double oscillation = Az*std::sin(2*M_PI*fz*newx*dimx/(vc*dim_scale) + phiz_cur);
+                    double oscillation = Az*std::sin(2*M_PI*fz*newx*dimx/vc + phiz_cur);
 
                     double xcirc = x + xoffset_uet;
                     size_t mult_uet = std::floor(xcirc / delta_uet);
@@ -393,8 +396,8 @@ void dzdf(double* orig_z, double f, double ap, double vc, double*& dzdf){
                 --y;
 
                 double perimeter = 2*M_PI*cylinder_radius;
-                double phase_diff_x = 2*M_PI*fx*perimeter*dimx/(vc*dim_scale) + phix_cur;
-                double phase_diff_z = 2*M_PI*fz*perimeter*dimx/(vc*dim_scale) + phiz_cur;
+                double phase_diff_x = 2*M_PI*fx*perimeter*dimx/vc + phix_cur;
+                double phase_diff_z = 2*M_PI*fz*perimeter*dimx/vc + phiz_cur;
                 phix_cur = phase_diff_x - std::floor((phase_diff_x)/(2*M_PI))*2*M_PI;
                 phiz_cur = phase_diff_z - std::floor((phase_diff_z)/(2*M_PI))*2*M_PI;
 
