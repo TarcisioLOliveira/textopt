@@ -49,6 +49,7 @@ double r = 20/dim; // um
 double max_z = 0; // Used to calculate Sa, so uses smooth_min
 double min_z = 0; // Used only for texture display, so uses std::min()
 double dmax_zdf = 0; 
+double dmax_zdap = 0; 
 
 // "Random" oscillation
 // Models height variation along the tool path
@@ -260,7 +261,7 @@ void dzdap(double* orig_z, double f, double ap, double vc, double*& dzdap){
     double max_intersec = -smooth_min({-intersec1, -intersec2});
 
     double dmi = -smooth_min_deriv({-intersec1, -intersec2}, -intersec1)*(-di1) - smooth_min_deriv({-intersec1, -intersec2}, -intersec2)*(-di2);
-    dmax_zdf = smooth_min_deriv({0, max_intersec}, max_intersec)*dmi;
+    dmax_zdap = smooth_min_deriv({0, max_intersec}, max_intersec)*dmi;
     double phix_cur = phix;
     double phiz_cur = phiz;
 
@@ -459,10 +460,10 @@ double Sa(double*& map_z){
     return sum/area;
 }
 
-double dSa(double*& map_z, double* dzd){
+double dSa(double*& map_z, double* dzd, double dmax){
     size_t area = tex_width*tex_height;
     double sum = -std::accumulate(dzd, dzd+area, 0.0, std::plus<double>());
-    sum -= area*dmax_zdf; // Depth correction
+    sum -= area*dmax; // Depth correction
 
     return sum/area;
 }
@@ -614,9 +615,9 @@ int main(int argc, char* argv[]){
             dzdap(orig_z, f, ap, vc, dap);
 
             double dsurareadf = -surface_area_dz(map_z, df);
-            double dSadf = dSa(map_z, df);
+            double dSadf = dSa(map_z, df, dmax_zdf);
             double dsurareadap = -surface_area_dz(map_z, dap);
-            double dSadap = dSa(map_z, dap);
+            double dSadap = dSa(map_z, dap, dmax_zdap);
 
             std::cout << std::endl;
             std::cout << dsurareadf << " " << dSadf << std::endl;
