@@ -184,6 +184,17 @@ double smooth_floor_deriv(double v){
     return result;
 }
 
+/**
+ * Used mostly to fix smooth_floor() becoming negative when close to zero.
+ */
+double smooth_abs(double v){
+    return std::sqrt(v*v);
+}
+
+double smooth_abs_deriv(double v){
+    return v/std::sqrt(v*v);
+}
+
 void texture_map(double*& map_z, double* orig_z, double f, double ap, double vc){
     vc *= dim_scale;
     double y1 = -std::sqrt((std::pow(std::tan(alpha1)*r, 2))/(std::pow(std::tan(alpha1), 2)+1));
@@ -230,7 +241,7 @@ void texture_map(double*& map_z, double* orig_z, double f, double ap, double vc)
             // Calculate current row
             // Apply `abs()` to prevent it from becoming less than zero
             // when close to zero
-            double mult = std::sqrt(std::pow(smooth_floor((double) (y + YOFF) / f), 2));
+            double mult = smooth_abs(smooth_floor((double) (y + YOFF) / f));
 
             // Phase differences
             double perimeter = 2*M_PI*cylinder_radius;
@@ -248,7 +259,7 @@ void texture_map(double*& map_z, double* orig_z, double f, double ap, double vc)
 
             // Ultrasonic turning effects
             double xcirc = x + xoffset_uet;
-            double mult_uet = std::sqrt(std::pow(smooth_floor(xcirc / delta_uet), 2));
+            double mult_uet = smooth_abs(smooth_floor(xcirc / delta_uet));
             double x_uet = (xcirc - mult_uet*delta_uet)*Ax_uet/delta_uet - Ax_uet/2;
             double uet_effect = Az_uet*(1.0 - std::sqrt(1.0 - std::pow(x_uet/Ax_uet, 2)));
 
@@ -309,7 +320,7 @@ void dzdvc(double* orig_z, double f, double ap, double vc, double*& dzdvc){
             double oz = orig_z[tex_width*y + x];
             double& dz = dzdvc[tex_width*y + x];
 
-            double mult = std::sqrt(std::pow(smooth_floor((double) (y + YOFF) / f), 2));
+            double mult = smooth_abs(smooth_floor((double) (y + YOFF) / f));
             double dmult = 0;
 
             double perimeter = 2*M_PI*cylinder_radius;
@@ -335,8 +346,8 @@ void dzdvc(double* orig_z, double f, double ap, double vc, double*& dzdvc){
             double xcirc = x + xoffset_uet;
             double dxcirc = dxoff_uet;
 
-            double mult_uet = std::sqrt(std::pow(smooth_floor(xcirc / delta_uet), 2));
-            double dmult_uet = smooth_floor_deriv(xcirc / delta_uet)*(dxcirc*delta_uet - dduetdvc*xcirc)/(delta_uet*delta_uet);
+            double mult_uet = smooth_abs(smooth_floor(xcirc / delta_uet));
+            double dmult_uet = smooth_abs_deriv(smooth_floor(xcirc / delta_uet))*smooth_floor_deriv(xcirc / delta_uet)*(dxcirc*delta_uet - dduetdvc*xcirc)/(delta_uet*delta_uet);
 
             double x_uet = (xcirc - mult_uet*delta_uet)*Ax_uet/delta_uet - Ax_uet/2;
             double dx_uet = Ax_uet*(dxcirc*delta_uet - dduetdvc*xcirc)/(delta_uet*delta_uet) - Ax_uet*dmult_uet;
@@ -403,7 +414,7 @@ void dzdap(double* orig_z, double f, double ap, double vc, double*& dzdap){
             double oz = orig_z[tex_width*y + x];
             double& dz = dzdap[tex_width*y + x];
 
-            double mult = std::sqrt(std::pow(smooth_floor((double) (y + YOFF) / f), 2));
+            double mult = smooth_abs(smooth_floor((double) (y + YOFF) / f));
 
             double perimeter = 2*M_PI*cylinder_radius;
 
@@ -418,7 +429,7 @@ void dzdap(double* orig_z, double f, double ap, double vc, double*& dzdap){
             double oscillation = Az*std::sin(2*M_PI*fz*newx*dimx/vc + phiz_cur);
 
             double xcirc = x + xoffset_uet;
-            double mult_uet = std::sqrt(std::pow(smooth_floor(xcirc / delta_uet), 2));
+            double mult_uet = smooth_abs(smooth_floor(xcirc / delta_uet));
             double x_uet = (xcirc - mult_uet*delta_uet)*Ax_uet/delta_uet - Ax_uet/2;
             double uet_effect = Az_uet*(1.0 - std::sqrt(1.0 - std::pow(x_uet/Ax_uet, 2)));
 
@@ -481,8 +492,8 @@ void dzdf(double* orig_z, double f, double ap, double vc, double*& dzdf){
             double oz = orig_z[tex_width*y + x];
             double& dz = dzdf[tex_width*y + x];
 
-            double mult = std::sqrt(std::pow(smooth_floor((double) (y + YOFF) / f), 2));
-            double dmult = -smooth_floor_deriv((double)(y + YOFF) / f)*((double)y / (f*f));
+            double mult = smooth_abs(smooth_floor((double) (y + YOFF) / f));
+            double dmult = smooth_abs_deriv(smooth_floor((double) (y + YOFF) / f))*smooth_floor_deriv((double)(y + YOFF) / f)*(-((double)y / (f*f)));
 
             double perimeter = 2*M_PI*cylinder_radius;
 
@@ -507,8 +518,8 @@ void dzdf(double* orig_z, double f, double ap, double vc, double*& dzdf){
             double xcirc = x + xoffset_uet;
             double dxcirc = dxoff_uet;
 
-            double mult_uet = std::sqrt(std::pow(smooth_floor(xcirc / delta_uet), 2));
-            double dmult_uet = smooth_floor_deriv(xcirc / delta_uet)*dxcirc;
+            double mult_uet = smooth_abs(smooth_floor(xcirc / delta_uet));
+            double dmult_uet = smooth_abs_deriv(smooth_floor(xcirc / delta_uet))*smooth_floor_deriv(xcirc / delta_uet)*dxcirc;
 
             double x_uet = (xcirc - mult_uet*delta_uet)*Ax_uet/delta_uet - Ax_uet/2;
             double dx_uet = Ax_uet*dxcirc/delta_uet - Ax_uet*dmult_uet;
@@ -720,7 +731,7 @@ int main(int argc, char* argv[]){
     double dsurarea_vec[N] = {0, 0, 0};
 
     MMASolver mma(N, 1, 0, 1e6, 1);
-    mma.SetAsymptotes(0.001, 0.1, 1.001);
+    mma.SetAsymptotes(0.001, 0.01, 1.01);
 
     while(window.isOpen()){
         sf::Event event;
