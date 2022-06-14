@@ -37,6 +37,7 @@ size_t tex_height = 300;
 
 const double MULT = -1; // Exponent for smooth_min()
 const double FLOORD = 1e-10; // smooth_floor() precision
+const double ABS_EPS = 1e-15; // smooth_abs() precision
 const double YOFF = 0.001; // Workaround over smooth_floor() being off by -0.5 for integers
 
 double dim_scale = 1e6; // m to um
@@ -188,11 +189,11 @@ double smooth_floor_deriv(double v){
  * Used mostly to fix smooth_floor() becoming negative when close to zero.
  */
 double smooth_abs(double v){
-    return std::sqrt(v*v);
+    return std::sqrt(v*v+ABS_EPS);
 }
 
 double smooth_abs_deriv(double v){
-    return v/std::sqrt(v*v);
+    return v/std::sqrt(v*v+ABS_EPS);
 }
 
 void texture_map(double*& map_z, double* orig_z, double f, double ap, double vc){
