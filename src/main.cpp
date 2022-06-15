@@ -187,13 +187,19 @@ double smooth_floor_deriv(double v){
 
 /**
  * Used mostly to fix smooth_floor() becoming negative when close to zero.
+ *
+ * Not really smooth, yes, but it's actually more of a workaround. It works
+ * better this way, as smooth_abs_deriv() was introducing instability into
+ * the optimization process.
  */
 double smooth_abs(double v){
-    return std::sqrt(v*v+ABS_EPS);
+    return std::abs(v);
+    // return std::sqrt(v*v+ABS_EPS);
 }
 
 double smooth_abs_deriv(double v){
-    return v/std::sqrt(v*v+ABS_EPS);
+    // return v/std::sqrt(v*v+ABS_EPS);
+    return 1;
 }
 
 void texture_map(double*& map_z, double* orig_z, double f, double ap, double vc){
