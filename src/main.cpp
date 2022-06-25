@@ -22,6 +22,7 @@
 #include <SFML/Graphics/Color.hpp>
 #include <SFML/Graphics/Sprite.hpp>
 #include <SFML/Graphics/Texture.hpp>
+#include <SFML/System/Vector2.hpp>
 #include <SFML/Window.hpp>
 #include <SFML/Graphics.hpp>
 #include <random>
@@ -706,12 +707,15 @@ double surface_area_dz(double*& map_z, double* dzd){
 
 int main(int argc, char* argv[]){
 
-    size_t window_width = 800;
+    size_t window_width = 600;
     size_t window_height = 600;
 
     double max_roughness = 60;
 
+    auto resolution = sf::VideoMode::getDesktopMode();
+
     sf::RenderWindow window(sf::VideoMode(window_width, window_height), "textopt");
+    window.setPosition(sf::Vector2i((resolution.width - window_width)/2, (resolution.height - window_height)/2));
     sf::Texture img;
     img.create(tex_width, tex_height);
     sf::Sprite sprite(img);
