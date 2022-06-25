@@ -133,7 +133,7 @@ double smooth_min(std::initializer_list<double> x){
     return frac_top/frac_bot;
 };
 
-double smooth_min_deriv(std::initializer_list<double> x, double xx){
+double smooth_min_deriv(std::initializer_list<double> x, size_t i){
     double frac_top = 0;
     double frac_bot = 0;
     for(double xi : x){
@@ -144,7 +144,7 @@ double smooth_min_deriv(std::initializer_list<double> x, double xx){
 
     double sm = frac_top/frac_bot;
 
-    return (std::exp(MULT*xx)/frac_bot)*(1+MULT*(xx-sm));
+    return (std::exp(MULT*(*(x.begin()+i)))/frac_bot)*(1+MULT*((*(x.begin()+i))-sm));
 };
 
 double smooth_floor(double v){
@@ -378,7 +378,7 @@ void dzdvc(double* orig_z, double f, double ap, double vc, double*& dzdvc){
             }
             newz += oscillation + uet_effect;
             dznewdvc += doscilldvc + duet;
-            dz = smooth_min_deriv({oz, newz}, newz)*dznewdvc;
+            dz = smooth_min_deriv({oz, newz}, 1)*dznewdvc;
     }
 }
 
@@ -399,22 +399,22 @@ void dzdap(double* orig_z, double f, double ap, double vc, double*& dzdap){
     double di2 = 0;
     if(y1 + f/2 > 0){
         intersec1 = smooth_min({0, line_root1});
-        di1 = smooth_min_deriv({0, line_root1}, line_root1)*dlrdap1;
+        di1 = smooth_min_deriv({0, line_root1}, 1)*dlrdap1;
     } else {
         intersec1 = smooth_min({0, -std::sqrt(r*r - f*f/4) + r - ap});
-        di1 = smooth_min_deriv({0, -std::sqrt(r*r - f*f/4) + r - ap},-std::sqrt(r*r - f*f/4) + r - ap)*(-1);
+        di1 = smooth_min_deriv({0, -std::sqrt(r*r - f*f/4) + r - ap}, 1)*(-1);
     }
     if(y2 + f/2 < f){
         intersec2 = smooth_min({0, line_root2 + std::tan(alpha2)*f});
-        di2 = smooth_min_deriv({0, line_root2 + std::tan(alpha2)*f}, line_root2 + std::tan(alpha2)*f)*dlrdap2;
+        di2 = smooth_min_deriv({0, line_root2 + std::tan(alpha2)*f}, 1)*dlrdap2;
     } else {
         intersec2 = smooth_min({0, -std::sqrt(r*r - f*f/4) + r - ap});
-        di2 = smooth_min_deriv({0, -std::sqrt(r*r - f*f/4) + r - ap},-std::sqrt(r*r - f*f/4) + r - ap)*(-1);
+        di2 = smooth_min_deriv({0, -std::sqrt(r*r - f*f/4) + r - ap}, 1)*(-1);
     }
     double max_intersec = -smooth_min({-intersec1, -intersec2});
 
-    double dmi = -smooth_min_deriv({-intersec1, -intersec2}, -intersec1)*(-di1) - smooth_min_deriv({-intersec1, -intersec2}, -intersec2)*(-di2);
-    dmax_zdap = smooth_min_deriv({0, max_intersec}, max_intersec)*dmi;
+    double dmi = -smooth_min_deriv({-intersec1, -intersec2}, 0)*(-di1) - smooth_min_deriv({-intersec1, -intersec2}, 1)*(-di2);
+    dmax_zdap = smooth_min_deriv({0, max_intersec}, 1)*dmi;
 
     double delta_uet = vc/f_uet;
     for(size_t i = 0; i < tex_width*tex_height; ++i){
@@ -455,7 +455,7 @@ void dzdap(double* orig_z, double f, double ap, double vc, double*& dzdap){
                 dznewdap = dlrdap2;
             }
             newz += oscillation + uet_effect;
-            dz = smooth_min_deriv({oz, newz}, newz)*dznewdap;
+            dz = smooth_min_deriv({oz, newz}, 1)*dznewdap;
     }
 }
 
@@ -476,22 +476,22 @@ void dzdf(double* orig_z, double f, double ap, double vc, double*& dzdf){
     double di2 = 0;
     if(y1 + f/2 > 0){
         intersec1 = smooth_min({0, line_root1});
-        di1 = smooth_min_deriv({0, line_root1}, line_root1)*dlrdf1;
+        di1 = smooth_min_deriv({0, line_root1}, 1)*dlrdf1;
     } else {
         intersec1 = smooth_min({0, -std::sqrt(r*r - f*f/4) + r - ap});
-        di1 = smooth_min_deriv({0, -std::sqrt(r*r - f*f/4) + r - ap},-std::sqrt(r*r - f*f/4) + r - ap)*f/(4*std::sqrt(r*r-f*f/4));
+        di1 = smooth_min_deriv({0, -std::sqrt(r*r - f*f/4) + r - ap}, 1)*f/(4*std::sqrt(r*r-f*f/4));
     }
     if(y2 + f/2 < f){
         intersec2 = smooth_min({0, line_root2 + std::tan(alpha2)*f});
-        di2 = smooth_min_deriv({0, line_root2 + std::tan(alpha2)*f}, line_root2 + std::tan(alpha2)*f)*(dlrdf2 + std::tan(alpha2));
+        di2 = smooth_min_deriv({0, line_root2 + std::tan(alpha2)*f}, 1)*(dlrdf2 + std::tan(alpha2));
     } else {
         intersec2 = smooth_min({0, -std::sqrt(r*r - f*f/4) + r - ap});
-        di2 = smooth_min_deriv({0, -std::sqrt(r*r - f*f/4) + r - ap},-std::sqrt(r*r - f*f/4) + r - ap)*f/(4*std::sqrt(r*r-f*f/4));
+        di2 = smooth_min_deriv({0, -std::sqrt(r*r - f*f/4) + r - ap}, 1)*f/(4*std::sqrt(r*r-f*f/4));
     }
     double max_intersec = -smooth_min({-intersec1, -intersec2});
 
-    double dmi = -smooth_min_deriv({-intersec1, -intersec2}, -intersec1)*(-di1) - smooth_min_deriv({-intersec1, -intersec2}, -intersec2)*(-di2);
-    dmax_zdf = smooth_min_deriv({0, max_intersec}, max_intersec)*dmi;
+    double dmi = -smooth_min_deriv({-intersec1, -intersec2}, 0)*(-di1) - smooth_min_deriv({-intersec1, -intersec2}, 1)*(-di2);
+    dmax_zdf = smooth_min_deriv({0, max_intersec}, 1)*dmi;
 
     double delta_uet = vc/f_uet;
     double dduet = 0;
@@ -551,7 +551,7 @@ void dzdf(double* orig_z, double f, double ap, double vc, double*& dzdf){
             }
             newz += oscillation + uet_effect;
             dznewdf += doscilldf + duet;
-            dz = smooth_min_deriv({oz, newz}, newz)*dznewdf;
+            dz = smooth_min_deriv({oz, newz}, 1)*dznewdf;
     }
 }
 
