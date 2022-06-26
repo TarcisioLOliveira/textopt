@@ -240,41 +240,43 @@ void texture_map(double*& map_z, double* orig_z, double f, double ap, double vc)
     min_z = 0;
 
     double delta_uet = vc/f_uet;
-    for(size_t i = 0; i < tex_width*tex_height; ++i){
-        double x = i % tex_width;
-        double y = std::floor(((double)i) / tex_width);
-            // Get pixels
-            double& z = map_z[i];
-            double oz = orig_z[i];
+    for(size_t Y = 0; Y < tex_height; ++Y){
+        double y = static_cast<double>(Y);
 
-            // Calculate current row
-            // Apply `abs()` to prevent it from becoming less than zero
-            // when close to zero
-            double mult = smooth_abs(smooth_floor((y + YOFF) / f));
+        // Calculate current row
+        // Apply `abs()` to prevent it from becoming less than zero
+        // when close to zero
+        double mult = smooth_abs(smooth_floor((y + YOFF) / f));
 
-            // Phase differences
-            double perimeter = 2*M_PI*cylinder_radius;
+        // Phase differences
+        double perimeter = 2*M_PI*cylinder_radius;
 
-            double phase_diff_x = 2*M_PI*fx*mult*perimeter*dimx/vc + phix;
-            double phase_diff_z = 2*M_PI*fz*mult*perimeter*dimx/vc + phiz;
-            double phix_cur = phase_diff_x - smooth_floor((phase_diff_x)/(2*M_PI))*2*M_PI;
-            double phiz_cur = phase_diff_z - smooth_floor((phase_diff_z)/(2*M_PI))*2*M_PI;
+        double phase_diff_x = 2*M_PI*fx*mult*perimeter*dimx/vc + phix;
+        double phase_diff_z = 2*M_PI*fz*mult*perimeter*dimx/vc + phiz;
+        double phix_cur = phase_diff_x - smooth_floor((phase_diff_x)/(2*M_PI))*2*M_PI;
+        double phiz_cur = phase_diff_z - smooth_floor((phase_diff_z)/(2*M_PI))*2*M_PI;
 
-            double xoffset_uet = mult*perimeter;
+        double xoffset_uet = mult*perimeter;
 
-            // Random oscillation
-            double newx = x + Ax*std::sin(2*M_PI*fx*x*dimx/vc + phix_cur);
-            double oscillation = Az*std::sin(2*M_PI*fz*newx*dimx/vc + phiz_cur);
+        if(y >= line_root1/std::tan(alpha1) + mult*f && y <= -line_root2/std::tan(alpha2) + mult*f){
+            for(size_t X = 0; X < tex_width; ++X){
+                // Get pixels
+                double& z = map_z[X + Y*tex_width];
+                double oz = orig_z[X + Y*tex_width];
 
-            // Ultrasonic turning effects
-            double xcirc = x + xoffset_uet;
-            double mult_uet = smooth_abs(smooth_floor(xcirc / delta_uet));
-            double x_uet = (xcirc - mult_uet*delta_uet)*Ax_uet/delta_uet - Ax_uet/2;
-            double uet_effect = Az_uet*(1.0 - std::sqrt(1.0 - std::pow(x_uet/Ax_uet, 2)));
+                double x = static_cast<double>(X);
+                // Random oscillation
+                double newx = x + Ax*std::sin(2*M_PI*fx*x*dimx/vc + phix_cur);
+                double oscillation = Az*std::sin(2*M_PI*fz*newx*dimx/vc + phiz_cur);
 
-            // Tool shape
-            double newz = 0;
-            if(y >= line_root1/std::tan(alpha1) + mult*f && y <= -line_root2/std::tan(alpha2) + mult*f){
+                // Ultrasonic turning effects
+                double xcirc = x + xoffset_uet;
+                double mult_uet = smooth_abs(smooth_floor(xcirc / delta_uet));
+                double x_uet = (xcirc - mult_uet*delta_uet)*Ax_uet/delta_uet - Ax_uet/2;
+                double uet_effect = Az_uet*(1.0 - std::sqrt(1.0 - std::pow(x_uet/Ax_uet, 2)));
+
+                // Tool shape
+                double newz = 0;
                 if(y <= y1 + mult*f + f/2){
                     newz = -std::tan(alpha1)*(y - mult*f) + line_root1;
                 } else if(y <= y2 + mult*f + f/2){
@@ -283,13 +285,21 @@ void texture_map(double*& map_z, double* orig_z, double f, double ap, double vc)
                     newz = std::tan(alpha2)*(y - mult*f) + line_root2;
                 }
                 newz += oscillation + uet_effect;
+
+                // Write results
+                z = smooth_min({oz, newz});
+
             }
-
-            // Write results
-            z = smooth_min({oz, newz});
-
-            min_z = std::min(min_z, z);
+        } else {
+            for(size_t X = 0; X < tex_width; ++X){
+                // Get pixels
+                double& z = map_z[X + Y*tex_width];
+                double oz = orig_z[X + Y*tex_width];
+                z = oz;
+            }
+        }
     }
+    min_z = *std::min_element(map_z, map_z+tex_width*tex_height);
 }
 
 void dzdvc(double* orig_z, double f, double ap, double vc, double*& dzdvc){
@@ -325,50 +335,53 @@ void dzdvc(double* orig_z, double f, double ap, double vc, double*& dzdvc){
 
     double delta_uet = vc/f_uet;
     double dduetdvc = 1.0/f_uet;
-    for(size_t i = 0; i < tex_width*tex_height; ++i){
-        double x = i % tex_width;
-        double y = std::floor(((double)i) / tex_width);
-            double oz = orig_z[i];
-            double& dz = dzdvc[i];
+    for(size_t Y = 0; Y < tex_height; ++Y){
+        double y = static_cast<double>(Y);
 
-            double mult = smooth_abs(smooth_floor((double) (y + YOFF) / f));
-            double dmult = 0;
+        double mult = smooth_abs(smooth_floor((double) (y + YOFF) / f));
+        double dmult = 0;
 
-            double perimeter = 2*M_PI*cylinder_radius;
+        double perimeter = 2*M_PI*cylinder_radius;
 
-            double phase_diff_x = 2*M_PI*fx*mult*perimeter*dimx/vc + phix;
-            double dpdx = -2*M_PI*fx*mult*perimeter*dimx/(vc*vc);
-            double phase_diff_z = 2*M_PI*fz*mult*perimeter*dimx/vc + phiz;
-            double dpdz = -2*M_PI*fz*mult*perimeter*dimx/(vc*vc);
-            double phix_cur = phase_diff_x - smooth_floor((phase_diff_x)/(2*M_PI))*2*M_PI;
-            double dphix_cur = dpdx - smooth_floor_deriv((phase_diff_x)/(2*M_PI))*dpdx;
-            double phiz_cur = phase_diff_z - smooth_floor((phase_diff_z)/(2*M_PI))*2*M_PI;
-            double dphiz_cur = dpdz - smooth_floor_deriv((phase_diff_z)/(2*M_PI))*dpdz;
+        double phase_diff_x = 2*M_PI*fx*mult*perimeter*dimx/vc + phix;
+        double dpdx = -2*M_PI*fx*mult*perimeter*dimx/(vc*vc);
+        double phase_diff_z = 2*M_PI*fz*mult*perimeter*dimx/vc + phiz;
+        double dpdz = -2*M_PI*fz*mult*perimeter*dimx/(vc*vc);
+        double phix_cur = phase_diff_x - smooth_floor((phase_diff_x)/(2*M_PI))*2*M_PI;
+        double dphix_cur = dpdx - smooth_floor_deriv((phase_diff_x)/(2*M_PI))*dpdx;
+        double phiz_cur = phase_diff_z - smooth_floor((phase_diff_z)/(2*M_PI))*2*M_PI;
+        double dphiz_cur = dpdz - smooth_floor_deriv((phase_diff_z)/(2*M_PI))*dpdz;
 
-            double xoffset_uet = mult*perimeter;
-            double dxoff_uet = dmult*perimeter;
+        double xoffset_uet = mult*perimeter;
+        double dxoff_uet = dmult*perimeter;
 
-            double newx = x + Ax*std::sin(2*M_PI*fx*x*dimx/vc + phix_cur);
-            double dnewxdvc = Ax*std::cos(2*M_PI*fx*x*dimx/vc + phix_cur)*((-2)*M_PI*fx*x*dimx/(vc*vc) + dphix_cur);
+        if(y >= line_root1/std::tan(alpha1) + mult*f && y <= -line_root2/std::tan(alpha2) + mult*f){
+            for(size_t X = 0; X < tex_width; ++X){
+                double oz = orig_z[X + Y*tex_width];
+                double& dz = dzdvc[X + Y*tex_width];
 
-            double oscillation = Az*std::sin(2*M_PI*fz*newx*dimx/vc + phiz_cur);
-            double doscilldvc = Az*std::cos(2*M_PI*fz*newx*dimx/vc + phiz_cur)*(2*M_PI*fz*(dnewxdvc*dimx*vc - newx*dimx)/(vc*vc) + dphiz_cur);
+                double x = static_cast<double>(X);
 
-            double xcirc = x + xoffset_uet;
-            double dxcirc = dxoff_uet;
+                double newx = x + Ax*std::sin(2*M_PI*fx*x*dimx/vc + phix_cur);
+                double dnewxdvc = Ax*std::cos(2*M_PI*fx*x*dimx/vc + phix_cur)*((-2)*M_PI*fx*x*dimx/(vc*vc) + dphix_cur);
 
-            double mult_uet = smooth_abs(smooth_floor(xcirc / delta_uet));
-            double dmult_uet = smooth_abs_deriv(smooth_floor(xcirc / delta_uet))*smooth_floor_deriv(xcirc / delta_uet)*(dxcirc*delta_uet - dduetdvc*xcirc)/(delta_uet*delta_uet);
+                double oscillation = Az*std::sin(2*M_PI*fz*newx*dimx/vc + phiz_cur);
+                double doscilldvc = Az*std::cos(2*M_PI*fz*newx*dimx/vc + phiz_cur)*(2*M_PI*fz*(dnewxdvc*dimx*vc - newx*dimx)/(vc*vc) + dphiz_cur);
 
-            double x_uet = (xcirc - mult_uet*delta_uet)*Ax_uet/delta_uet - Ax_uet/2;
-            double dx_uet = Ax_uet*(dxcirc*delta_uet - dduetdvc*xcirc)/(delta_uet*delta_uet) - Ax_uet*dmult_uet;
+                double xcirc = x + xoffset_uet;
+                double dxcirc = dxoff_uet;
 
-            double uet_effect = Az_uet*(1.0 - std::sqrt(1.0 - std::pow(x_uet/Ax_uet, 2)));
-            double duet = -0.5*(Az_uet/std::sqrt(1.0 - std::pow(x_uet/Ax_uet, 2)))*(-2)*(x_uet/Ax_uet)*(dx_uet/Ax_uet);
+                double mult_uet = smooth_abs(smooth_floor(xcirc / delta_uet));
+                double dmult_uet = smooth_abs_deriv(smooth_floor(xcirc / delta_uet))*smooth_floor_deriv(xcirc / delta_uet)*(dxcirc*delta_uet - dduetdvc*xcirc)/(delta_uet*delta_uet);
 
-            double newz = 0;
-            double dznewdvc = 0;
-            if(y >= line_root1/std::tan(alpha1) + mult*f && y <= -line_root2/std::tan(alpha2) + mult*f){
+                double x_uet = (xcirc - mult_uet*delta_uet)*Ax_uet/delta_uet - Ax_uet/2;
+                double dx_uet = Ax_uet*(dxcirc*delta_uet - dduetdvc*xcirc)/(delta_uet*delta_uet) - Ax_uet*dmult_uet;
+
+                double uet_effect = Az_uet*(1.0 - std::sqrt(1.0 - std::pow(x_uet/Ax_uet, 2)));
+                double duet = -0.5*(Az_uet/std::sqrt(1.0 - std::pow(x_uet/Ax_uet, 2)))*(-2)*(x_uet/Ax_uet)*(dx_uet/Ax_uet);
+
+                double newz = 0;
+                double dznewdvc = 0;
                 if(y <= y1 + mult*f + f/2){
                     newz = -std::tan(alpha1)*(y - mult*f) + line_root1;
                     dznewdvc = dlrdvc1;
@@ -381,8 +394,14 @@ void dzdvc(double* orig_z, double f, double ap, double vc, double*& dzdvc){
                 }
                 newz += oscillation + uet_effect;
                 dznewdvc += doscilldvc + duet;
+                dz = smooth_min_deriv({oz, newz}, 1)*dznewdvc;
             }
-            dz = smooth_min_deriv({oz, newz}, 1)*dznewdvc;
+        } else {
+            for(size_t X = 0; X < tex_width; ++X){
+                double& dz = dzdvc[X + Y*tex_width];
+                dz = 0;
+            }
+        }
     }
 }
 
@@ -421,34 +440,37 @@ void dzdap(double* orig_z, double f, double ap, double vc, double*& dzdap){
     dmax_zdap = smooth_min_deriv({0, max_intersec}, 1)*dmi;
 
     double delta_uet = vc/f_uet;
-    for(size_t i = 0; i < tex_width*tex_height; ++i){
-        double x = i % tex_width;
-        double y = std::floor(((double)i) / tex_width);
-            double oz = orig_z[i];
-            double& dz = dzdap[i];
+    for(size_t Y = 0; Y < tex_height; ++Y){
+        double y = static_cast<double>(Y);
 
-            double mult = smooth_abs(smooth_floor((double) (y + YOFF) / f));
+        double mult = smooth_abs(smooth_floor((double) (y + YOFF) / f));
 
-            double perimeter = 2*M_PI*cylinder_radius;
+        double perimeter = 2*M_PI*cylinder_radius;
 
-            double phase_diff_x = 2*M_PI*fx*mult*perimeter*dimx/vc + phix;
-            double phase_diff_z = 2*M_PI*fz*mult*perimeter*dimx/vc + phiz;
-            double phix_cur = phase_diff_x - smooth_floor((phase_diff_x)/(2*M_PI))*2*M_PI;
-            double phiz_cur = phase_diff_z - smooth_floor((phase_diff_z)/(2*M_PI))*2*M_PI;
+        double phase_diff_x = 2*M_PI*fx*mult*perimeter*dimx/vc + phix;
+        double phase_diff_z = 2*M_PI*fz*mult*perimeter*dimx/vc + phiz;
+        double phix_cur = phase_diff_x - smooth_floor((phase_diff_x)/(2*M_PI))*2*M_PI;
+        double phiz_cur = phase_diff_z - smooth_floor((phase_diff_z)/(2*M_PI))*2*M_PI;
 
-            double xoffset_uet = mult*perimeter;
+        double xoffset_uet = mult*perimeter;
 
-            double newx = x + Ax*std::sin(2*M_PI*fx*x*dimx/vc + phix_cur);
-            double oscillation = Az*std::sin(2*M_PI*fz*newx*dimx/vc + phiz_cur);
+        if(y >= line_root1/std::tan(alpha1) + mult*f && y <= -line_root2/std::tan(alpha2) + mult*f){
+            for(size_t X = 0; X < tex_width; ++X){
+                double oz = orig_z[X + Y*tex_width];
+                double& dz = dzdap[X + Y*tex_width];
 
-            double xcirc = x + xoffset_uet;
-            double mult_uet = smooth_abs(smooth_floor(xcirc / delta_uet));
-            double x_uet = (xcirc - mult_uet*delta_uet)*Ax_uet/delta_uet - Ax_uet/2;
-            double uet_effect = Az_uet*(1.0 - std::sqrt(1.0 - std::pow(x_uet/Ax_uet, 2)));
+                double x = static_cast<double>(X);
 
-            double newz = 0;
-            double dznewdap = 0;
-            if(y >= line_root1/std::tan(alpha1) + mult*f && y <= -line_root2/std::tan(alpha2) + mult*f){
+                double newx = x + Ax*std::sin(2*M_PI*fx*x*dimx/vc + phix_cur);
+                double oscillation = Az*std::sin(2*M_PI*fz*newx*dimx/vc + phiz_cur);
+
+                double xcirc = x + xoffset_uet;
+                double mult_uet = smooth_abs(smooth_floor(xcirc / delta_uet));
+                double x_uet = (xcirc - mult_uet*delta_uet)*Ax_uet/delta_uet - Ax_uet/2;
+                double uet_effect = Az_uet*(1.0 - std::sqrt(1.0 - std::pow(x_uet/Ax_uet, 2)));
+
+                double newz = 0;
+                double dznewdap = 0;
                 if(y <= y1 + mult*f + f/2){
                     newz = -std::tan(alpha1)*(y - mult*f) + line_root1;
                     dznewdap = dlrdap1;
@@ -460,8 +482,14 @@ void dzdap(double* orig_z, double f, double ap, double vc, double*& dzdap){
                     dznewdap = dlrdap2;
                 }
                 newz += oscillation + uet_effect;
+                dz = smooth_min_deriv({oz, newz}, 1)*dznewdap;
             }
-            dz = smooth_min_deriv({oz, newz}, 1)*dznewdap;
+        } else {
+            for(size_t X = 0; X < tex_width; ++X){
+                double& dz = dzdap[X + Y*tex_width];
+                dz = 0;
+            }
+        }
     }
 }
 
@@ -501,50 +529,53 @@ void dzdf(double* orig_z, double f, double ap, double vc, double*& dzdf){
 
     double delta_uet = vc/f_uet;
     double dduet = 0;
-    for(size_t i = 0; i < tex_width*tex_height; ++i){
-        double x = i % tex_width;
-        double y = std::floor(((double)i) / tex_width);
-            double oz = orig_z[i];
-            double& dz = dzdf[i];
+    for(size_t Y = 0; Y < tex_height; ++Y){
+        double y = static_cast<double>(Y);
 
-            double mult = smooth_abs(smooth_floor((double) (y + YOFF) / f));
-            double dmult = smooth_abs_deriv(smooth_floor((double) (y + YOFF) / f))*smooth_floor_deriv((double)(y + YOFF) / f)*(-((double)y / (f*f)));
+        double mult = smooth_abs(smooth_floor((double) (y + YOFF) / f));
+        double dmult = smooth_abs_deriv(smooth_floor((double) (y + YOFF) / f))*smooth_floor_deriv((double)(y + YOFF) / f)*(-((double)y / (f*f)));
 
-            double perimeter = 2*M_PI*cylinder_radius;
+        double perimeter = 2*M_PI*cylinder_radius;
 
-            double phase_diff_x = 2*M_PI*fx*mult*perimeter*dimx/vc + phix;
-            double dpdx = 2*M_PI*fx*dmult*perimeter*dimx/vc;
-            double phase_diff_z = 2*M_PI*fz*mult*perimeter*dimx/vc + phiz;
-            double dpdz = 2*M_PI*fz*dmult*perimeter*dimx/vc;
-            double phix_cur = phase_diff_x - smooth_floor((phase_diff_x)/(2*M_PI))*2*M_PI;
-            double dphix_cur = dpdx - smooth_floor_deriv((phase_diff_x)/(2*M_PI))*dpdx;
-            double phiz_cur = phase_diff_z - smooth_floor((phase_diff_z)/(2*M_PI))*2*M_PI;
-            double dphiz_cur = dpdz - smooth_floor_deriv((phase_diff_z)/(2*M_PI))*dpdz;
+        double phase_diff_x = 2*M_PI*fx*mult*perimeter*dimx/vc + phix;
+        double dpdx = 2*M_PI*fx*dmult*perimeter*dimx/vc;
+        double phase_diff_z = 2*M_PI*fz*mult*perimeter*dimx/vc + phiz;
+        double dpdz = 2*M_PI*fz*dmult*perimeter*dimx/vc;
+        double phix_cur = phase_diff_x - smooth_floor((phase_diff_x)/(2*M_PI))*2*M_PI;
+        double dphix_cur = dpdx - smooth_floor_deriv((phase_diff_x)/(2*M_PI))*dpdx;
+        double phiz_cur = phase_diff_z - smooth_floor((phase_diff_z)/(2*M_PI))*2*M_PI;
+        double dphiz_cur = dpdz - smooth_floor_deriv((phase_diff_z)/(2*M_PI))*dpdz;
 
-            double xoffset_uet = mult*perimeter;
-            double dxoff_uet = dmult*perimeter;
+        double xoffset_uet = mult*perimeter;
+        double dxoff_uet = dmult*perimeter;
 
-            double newx = x + Ax*std::sin(2*M_PI*fx*x*dimx/vc + phix_cur);
-            double dnewxdf = Ax*std::cos(2*M_PI*fx*x*dimx/vc + phix_cur)*dphix_cur;
+        if(y >= line_root1/std::tan(alpha1) + mult*f && y <= -line_root2/std::tan(alpha2) + mult*f){
+            for(size_t X = 0; X < tex_width; ++X){
+                double oz = orig_z[X + Y*tex_width];
+                double& dz = dzdf[X + Y*tex_width];
 
-            double oscillation = Az*std::sin(2*M_PI*fz*newx*dimx/vc + phiz_cur);
-            double doscilldf = Az*std::cos(2*M_PI*fz*newx*dimx/vc + phiz_cur)*(2*M_PI*fz*dnewxdf*dimx/vc + dphiz_cur);
+                double x = static_cast<double>(X);
 
-            double xcirc = x + xoffset_uet;
-            double dxcirc = dxoff_uet;
+                double newx = x + Ax*std::sin(2*M_PI*fx*x*dimx/vc + phix_cur);
+                double dnewxdf = Ax*std::cos(2*M_PI*fx*x*dimx/vc + phix_cur)*dphix_cur;
 
-            double mult_uet = smooth_abs(smooth_floor(xcirc / delta_uet));
-            double dmult_uet = smooth_abs_deriv(smooth_floor(xcirc / delta_uet))*smooth_floor_deriv(xcirc / delta_uet)*dxcirc;
+                double oscillation = Az*std::sin(2*M_PI*fz*newx*dimx/vc + phiz_cur);
+                double doscilldf = Az*std::cos(2*M_PI*fz*newx*dimx/vc + phiz_cur)*(2*M_PI*fz*dnewxdf*dimx/vc + dphiz_cur);
 
-            double x_uet = (xcirc - mult_uet*delta_uet)*Ax_uet/delta_uet - Ax_uet/2;
-            double dx_uet = Ax_uet*dxcirc/delta_uet - Ax_uet*dmult_uet;
+                double xcirc = x + xoffset_uet;
+                double dxcirc = dxoff_uet;
 
-            double uet_effect = Az_uet*(1.0 - std::sqrt(1.0 - std::pow(x_uet/Ax_uet, 2)));
-            double duet = -0.5*(Az_uet/std::sqrt(1.0 - std::pow(x_uet/Ax_uet, 2)))*(-2)*(x_uet/Ax_uet)*(dx_uet/Ax_uet);
+                double mult_uet = smooth_abs(smooth_floor(xcirc / delta_uet));
+                double dmult_uet = smooth_abs_deriv(smooth_floor(xcirc / delta_uet))*smooth_floor_deriv(xcirc / delta_uet)*dxcirc;
 
-            double newz = 0;
-            double dznewdf = 0;
-            if(y >= line_root1/std::tan(alpha1) + mult*f && y <= -line_root2/std::tan(alpha2) + mult*f){
+                double x_uet = (xcirc - mult_uet*delta_uet)*Ax_uet/delta_uet - Ax_uet/2;
+                double dx_uet = Ax_uet*dxcirc/delta_uet - Ax_uet*dmult_uet;
+
+                double uet_effect = Az_uet*(1.0 - std::sqrt(1.0 - std::pow(x_uet/Ax_uet, 2)));
+                double duet = -0.5*(Az_uet/std::sqrt(1.0 - std::pow(x_uet/Ax_uet, 2)))*(-2)*(x_uet/Ax_uet)*(dx_uet/Ax_uet);
+
+                double newz = 0;
+                double dznewdf = 0;
                 if(y <= y1 + mult*f + f/2){
                     newz = -std::tan(alpha1)*(y - mult*f) + line_root1;
                     dznewdf = std::tan(alpha1)*(mult + dmult*f) + dlrdf1;
@@ -558,8 +589,14 @@ void dzdf(double* orig_z, double f, double ap, double vc, double*& dzdf){
                 }
                 newz += oscillation + uet_effect;
                 dznewdf += doscilldf + duet;
+                dz = smooth_min_deriv({oz, newz}, 1)*dznewdf;
             }
-            dz = smooth_min_deriv({oz, newz}, 1)*dznewdf;
+        } else {
+            for(size_t X = 0; X < tex_width; ++X){
+                double& dz = dzdf[X + Y*tex_width];
+                dz = 0;
+            }
+        }
     }
 }
 
