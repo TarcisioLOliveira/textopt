@@ -240,6 +240,7 @@ void texture_map(double*& map_z, double* orig_z, double f, double ap, double vc)
     min_z = 0;
 
     double delta_uet = vc/f_uet;
+    std::vector<double> newz(tex_width);
     for(size_t Y = 0; Y < tex_height; ++Y){
         double y = static_cast<double>(Y);
 
@@ -260,10 +261,6 @@ void texture_map(double*& map_z, double* orig_z, double f, double ap, double vc)
 
         if(y >= line_root1/std::tan(alpha1) + mult*f && y <= -line_root2/std::tan(alpha2) + mult*f){
             for(size_t X = 0; X < tex_width; ++X){
-                // Get pixels
-                double& z = map_z[X + Y*tex_width];
-                double oz = orig_z[X + Y*tex_width];
-
                 double x = static_cast<double>(X);
                 // Random oscillation
                 double newx = x + Ax*std::sin(2*M_PI*fx*x*dimx/vc + phix_cur);
@@ -275,20 +272,40 @@ void texture_map(double*& map_z, double* orig_z, double f, double ap, double vc)
                 double x_uet = (xcirc - mult_uet*delta_uet)*Ax_uet/delta_uet - Ax_uet/2;
                 double uet_effect = Az_uet*(1.0 - std::sqrt(1.0 - std::pow(x_uet/Ax_uet, 2)));
 
+                newz[X] = oscillation + uet_effect;
+            }
+
                 // Tool shape
-                double newz = 0;
-                if(y <= y1 + mult*f + f/2){
-                    newz = -std::tan(alpha1)*(y - mult*f) + line_root1;
-                } else if(y <= y2 + mult*f + f/2){
-                    newz = -std::sqrt(r*r - std::pow(y - mult*f - f/2, 2)) + r - ap;
-                } else {
-                    newz = std::tan(alpha2)*(y - mult*f) + line_root2;
+            if(y <= y1 + mult*f + f/2){
+                for(size_t X = 0; X < tex_width; ++X){
+                    // Get pixels
+                    double& z = map_z[X + Y*tex_width];
+                    double oz = orig_z[X + Y*tex_width];
+                    newz[X] += -std::tan(alpha1)*(y - mult*f) + line_root1;
+
+                    // Write results
+                    z = smooth_min({oz, newz[X]});
                 }
-                newz += oscillation + uet_effect;
+            } else if(y <= y2 + mult*f + f/2){
+                for(size_t X = 0; X < tex_width; ++X){
+                    // Get pixels
+                    double& z = map_z[X + Y*tex_width];
+                    double oz = orig_z[X + Y*tex_width];
+                    newz[X] += -std::sqrt(r*r - std::pow(y - mult*f - f/2, 2)) + r - ap;
 
-                // Write results
-                z = smooth_min({oz, newz});
+                    // Write results
+                    z = smooth_min({oz, newz[X]});
+                }
+            } else {
+                for(size_t X = 0; X < tex_width; ++X){
+                    // Get pixels
+                    double& z = map_z[X + Y*tex_width];
+                    double oz = orig_z[X + Y*tex_width];
+                    newz[X] += std::tan(alpha2)*(y - mult*f) + line_root2;
 
+                    // Write results
+                    z = smooth_min({oz, newz[X]});
+                }
             }
         } else {
             for(size_t X = 0; X < tex_width; ++X){
@@ -335,6 +352,8 @@ void dzdvc(double* orig_z, double f, double ap, double vc, double*& dzdvc){
 
     double delta_uet = vc/f_uet;
     double dduetdvc = 1.0/f_uet;
+    std::vector<double> newz(tex_width);
+    std::vector<double> dznewdvc(tex_width);
     for(size_t Y = 0; Y < tex_height; ++Y){
         double y = static_cast<double>(Y);
 
@@ -357,9 +376,6 @@ void dzdvc(double* orig_z, double f, double ap, double vc, double*& dzdvc){
 
         if(y >= line_root1/std::tan(alpha1) + mult*f && y <= -line_root2/std::tan(alpha2) + mult*f){
             for(size_t X = 0; X < tex_width; ++X){
-                double oz = orig_z[X + Y*tex_width];
-                double& dz = dzdvc[X + Y*tex_width];
-
                 double x = static_cast<double>(X);
 
                 double newx = x + Ax*std::sin(2*M_PI*fx*x*dimx/vc + phix_cur);
@@ -380,21 +396,33 @@ void dzdvc(double* orig_z, double f, double ap, double vc, double*& dzdvc){
                 double uet_effect = Az_uet*(1.0 - std::sqrt(1.0 - std::pow(x_uet/Ax_uet, 2)));
                 double duet = -0.5*(Az_uet/std::sqrt(1.0 - std::pow(x_uet/Ax_uet, 2)))*(-2)*(x_uet/Ax_uet)*(dx_uet/Ax_uet);
 
-                double newz = 0;
-                double dznewdvc = 0;
-                if(y <= y1 + mult*f + f/2){
-                    newz = -std::tan(alpha1)*(y - mult*f) + line_root1;
-                    dznewdvc = dlrdvc1;
-                } else if(y <= y2 + mult*f + f/2){
-                    newz = -std::sqrt(r*r - std::pow(y - mult*f - f/2, 2)) + r - ap;
-                    dznewdvc = 0;
-                } else {
-                    newz =  std::tan(alpha2)*(y - mult*f) + line_root2;
-                    dznewdvc = dlrdvc2;
+                newz[X] = oscillation + uet_effect;
+                dznewdvc[X] = doscilldvc + duet;
+            }
+            if(y <= y1 + mult*f + f/2){
+                for(size_t X = 0; X < tex_width; ++X){
+                    double oz = orig_z[X + Y*tex_width];
+                    double& dz = dzdvc[X + Y*tex_width];
+                    newz[X] += -std::tan(alpha1)*(y - mult*f) + line_root1;
+                    dznewdvc[X] += dlrdvc1;
+                    dz = smooth_min_deriv({oz, newz[X]}, 1)*dznewdvc[X];
                 }
-                newz += oscillation + uet_effect;
-                dznewdvc += doscilldvc + duet;
-                dz = smooth_min_deriv({oz, newz}, 1)*dznewdvc;
+            } else if(y <= y2 + mult*f + f/2){
+                for(size_t X = 0; X < tex_width; ++X){
+                    double oz = orig_z[X + Y*tex_width];
+                    double& dz = dzdvc[X + Y*tex_width];
+                    newz[X] += -std::sqrt(r*r - std::pow(y - mult*f - f/2, 2)) + r - ap;
+                    dznewdvc[X] += 0;
+                    dz = smooth_min_deriv({oz, newz[X]}, 1)*dznewdvc[X];
+                }
+            } else {
+                for(size_t X = 0; X < tex_width; ++X){
+                    double oz = orig_z[X + Y*tex_width];
+                    double& dz = dzdvc[X + Y*tex_width];
+                    newz[X] +=  std::tan(alpha2)*(y - mult*f) + line_root2;
+                    dznewdvc[X] += dlrdvc2;
+                    dz = smooth_min_deriv({oz, newz[X]}, 1)*dznewdvc[X];
+                }
             }
         } else {
             for(size_t X = 0; X < tex_width; ++X){
@@ -440,6 +468,7 @@ void dzdap(double* orig_z, double f, double ap, double vc, double*& dzdap){
     dmax_zdap = smooth_min_deriv({0, max_intersec}, 1)*dmi;
 
     double delta_uet = vc/f_uet;
+    std::vector<double> newz(tex_width);
     for(size_t Y = 0; Y < tex_height; ++Y){
         double y = static_cast<double>(Y);
 
@@ -456,9 +485,6 @@ void dzdap(double* orig_z, double f, double ap, double vc, double*& dzdap){
 
         if(y >= line_root1/std::tan(alpha1) + mult*f && y <= -line_root2/std::tan(alpha2) + mult*f){
             for(size_t X = 0; X < tex_width; ++X){
-                double oz = orig_z[X + Y*tex_width];
-                double& dz = dzdap[X + Y*tex_width];
-
                 double x = static_cast<double>(X);
 
                 double newx = x + Ax*std::sin(2*M_PI*fx*x*dimx/vc + phix_cur);
@@ -469,20 +495,32 @@ void dzdap(double* orig_z, double f, double ap, double vc, double*& dzdap){
                 double x_uet = (xcirc - mult_uet*delta_uet)*Ax_uet/delta_uet - Ax_uet/2;
                 double uet_effect = Az_uet*(1.0 - std::sqrt(1.0 - std::pow(x_uet/Ax_uet, 2)));
 
-                double newz = 0;
-                double dznewdap = 0;
-                if(y <= y1 + mult*f + f/2){
-                    newz = -std::tan(alpha1)*(y - mult*f) + line_root1;
-                    dznewdap = dlrdap1;
-                } else if(y <= y2 + mult*f + f/2){
-                    newz = -std::sqrt(r*r - std::pow((double)y - mult*f - f/2, 2)) + r - ap;
-                    dznewdap = -1;
-                } else {
-                    newz =  std::tan(alpha2)*(y - mult*f) + line_root2;
-                    dznewdap = dlrdap2;
+                newz[X] = oscillation + uet_effect;
+            }
+            if(y <= y1 + mult*f + f/2){
+                for(size_t X = 0; X < tex_width; ++X){
+                    double oz = orig_z[X + Y*tex_width];
+                    double& dz = dzdap[X + Y*tex_width];
+                    newz[X] += -std::tan(alpha1)*(y - mult*f) + line_root1;
+                    double dznewdap = dlrdap1;
+                    dz = smooth_min_deriv({oz, newz[X]}, 1)*dznewdap;
                 }
-                newz += oscillation + uet_effect;
-                dz = smooth_min_deriv({oz, newz}, 1)*dznewdap;
+            } else if(y <= y2 + mult*f + f/2){
+                for(size_t X = 0; X < tex_width; ++X){
+                    double oz = orig_z[X + Y*tex_width];
+                    double& dz = dzdap[X + Y*tex_width];
+                    newz[X] += -std::sqrt(r*r - std::pow((double)y - mult*f - f/2, 2)) + r - ap;
+                    double dznewdap = -1;
+                    dz = smooth_min_deriv({oz, newz[X]}, 1)*dznewdap;
+                }
+            } else {
+                for(size_t X = 0; X < tex_width; ++X){
+                    double oz = orig_z[X + Y*tex_width];
+                    double& dz = dzdap[X + Y*tex_width];
+                    newz[X] +=  std::tan(alpha2)*(y - mult*f) + line_root2;
+                    double dznewdap = dlrdap2;
+                    dz = smooth_min_deriv({oz, newz[X]}, 1)*dznewdap;
+                }
             }
         } else {
             for(size_t X = 0; X < tex_width; ++X){
@@ -529,6 +567,8 @@ void dzdf(double* orig_z, double f, double ap, double vc, double*& dzdf){
 
     double delta_uet = vc/f_uet;
     double dduet = 0;
+    std::vector<double> newz(tex_width);
+    std::vector<double> dznewdf(tex_width);
     for(size_t Y = 0; Y < tex_height; ++Y){
         double y = static_cast<double>(Y);
 
@@ -551,9 +591,6 @@ void dzdf(double* orig_z, double f, double ap, double vc, double*& dzdf){
 
         if(y >= line_root1/std::tan(alpha1) + mult*f && y <= -line_root2/std::tan(alpha2) + mult*f){
             for(size_t X = 0; X < tex_width; ++X){
-                double oz = orig_z[X + Y*tex_width];
-                double& dz = dzdf[X + Y*tex_width];
-
                 double x = static_cast<double>(X);
 
                 double newx = x + Ax*std::sin(2*M_PI*fx*x*dimx/vc + phix_cur);
@@ -574,22 +611,35 @@ void dzdf(double* orig_z, double f, double ap, double vc, double*& dzdf){
                 double uet_effect = Az_uet*(1.0 - std::sqrt(1.0 - std::pow(x_uet/Ax_uet, 2)));
                 double duet = -0.5*(Az_uet/std::sqrt(1.0 - std::pow(x_uet/Ax_uet, 2)))*(-2)*(x_uet/Ax_uet)*(dx_uet/Ax_uet);
 
-                double newz = 0;
-                double dznewdf = 0;
-                if(y <= y1 + mult*f + f/2){
-                    newz = -std::tan(alpha1)*(y - mult*f) + line_root1;
-                    dznewdf = std::tan(alpha1)*(mult + dmult*f) + dlrdf1;
-                } else if(y <= y2 + mult*f + f/2){
-                    double yy = y - mult*f - f/2;
-                    newz = -std::sqrt(r*r - yy*yy) + r - ap;
-                    dznewdf = 2*yy*(mult + dmult*f + 0.5)/std::sqrt(r*r - yy*yy);
-                } else {
-                    newz = std::tan(alpha2)*(y - mult*f) + line_root2;
-                    dznewdf = -std::tan(alpha2)*(mult + dmult*f) + dlrdf2;
+                newz[X] = oscillation + uet_effect;
+                dznewdf[X] = doscilldf + duet;
+            }
+
+            if(y <= y1 + mult*f + f/2){
+                for(size_t X = 0; X < tex_width; ++X){
+                    double oz = orig_z[X + Y*tex_width];
+                    double& dz = dzdf[X + Y*tex_width];
+                    newz[X] += -std::tan(alpha1)*(y - mult*f) + line_root1;
+                    dznewdf[X] += std::tan(alpha1)*(mult + dmult*f) + dlrdf1;
+                    dz = smooth_min_deriv({oz, newz[X]}, 1)*dznewdf[X];
                 }
-                newz += oscillation + uet_effect;
-                dznewdf += doscilldf + duet;
-                dz = smooth_min_deriv({oz, newz}, 1)*dznewdf;
+            } else if(y <= y2 + mult*f + f/2){
+                for(size_t X = 0; X < tex_width; ++X){
+                    double oz = orig_z[X + Y*tex_width];
+                    double& dz = dzdf[X + Y*tex_width];
+                    double yy = y - mult*f - f/2;
+                    newz[X] += -std::sqrt(r*r - yy*yy) + r - ap;
+                    dznewdf[X] += 2*yy*(mult + dmult*f + 0.5)/std::sqrt(r*r - yy*yy);
+                    dz = smooth_min_deriv({oz, newz[X]}, 1)*dznewdf[X];
+                }
+            } else {
+                for(size_t X = 0; X < tex_width; ++X){
+                    double oz = orig_z[X + Y*tex_width];
+                    double& dz = dzdf[X + Y*tex_width];
+                    newz[X] += std::tan(alpha2)*(y - mult*f) + line_root2;
+                    dznewdf[X] += -std::tan(alpha2)*(mult + dmult*f) + dlrdf2;
+                    dz = smooth_min_deriv({oz, newz[X]}, 1)*dznewdf[X];
+                }
             }
         } else {
             for(size_t X = 0; X < tex_width; ++X){
