@@ -89,7 +89,7 @@ enum Colorscheme{
     HSV
 };
 
-double triangle_area(std::array<Point, 3> p){
+inline double triangle_area(std::array<Point, 3> p){
     Vector v1{p[1].x - p[0].x, p[1].y - p[0].y, p[1].z - p[0].z};
     Vector v2{p[2].x - p[0].x, p[2].y - p[0].y, p[2].z - p[0].z};
 
@@ -103,7 +103,7 @@ double triangle_area(std::array<Point, 3> p){
 }
 
 
-double triangle_area_deriv(std::array<Point, 3> p, std::array<double, 3> dz){
+inline double triangle_area_deriv(std::array<Point, 3> p, std::array<double, 3> dz){
     Vector v1{p[1].x - p[0].x, p[1].y - p[0].y, p[1].z - p[0].z};
     Vector v2{p[2].x - p[0].x, p[2].y - p[0].y, p[2].z - p[0].z};
     double dv1 = dz[1] - dz[0];
@@ -121,7 +121,7 @@ double triangle_area_deriv(std::array<Point, 3> p, std::array<double, 3> dz){
     return A;
 }
 
-double smooth_min(std::initializer_list<double> x){
+inline double smooth_min(std::initializer_list<double> x){
     double frac_top = 0;
     double frac_bot = 0;
     for(double xi : x){
@@ -133,7 +133,7 @@ double smooth_min(std::initializer_list<double> x){
     return frac_top/frac_bot;
 };
 
-double smooth_min_deriv(std::initializer_list<double> x, size_t i){
+inline double smooth_min_deriv(std::initializer_list<double> x, size_t i){
     double frac_top = 0;
     double frac_bot = 0;
     for(double xi : x){
@@ -147,7 +147,7 @@ double smooth_min_deriv(std::initializer_list<double> x, size_t i){
     return (std::exp(MULT*(*(x.begin()+i)))/frac_bot)*(1+MULT*((*(x.begin()+i))-sm));
 };
 
-double smooth_floor(double v){
+inline double smooth_floor(double v){
     // https://math.stackexchange.com/questions/2746958/smooth-floor-function
     //
     // δ = 0.01;
@@ -168,7 +168,7 @@ double smooth_floor(double v){
     return result;
 }
 
-double smooth_floor_deriv(double v){
+inline double smooth_floor_deriv(double v){
     double p1x = (1.0 - FLOORD)*std::sin(2*M_PI*((2*v-1)/4));
     double dp1x = (1.0 - FLOORD)*std::cos(2*M_PI*((2*v-1)/4))*2*M_PI*2/4;
 
@@ -193,12 +193,12 @@ double smooth_floor_deriv(double v){
  * better this way, as smooth_abs_deriv() was introducing instability into
  * the optimization process.
  */
-double smooth_abs(double v){
+inline double smooth_abs(double v){
     return std::abs(v);
     // return std::sqrt(v*v+ABS_EPS);
 }
 
-double smooth_abs_deriv(double v){
+inline double smooth_abs_deriv(double v){
     // return v/std::sqrt(v*v+ABS_EPS);
     return 1;
 }
