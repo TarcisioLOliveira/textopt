@@ -669,6 +669,7 @@ void draw_texture(sf::Uint8*& img, double* map_z, double ap, size_t w, size_t h,
                 double& z = map_z[tex_width*y + x];
 
                 double norm = -(z-max_z)/(max_z - min_z);
+                norm = std::max(0.0, std::min(1.0, norm));
                 double r, g, b;
                 if(norm <= 0.25){
                     r = 1;
