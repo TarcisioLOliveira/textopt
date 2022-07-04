@@ -838,7 +838,7 @@ int main(int argc, char* argv[]){
     double dsurarea_vec[N] = {0, 0, 0};
 
     MMASolver mma(N, 1, 0, 1e6, 1);
-    mma.SetAsymptotes(0.001, 0.01, 1.01);
+    mma.SetAsymptotes(0.001, 0.7, 1.2);
 
     while(window.isOpen()){
         sf::Event event;
