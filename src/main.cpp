@@ -204,7 +204,7 @@ inline double smooth_abs_deriv(double v){
     return 1;
 }
 
-void texture_map(double*& map_z, double* orig_z, double f, double ap, double vc){
+void texture_map(std::vector<double>& map_z, const std::vector<double>& orig_z, double f, double ap, double vc){
     vc *= dim_scale;
     double y1 = -std::sqrt((std::pow(std::tan(alpha1)*r, 2))/(std::pow(std::tan(alpha1), 2)+1));
     double y2 =  std::sqrt((std::pow(std::tan(alpha2)*r, 2))/(std::pow(std::tan(alpha2), 2)+1));
@@ -317,10 +317,10 @@ void texture_map(double*& map_z, double* orig_z, double f, double ap, double vc)
             }
         }
     }
-    min_z = *std::min_element(map_z, map_z+tex_width*tex_height);
+    min_z = *std::min_element(map_z.begin(), map_z.end());
 }
 
-void dzdvc(double* orig_z, double f, double ap, double vc, double*& dzdvc){
+void dzdvc(const std::vector<double>& orig_z, double f, double ap, double vc, std::vector<double>& dzdvc){
     vc *= dim_scale;
     double y1 = -std::sqrt((std::pow(std::tan(alpha1)*r, 2))/(std::pow(std::tan(alpha1), 2)+1));
     double y2 =  std::sqrt((std::pow(std::tan(alpha2)*r, 2))/(std::pow(std::tan(alpha2), 2)+1));
@@ -434,7 +434,7 @@ void dzdvc(double* orig_z, double f, double ap, double vc, double*& dzdvc){
     }
 }
 
-void dzdap(double* orig_z, double f, double ap, double vc, double*& dzdap){
+void dzdap(const std::vector<double>& orig_z, double f, double ap, double vc, std::vector<double>& dzdap){
     vc *= dim_scale;
     double y1 = -std::sqrt((std::pow(std::tan(alpha1)*r, 2))/(std::pow(std::tan(alpha1), 2)+1));
     double y2 =  std::sqrt((std::pow(std::tan(alpha2)*r, 2))/(std::pow(std::tan(alpha2), 2)+1));
@@ -532,7 +532,7 @@ void dzdap(double* orig_z, double f, double ap, double vc, double*& dzdap){
     }
 }
 
-void dzdf(double* orig_z, double f, double ap, double vc, double*& dzdf){
+void dzdf(const std::vector<double>& orig_z, double f, double ap, double vc, std::vector<double>& dzdf){
     vc *= dim_scale;
     double y1 = -std::sqrt((std::pow(std::tan(alpha1)*r, 2))/(std::pow(std::tan(alpha1), 2)+1));
     double y2 =  std::sqrt((std::pow(std::tan(alpha2)*r, 2))/(std::pow(std::tan(alpha2), 2)+1));
@@ -651,11 +651,11 @@ void dzdf(double* orig_z, double f, double ap, double vc, double*& dzdf){
     }
 }
 
-void draw_texture(sf::Uint8*& img, double* map_z, double ap, size_t w, size_t h, Colorscheme colorscheme){
+void draw_texture(std::vector<sf::Uint8>& img, const std::vector<double>& map_z, double ap, size_t w, size_t h, Colorscheme colorscheme){
     if(colorscheme == Colorscheme::GRAYSCALE){
         for(size_t x = 0; x < tex_width; ++x){
             for(size_t y = 0; y < tex_height; ++y){
-                double& z = map_z[tex_width*y + x];
+                double z = map_z[tex_width*y + x];
 
                 sf::Uint8 rgb = (sf::Uint8)std::round(255*(1 + (z-max_z)/(max_z - min_z)));
                 img[(tex_width*y + x)*4+0] = rgb;
@@ -667,7 +667,7 @@ void draw_texture(sf::Uint8*& img, double* map_z, double ap, size_t w, size_t h,
     } else if(colorscheme == Colorscheme::HSV){
         for(size_t x = 0; x < tex_width; ++x){
             for(size_t y = 0; y < tex_height; ++y){
-                double& z = map_z[tex_width*y + x];
+                double z = map_z[tex_width*y + x];
 
                 double norm = -(z-max_z)/(max_z - min_z);
                 norm = std::max(0.0, std::min(1.0, norm));
@@ -700,23 +700,23 @@ void draw_texture(sf::Uint8*& img, double* map_z, double ap, size_t w, size_t h,
     }
 }
 
-double Sa(double*& map_z){
+double Sa(const std::vector<double>& map_z){
     size_t area = tex_width*tex_height;
-    double sum = -std::accumulate(map_z, map_z+area, 0.0, std::plus<double>());
+    double sum = -std::accumulate(map_z.begin(), map_z.end(), 0.0, std::plus<double>());
     sum -= area*max_z; // Depth correction
 
     return sum/area;
 }
 
-double dSa(double*& map_z, double* dzd, double dmax){
+double dSa(const std::vector<double>& dzd, double dmax){
     size_t area = tex_width*tex_height;
-    double sum = -std::accumulate(dzd, dzd+area, 0.0, std::plus<double>());
+    double sum = -std::accumulate(dzd.begin(), dzd.end(), 0.0, std::plus<double>());
     sum -= area*dmax; // Depth correction
 
     return sum/area;
 }
 
-double surface_area(double*& map_z){
+double surface_area(const std::vector<double>& map_z){
     // For a N*M matrix of points, the actual projected surface area is (dimx*dimy)*((N-1)*(M-1))
     double A = 0;
     for(size_t x = 0; x < tex_width; x+=2){
@@ -758,7 +758,7 @@ double surface_area(double*& map_z){
     return A;
 }
 
-double surface_area_dz(double*& map_z, double* dzd){
+double surface_area_dz(const std::vector<double>& map_z, const std::vector<double>& dzd){
     double A = 0;
     for(size_t x = 0; x < tex_width; x+=2){
         for(size_t y = 0; y < tex_height; y+=2){
@@ -818,14 +818,13 @@ int main(int argc, char* argv[]){
     sf::Sprite sprite(img);
     sprite.setPosition(sf::Vector2f(window_width/2-tex_width/2, window_height/2-tex_height/2));
 
-    // std::default_random_engine generator;
-    // std::uniform_int_distribution<sf::Uint8> rand(0);
-    sf::Uint8* px = new sf::Uint8[tex_width*tex_height*4]();
-    double* map_z = new double[tex_width*tex_height]();
-    double* orig_z = new double[tex_width*tex_height]();
-    double* df = new double[tex_width*tex_height]();
-    double* dap = new double[tex_width*tex_height]();
-    double* dvc = new double[tex_width*tex_height]();
+    std::vector<sf::Uint8> px(tex_width*tex_height*4);
+
+    std::vector<double> map_z  (tex_width*tex_height);
+    std::vector<double> orig_z (tex_width*tex_height);
+    std::vector<double> df     (tex_width*tex_height);
+    std::vector<double> dap    (tex_width*tex_height);
+    std::vector<double> dvc    (tex_width*tex_height);
 
     double ch = 1;
     size_t it = 1;
@@ -868,11 +867,11 @@ int main(int argc, char* argv[]){
             dzdvc(orig_z, f, ap, vc, dvc);
 
             double dsurareadf = -surface_area_dz(map_z, df);
-            double dSadf = dSa(map_z, df, dmax_zdf);
+            double dSadf = dSa(df, dmax_zdf);
             double dsurareadap = -surface_area_dz(map_z, dap);
-            double dSadap = dSa(map_z, dap, dmax_zdap);
+            double dSadap = dSa(dap, dmax_zdap);
             double dsurareadvc = -surface_area_dz(map_z, dvc);
-            double dSadvc = dSa(map_z, dvc, dmax_zdvc);
+            double dSadvc = dSa(dvc, dmax_zdvc);
 
             std::cout << std::endl;
             std::cout << dsurareadf << " " << dSadf << std::endl;
@@ -902,7 +901,7 @@ int main(int argc, char* argv[]){
             ++it;
         }
 
-        img.update(px);
+        img.update(px.data());
         auto wsize = window.getSize();
         window_width = wsize.x;
         window_height = wsize.y;
@@ -911,13 +910,6 @@ int main(int argc, char* argv[]){
         window.draw(sprite);
         window.display();
     }
-
-    delete[] px;
-    delete[] map_z;
-    delete[] orig_z;
-    delete[] df;
-    delete[] dap;
-    delete[] dvc;
 
     img.copyToImage().saveToFile("result.png");
 
