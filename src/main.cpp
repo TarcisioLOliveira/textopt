@@ -31,6 +31,7 @@
 #include <initializer_list>
 #include <numeric>
 #include <MMASolver.hpp>
+#include <array>
 #include <algorithm>
 
 size_t tex_width = 300;
