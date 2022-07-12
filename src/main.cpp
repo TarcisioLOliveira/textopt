@@ -26,56 +26,14 @@
 #include <SFML/Window.hpp>
 #include <SFML/Graphics.hpp>
 #include <random>
-#include <cmath>
 #include <iostream>
 #include <initializer_list>
 #include <numeric>
-#include <MMASolver.hpp>
 #include <array>
 #include <algorithm>
 
-size_t tex_width = 300;
-size_t tex_height = 300;
-
-const double MULT = -1; // Exponent for smooth_min()
-const double FLOORD = 1e-10; // smooth_floor() precision
-const double ABS_EPS = 1e-15; // smooth_abs() precision
-const double YOFF = 0.001; // Workaround over smooth_floor() being off by -0.5 for integers
-
-double dim_scale = 1e6; // m to um
-double dim = 1;
-double dimx = dim;
-double dimy = dim;
-double dimz = dim;
-
-double alpha1 = 60*M_PI/180;
-double alpha2 = 60*M_PI/180;
-double r = 20/dim; // um
-double max_z = 0; // Used to calculate Sa, so uses smooth_min
-double min_z = 0; // Used only for texture display, so uses std::min()
-double dmax_zdf = 0; 
-double dmax_zdap = 0; 
-double dmax_zdvc = 0; 
-
-// "Random" oscillation
-// Models height variation along the tool path
-
-// Amplitude [dim], e.g. [um]
-double Ax = 0.5;
-double Az = 0.1;
-// Frequency [Hz]
-double fx = 19*1e5;
-double fz = 51*1e5;
-// Phase [rad]
-double phix = 20*M_PI/180;
-double phiz = 0;
-
-double cylinder_radius = 6*1e-3*dim_scale; // [um]
-
-// Ultrasonic elliptical turning
-double f_uet = 20000; // [Hz]
-double Ax_uet = 1; // [um]
-double Az_uet = 2; // [um]
+#include "MMASolver.hpp"
+#include "param.hpp"
 
 struct Point{
     double x, y, z;
@@ -126,7 +84,7 @@ inline double smooth_min(std::initializer_list<double> x){
     double frac_top = 0;
     double frac_bot = 0;
     for(double xi : x){
-        double exp = std::exp(MULT*xi);
+        double exp = std::exp(param::MULT*xi);
         frac_top += xi*exp;
         frac_bot += exp;
     }
@@ -138,14 +96,14 @@ inline double smooth_min_deriv(std::initializer_list<double> x, size_t i){
     double frac_top = 0;
     double frac_bot = 0;
     for(double xi : x){
-        double exp = std::exp(MULT*xi);
+        double exp = std::exp(param::MULT*xi);
         frac_top += xi*exp;
         frac_bot += exp;
     }
 
     double sm = frac_top/frac_bot;
 
-    return (std::exp(MULT*(*(x.begin()+i)))/frac_bot)*(1+MULT*((*(x.begin()+i))-sm));
+    return (std::exp(param::MULT*(*(x.begin()+i)))/frac_bot)*(1+param::MULT*((*(x.begin()+i))-sm));
 };
 
 inline double smooth_floor(double v){
@@ -157,8 +115,8 @@ inline double smooth_floor(double v){
     // swt[x_] := (1 + trg[(2 x - 1)/4] sqr[x/2])/2;
     // flr[x_] := x-swt[x]
 
-    double p1x = (1.0 - FLOORD)*std::sin(2*M_PI*((2*v-1)/4));
-    double p2x = std::sin(2*M_PI*(v/2))/FLOORD;
+    double p1x = (1.0 - param::FLOORD)*std::sin(2*M_PI*((2*v-1)/4));
+    double p2x = std::sin(2*M_PI*(v/2))/param::FLOORD;
 
     double p1 = 1 - 2*std::acos(p1x)/M_PI;
     double p2 = 2 * std::atan(p2x)/M_PI;
@@ -170,11 +128,11 @@ inline double smooth_floor(double v){
 }
 
 inline double smooth_floor_deriv(double v){
-    double p1x = (1.0 - FLOORD)*std::sin(2*M_PI*((2*v-1)/4));
-    double dp1x = (1.0 - FLOORD)*std::cos(2*M_PI*((2*v-1)/4))*2*M_PI*2/4;
+    double p1x = (1.0 - param::FLOORD)*std::sin(2*M_PI*((2*v-1)/4));
+    double dp1x = (1.0 - param::FLOORD)*std::cos(2*M_PI*((2*v-1)/4))*2*M_PI*2/4;
 
-    double p2x = std::sin(2*M_PI*(v/2))/FLOORD;
-    double dp2x = (std::cos(2*M_PI*(v/2))/FLOORD)*2*M_PI/2;
+    double p2x = std::sin(2*M_PI*(v/2))/param::FLOORD;
+    double dp2x = (std::cos(2*M_PI*(v/2))/param::FLOORD)*2*M_PI/2;
 
     double p1 = 1 - 2*std::acos(p1x)/M_PI;
     double dp1 = (2.0/(std::sqrt(1 - p1x*p1x)*M_PI))*dp1x;
@@ -205,6 +163,8 @@ inline double smooth_abs_deriv(double v){
 }
 
 void texture_map(std::vector<double>& map_z, const std::vector<double>& orig_z, double f, double ap, double vc){
+    using namespace param;
+
     vc *= dim_scale;
     double y1 = -std::sqrt((std::pow(std::tan(alpha1)*r, 2))/(std::pow(std::tan(alpha1), 2)+1));
     double y2 =  std::sqrt((std::pow(std::tan(alpha2)*r, 2))/(std::pow(std::tan(alpha2), 2)+1));
@@ -321,6 +281,8 @@ void texture_map(std::vector<double>& map_z, const std::vector<double>& orig_z, 
 }
 
 void dzdvc(const std::vector<double>& orig_z, double f, double ap, double vc, std::vector<double>& dzdvc){
+    using namespace param;
+
     vc *= dim_scale;
     double y1 = -std::sqrt((std::pow(std::tan(alpha1)*r, 2))/(std::pow(std::tan(alpha1), 2)+1));
     double y2 =  std::sqrt((std::pow(std::tan(alpha2)*r, 2))/(std::pow(std::tan(alpha2), 2)+1));
@@ -435,6 +397,8 @@ void dzdvc(const std::vector<double>& orig_z, double f, double ap, double vc, st
 }
 
 void dzdap(const std::vector<double>& orig_z, double f, double ap, double vc, std::vector<double>& dzdap){
+    using namespace param;
+
     vc *= dim_scale;
     double y1 = -std::sqrt((std::pow(std::tan(alpha1)*r, 2))/(std::pow(std::tan(alpha1), 2)+1));
     double y2 =  std::sqrt((std::pow(std::tan(alpha2)*r, 2))/(std::pow(std::tan(alpha2), 2)+1));
@@ -533,6 +497,8 @@ void dzdap(const std::vector<double>& orig_z, double f, double ap, double vc, st
 }
 
 void dzdf(const std::vector<double>& orig_z, double f, double ap, double vc, std::vector<double>& dzdf){
+    using namespace param;
+
     vc *= dim_scale;
     double y1 = -std::sqrt((std::pow(std::tan(alpha1)*r, 2))/(std::pow(std::tan(alpha1), 2)+1));
     double y2 =  std::sqrt((std::pow(std::tan(alpha2)*r, 2))/(std::pow(std::tan(alpha2), 2)+1));
@@ -652,6 +618,8 @@ void dzdf(const std::vector<double>& orig_z, double f, double ap, double vc, std
 }
 
 void draw_texture(std::vector<sf::Uint8>& img, const std::vector<double>& map_z, double ap, size_t w, size_t h, Colorscheme colorscheme){
+    using namespace param;
+
     if(colorscheme == Colorscheme::GRAYSCALE){
         for(size_t x = 0; x < tex_width; ++x){
             for(size_t y = 0; y < tex_height; ++y){
@@ -701,6 +669,8 @@ void draw_texture(std::vector<sf::Uint8>& img, const std::vector<double>& map_z,
 }
 
 double Sa(const std::vector<double>& map_z){
+    using namespace param;
+
     size_t area = tex_width*tex_height;
     double sum = -std::accumulate(map_z.begin(), map_z.end(), 0.0, std::plus<double>());
     sum -= area*max_z; // Depth correction
@@ -709,6 +679,8 @@ double Sa(const std::vector<double>& map_z){
 }
 
 double dSa(const std::vector<double>& dzd, double dmax){
+    using namespace param;
+
     size_t area = tex_width*tex_height;
     double sum = -std::accumulate(dzd.begin(), dzd.end(), 0.0, std::plus<double>());
     sum -= area*dmax; // Depth correction
@@ -717,6 +689,8 @@ double dSa(const std::vector<double>& dzd, double dmax){
 }
 
 double surface_area(const std::vector<double>& map_z){
+    using namespace param;
+
     // For a N*M matrix of points, the actual projected surface area is (dimx*dimy)*((N-1)*(M-1))
     double A = 0;
     for(size_t x = 0; x < tex_width; x+=2){
@@ -759,6 +733,8 @@ double surface_area(const std::vector<double>& map_z){
 }
 
 double surface_area_dz(const std::vector<double>& map_z, const std::vector<double>& dzd){
+    using namespace param;
+
     double A = 0;
     for(size_t x = 0; x < tex_width; x+=2){
         for(size_t y = 0; y < tex_height; y+=2){
@@ -803,6 +779,7 @@ double surface_area_dz(const std::vector<double>& map_z, const std::vector<doubl
 }
 
 int main(int argc, char* argv[]){
+    using namespace param;
 
     size_t window_width = 600;
     size_t window_height = 600;
