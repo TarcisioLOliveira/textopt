@@ -25,15 +25,14 @@
 #include <SFML/System/Vector2.hpp>
 #include <SFML/Window.hpp>
 #include <SFML/Graphics.hpp>
-#include <random>
 #include <iostream>
-#include <initializer_list>
 #include <numeric>
 #include <array>
 #include <algorithm>
 
 #include "MMASolver.hpp"
 #include "param.hpp"
+#include "smooth.hpp"
 
 struct Point{
     double x, y, z;
@@ -80,87 +79,6 @@ inline double triangle_area_deriv(std::array<Point, 3> p, std::array<double, 3> 
     return A;
 }
 
-inline double smooth_min(std::initializer_list<double> x){
-    double frac_top = 0;
-    double frac_bot = 0;
-    for(double xi : x){
-        double exp = std::exp(param::MULT*xi);
-        frac_top += xi*exp;
-        frac_bot += exp;
-    }
-
-    return frac_top/frac_bot;
-};
-
-inline double smooth_min_deriv(std::initializer_list<double> x, size_t i){
-    double frac_top = 0;
-    double frac_bot = 0;
-    for(double xi : x){
-        double exp = std::exp(param::MULT*xi);
-        frac_top += xi*exp;
-        frac_bot += exp;
-    }
-
-    double sm = frac_top/frac_bot;
-
-    return (std::exp(param::MULT*(*(x.begin()+i)))/frac_bot)*(1+param::MULT*((*(x.begin()+i))-sm));
-};
-
-inline double smooth_floor(double v){
-    // https://math.stackexchange.com/questions/2746958/smooth-floor-function
-    //
-    // δ = 0.01;
-    // trg[x_] := 1 - 2 ArcCos[(1 - δ) Sin[2 π x]]/π;
-    // sqr[x_] := 2 ArcTan[Sin[2 π x]/δ]/π;
-    // swt[x_] := (1 + trg[(2 x - 1)/4] sqr[x/2])/2;
-    // flr[x_] := x-swt[x]
-
-    double p1x = (1.0 - param::FLOORD)*std::sin(2*M_PI*((2*v-1)/4));
-    double p2x = std::sin(2*M_PI*(v/2))/param::FLOORD;
-
-    double p1 = 1 - 2*std::acos(p1x)/M_PI;
-    double p2 = 2 * std::atan(p2x)/M_PI;
-    double sawtooth = (1 + p1 * p2)/2;
-
-    double result = v - sawtooth;
-
-    return result;
-}
-
-inline double smooth_floor_deriv(double v){
-    double p1x = (1.0 - param::FLOORD)*std::sin(2*M_PI*((2*v-1)/4));
-    double dp1x = (1.0 - param::FLOORD)*std::cos(2*M_PI*((2*v-1)/4))*2*M_PI*2/4;
-
-    double p2x = std::sin(2*M_PI*(v/2))/param::FLOORD;
-    double dp2x = (std::cos(2*M_PI*(v/2))/param::FLOORD)*2*M_PI/2;
-
-    double p1 = 1 - 2*std::acos(p1x)/M_PI;
-    double dp1 = (2.0/(std::sqrt(1 - p1x*p1x)*M_PI))*dp1x;
-    double p2 = 2 * std::atan(p2x)/M_PI;
-    double dp2 = (2.0/((p2x*p2x + 1)*M_PI))*dp2x;
-    double dsawtooth = (1 + dp1 * p2 + p1 * dp2)/2;
-
-    double result = 1.0 - dsawtooth;
-    
-    return result;
-}
-
-/**
- * Used mostly to fix smooth_floor() becoming negative when close to zero.
- *
- * Not really smooth, yes, but it's actually more of a workaround. It works
- * better this way, as smooth_abs_deriv() was introducing instability into
- * the optimization process.
- */
-inline double smooth_abs(double v){
-    return std::abs(v);
-    // return std::sqrt(v*v+ABS_EPS);
-}
-
-inline double smooth_abs_deriv(double v){
-    // return v/std::sqrt(v*v+ABS_EPS);
-    return 1;
-}
 
 void texture_map(std::vector<double>& map_z, const std::vector<double>& orig_z, double f, double ap, double vc){
     using namespace param;
@@ -182,22 +100,22 @@ void texture_map(std::vector<double>& map_z, const std::vector<double>& orig_z, 
     double intersec2 = 0;
     if(y1 + f/2 > 0){
         // If the radius is smaller than the feed rate, check for the line
-        intersec1 = smooth_min({0, line_root1});
+        intersec1 = smooth::min({0, line_root1});
     } else {
         // Check for the circle
-        intersec1 = smooth_min({0, -std::sqrt(r*r - f*f/4) + r - ap});
+        intersec1 = smooth::min({0, -std::sqrt(r*r - f*f/4) + r - ap});
     }
     if(y2 + f/2 < f){
         // If the radius is smaller than the feed rate...
-        intersec2 = smooth_min({0, line_root2 + std::tan(alpha2)*f});
+        intersec2 = smooth::min({0, line_root2 + std::tan(alpha2)*f});
     } else {
-        intersec2 = smooth_min({0, -std::sqrt(r*r - f*f/4) + r - ap});
+        intersec2 = smooth::min({0, -std::sqrt(r*r - f*f/4) + r - ap});
     }
     // Check if one of them is greater than zero
-    double max_intersec = -smooth_min({-intersec1, -intersec2});
+    double max_intersec = -smooth::min({-intersec1, -intersec2});
     // If one is greater than zero, max_z must be zero. Otherwise, it's
     // the lesser one.
-    max_z = smooth_min({0, max_intersec});
+    max_z = smooth::min({0, max_intersec});
     min_z = 0;
 
     double delta_uet = vc/f_uet;
@@ -208,15 +126,15 @@ void texture_map(std::vector<double>& map_z, const std::vector<double>& orig_z, 
         // Calculate current row
         // Apply `abs()` to prevent it from becoming less than zero
         // when close to zero
-        double mult = smooth_abs(smooth_floor((y + YOFF) / f));
+        double mult = smooth::abs(smooth::floor((y + YOFF) / f));
 
         // Phase differences
         double perimeter = 2*M_PI*cylinder_radius;
 
         double phase_diff_x = 2*M_PI*fx*mult*perimeter*dimx/vc + phix;
         double phase_diff_z = 2*M_PI*fz*mult*perimeter*dimx/vc + phiz;
-        double phix_cur = phase_diff_x - smooth_floor((phase_diff_x)/(2*M_PI))*2*M_PI;
-        double phiz_cur = phase_diff_z - smooth_floor((phase_diff_z)/(2*M_PI))*2*M_PI;
+        double phix_cur = phase_diff_x - smooth::floor((phase_diff_x)/(2*M_PI))*2*M_PI;
+        double phiz_cur = phase_diff_z - smooth::floor((phase_diff_z)/(2*M_PI))*2*M_PI;
 
         double xoffset_uet = mult*perimeter;
 
@@ -229,7 +147,7 @@ void texture_map(std::vector<double>& map_z, const std::vector<double>& orig_z, 
 
                 // Ultrasonic turning effects
                 double xcirc = x + xoffset_uet;
-                double mult_uet = smooth_abs(smooth_floor(xcirc / delta_uet));
+                double mult_uet = smooth::abs(smooth::floor(xcirc / delta_uet));
                 double x_uet = (xcirc - mult_uet*delta_uet)*Ax_uet/delta_uet - Ax_uet/2;
                 double uet_effect = Az_uet*(1.0 - std::sqrt(1.0 - std::pow(x_uet/Ax_uet, 2)));
 
@@ -245,7 +163,7 @@ void texture_map(std::vector<double>& map_z, const std::vector<double>& orig_z, 
                     newz[X] += -std::tan(alpha1)*(y - mult*f) + line_root1;
 
                     // Write results
-                    z = smooth_min({oz, newz[X]});
+                    z = smooth::min({oz, newz[X]});
                 }
             } else if(y <= y2 + mult*f + f/2){
                 for(size_t X = 0; X < tex_width; ++X){
@@ -255,7 +173,7 @@ void texture_map(std::vector<double>& map_z, const std::vector<double>& orig_z, 
                     newz[X] += -std::sqrt(r*r - std::pow(y - mult*f - f/2, 2)) + r - ap;
 
                     // Write results
-                    z = smooth_min({oz, newz[X]});
+                    z = smooth::min({oz, newz[X]});
                 }
             } else {
                 for(size_t X = 0; X < tex_width; ++X){
@@ -265,7 +183,7 @@ void texture_map(std::vector<double>& map_z, const std::vector<double>& orig_z, 
                     newz[X] += std::tan(alpha2)*(y - mult*f) + line_root2;
 
                     // Write results
-                    z = smooth_min({oz, newz[X]});
+                    z = smooth::min({oz, newz[X]});
                 }
             }
         } else {
@@ -299,19 +217,19 @@ void dzdvc(const std::vector<double>& orig_z, double f, double ap, double vc, st
     double di1 = 0;
     double di2 = 0;
     if(y1 + f/2 > 0){
-        intersec1 = smooth_min({0, line_root1});
+        intersec1 = smooth::min({0, line_root1});
     } else {
-        intersec1 = smooth_min({0, -std::sqrt(r*r - f*f/4) + r - ap});
+        intersec1 = smooth::min({0, -std::sqrt(r*r - f*f/4) + r - ap});
     }
     if(y2 + f/2 < f){
-        intersec2 = smooth_min({0, line_root2 + std::tan(alpha2)*f});
+        intersec2 = smooth::min({0, line_root2 + std::tan(alpha2)*f});
     } else {
-        intersec2 = smooth_min({0, -std::sqrt(r*r - f*f/4) + r - ap});
+        intersec2 = smooth::min({0, -std::sqrt(r*r - f*f/4) + r - ap});
     }
-    double max_intersec = -smooth_min({-intersec1, -intersec2});
+    double max_intersec = -smooth::min({-intersec1, -intersec2});
 
-    double dmi = 0;//-smooth_min_deriv({-intersec1, -intersec2}, -intersec1)*(-di1) - smooth_min_deriv({-intersec1, -intersec2}, -intersec2)*(-di2);
-    dmax_zdvc = 0;//smooth_min_deriv({0, max_intersec}, max_intersec)*dmi;
+    double dmi = 0;//-smooth::min_deriv({-intersec1, -intersec2}, -intersec1)*(-di1) - smooth::min_deriv({-intersec1, -intersec2}, -intersec2)*(-di2);
+    dmax_zdvc = 0;//smooth::min_deriv({0, max_intersec}, max_intersec)*dmi;
 
     double delta_uet = vc/f_uet;
     double dduetdvc = 1.0/f_uet;
@@ -320,7 +238,7 @@ void dzdvc(const std::vector<double>& orig_z, double f, double ap, double vc, st
     for(size_t Y = 0; Y < tex_height; ++Y){
         double y = static_cast<double>(Y);
 
-        double mult = smooth_abs(smooth_floor((double) (y + YOFF) / f));
+        double mult = smooth::abs(smooth::floor((double) (y + YOFF) / f));
         double dmult = 0;
 
         double perimeter = 2*M_PI*cylinder_radius;
@@ -329,10 +247,10 @@ void dzdvc(const std::vector<double>& orig_z, double f, double ap, double vc, st
         double dpdx = -2*M_PI*fx*mult*perimeter*dimx/(vc*vc);
         double phase_diff_z = 2*M_PI*fz*mult*perimeter*dimx/vc + phiz;
         double dpdz = -2*M_PI*fz*mult*perimeter*dimx/(vc*vc);
-        double phix_cur = phase_diff_x - smooth_floor((phase_diff_x)/(2*M_PI))*2*M_PI;
-        double dphix_cur = dpdx - smooth_floor_deriv((phase_diff_x)/(2*M_PI))*dpdx;
-        double phiz_cur = phase_diff_z - smooth_floor((phase_diff_z)/(2*M_PI))*2*M_PI;
-        double dphiz_cur = dpdz - smooth_floor_deriv((phase_diff_z)/(2*M_PI))*dpdz;
+        double phix_cur = phase_diff_x - smooth::floor((phase_diff_x)/(2*M_PI))*2*M_PI;
+        double dphix_cur = dpdx - smooth::floor_deriv((phase_diff_x)/(2*M_PI))*dpdx;
+        double phiz_cur = phase_diff_z - smooth::floor((phase_diff_z)/(2*M_PI))*2*M_PI;
+        double dphiz_cur = dpdz - smooth::floor_deriv((phase_diff_z)/(2*M_PI))*dpdz;
 
         double xoffset_uet = mult*perimeter;
         double dxoff_uet = dmult*perimeter;
@@ -350,8 +268,8 @@ void dzdvc(const std::vector<double>& orig_z, double f, double ap, double vc, st
                 double xcirc = x + xoffset_uet;
                 double dxcirc = dxoff_uet;
 
-                double mult_uet = smooth_abs(smooth_floor(xcirc / delta_uet));
-                double dmult_uet = smooth_abs_deriv(smooth_floor(xcirc / delta_uet))*smooth_floor_deriv(xcirc / delta_uet)*(dxcirc*delta_uet - dduetdvc*xcirc)/(delta_uet*delta_uet);
+                double mult_uet = smooth::abs(smooth::floor(xcirc / delta_uet));
+                double dmult_uet = smooth::abs_deriv(smooth::floor(xcirc / delta_uet))*smooth::floor_deriv(xcirc / delta_uet)*(dxcirc*delta_uet - dduetdvc*xcirc)/(delta_uet*delta_uet);
 
                 double x_uet = (xcirc - mult_uet*delta_uet)*Ax_uet/delta_uet - Ax_uet/2;
                 double dx_uet = Ax_uet*(dxcirc*delta_uet - dduetdvc*xcirc)/(delta_uet*delta_uet) - Ax_uet*dmult_uet;
@@ -368,7 +286,7 @@ void dzdvc(const std::vector<double>& orig_z, double f, double ap, double vc, st
                     double& dz = dzdvc[X + Y*tex_width];
                     newz[X] += -std::tan(alpha1)*(y - mult*f) + line_root1;
                     dznewdvc[X] += dlrdvc1;
-                    dz = smooth_min_deriv({oz, newz[X]}, 1)*dznewdvc[X];
+                    dz = smooth::min_deriv({oz, newz[X]}, 1)*dznewdvc[X];
                 }
             } else if(y <= y2 + mult*f + f/2){
                 for(size_t X = 0; X < tex_width; ++X){
@@ -376,7 +294,7 @@ void dzdvc(const std::vector<double>& orig_z, double f, double ap, double vc, st
                     double& dz = dzdvc[X + Y*tex_width];
                     newz[X] += -std::sqrt(r*r - std::pow(y - mult*f - f/2, 2)) + r - ap;
                     dznewdvc[X] += 0;
-                    dz = smooth_min_deriv({oz, newz[X]}, 1)*dznewdvc[X];
+                    dz = smooth::min_deriv({oz, newz[X]}, 1)*dznewdvc[X];
                 }
             } else {
                 for(size_t X = 0; X < tex_width; ++X){
@@ -384,7 +302,7 @@ void dzdvc(const std::vector<double>& orig_z, double f, double ap, double vc, st
                     double& dz = dzdvc[X + Y*tex_width];
                     newz[X] +=  std::tan(alpha2)*(y - mult*f) + line_root2;
                     dznewdvc[X] += dlrdvc2;
-                    dz = smooth_min_deriv({oz, newz[X]}, 1)*dznewdvc[X];
+                    dz = smooth::min_deriv({oz, newz[X]}, 1)*dznewdvc[X];
                 }
             }
         } else {
@@ -414,37 +332,37 @@ void dzdap(const std::vector<double>& orig_z, double f, double ap, double vc, st
     double di1 = 0;
     double di2 = 0;
     if(y1 + f/2 > 0){
-        intersec1 = smooth_min({0, line_root1});
-        di1 = smooth_min_deriv({0, line_root1}, 1)*dlrdap1;
+        intersec1 = smooth::min({0, line_root1});
+        di1 = smooth::min_deriv({0, line_root1}, 1)*dlrdap1;
     } else {
-        intersec1 = smooth_min({0, -std::sqrt(r*r - f*f/4) + r - ap});
-        di1 = smooth_min_deriv({0, -std::sqrt(r*r - f*f/4) + r - ap}, 1)*(-1);
+        intersec1 = smooth::min({0, -std::sqrt(r*r - f*f/4) + r - ap});
+        di1 = smooth::min_deriv({0, -std::sqrt(r*r - f*f/4) + r - ap}, 1)*(-1);
     }
     if(y2 + f/2 < f){
-        intersec2 = smooth_min({0, line_root2 + std::tan(alpha2)*f});
-        di2 = smooth_min_deriv({0, line_root2 + std::tan(alpha2)*f}, 1)*dlrdap2;
+        intersec2 = smooth::min({0, line_root2 + std::tan(alpha2)*f});
+        di2 = smooth::min_deriv({0, line_root2 + std::tan(alpha2)*f}, 1)*dlrdap2;
     } else {
-        intersec2 = smooth_min({0, -std::sqrt(r*r - f*f/4) + r - ap});
-        di2 = smooth_min_deriv({0, -std::sqrt(r*r - f*f/4) + r - ap}, 1)*(-1);
+        intersec2 = smooth::min({0, -std::sqrt(r*r - f*f/4) + r - ap});
+        di2 = smooth::min_deriv({0, -std::sqrt(r*r - f*f/4) + r - ap}, 1)*(-1);
     }
-    double max_intersec = -smooth_min({-intersec1, -intersec2});
+    double max_intersec = -smooth::min({-intersec1, -intersec2});
 
-    double dmi = -smooth_min_deriv({-intersec1, -intersec2}, 0)*(-di1) - smooth_min_deriv({-intersec1, -intersec2}, 1)*(-di2);
-    dmax_zdap = smooth_min_deriv({0, max_intersec}, 1)*dmi;
+    double dmi = -smooth::min_deriv({-intersec1, -intersec2}, 0)*(-di1) - smooth::min_deriv({-intersec1, -intersec2}, 1)*(-di2);
+    dmax_zdap = smooth::min_deriv({0, max_intersec}, 1)*dmi;
 
     double delta_uet = vc/f_uet;
     std::vector<double> newz(tex_width);
     for(size_t Y = 0; Y < tex_height; ++Y){
         double y = static_cast<double>(Y);
 
-        double mult = smooth_abs(smooth_floor((double) (y + YOFF) / f));
+        double mult = smooth::abs(smooth::floor((double) (y + YOFF) / f));
 
         double perimeter = 2*M_PI*cylinder_radius;
 
         double phase_diff_x = 2*M_PI*fx*mult*perimeter*dimx/vc + phix;
         double phase_diff_z = 2*M_PI*fz*mult*perimeter*dimx/vc + phiz;
-        double phix_cur = phase_diff_x - smooth_floor((phase_diff_x)/(2*M_PI))*2*M_PI;
-        double phiz_cur = phase_diff_z - smooth_floor((phase_diff_z)/(2*M_PI))*2*M_PI;
+        double phix_cur = phase_diff_x - smooth::floor((phase_diff_x)/(2*M_PI))*2*M_PI;
+        double phiz_cur = phase_diff_z - smooth::floor((phase_diff_z)/(2*M_PI))*2*M_PI;
 
         double xoffset_uet = mult*perimeter;
 
@@ -456,7 +374,7 @@ void dzdap(const std::vector<double>& orig_z, double f, double ap, double vc, st
                 double oscillation = Az*std::sin(2*M_PI*fz*newx*dimx/vc + phiz_cur);
 
                 double xcirc = x + xoffset_uet;
-                double mult_uet = smooth_abs(smooth_floor(xcirc / delta_uet));
+                double mult_uet = smooth::abs(smooth::floor(xcirc / delta_uet));
                 double x_uet = (xcirc - mult_uet*delta_uet)*Ax_uet/delta_uet - Ax_uet/2;
                 double uet_effect = Az_uet*(1.0 - std::sqrt(1.0 - std::pow(x_uet/Ax_uet, 2)));
 
@@ -468,7 +386,7 @@ void dzdap(const std::vector<double>& orig_z, double f, double ap, double vc, st
                     double& dz = dzdap[X + Y*tex_width];
                     newz[X] += -std::tan(alpha1)*(y - mult*f) + line_root1;
                     double dznewdap = dlrdap1;
-                    dz = smooth_min_deriv({oz, newz[X]}, 1)*dznewdap;
+                    dz = smooth::min_deriv({oz, newz[X]}, 1)*dznewdap;
                 }
             } else if(y <= y2 + mult*f + f/2){
                 for(size_t X = 0; X < tex_width; ++X){
@@ -476,7 +394,7 @@ void dzdap(const std::vector<double>& orig_z, double f, double ap, double vc, st
                     double& dz = dzdap[X + Y*tex_width];
                     newz[X] += -std::sqrt(r*r - std::pow((double)y - mult*f - f/2, 2)) + r - ap;
                     double dznewdap = -1;
-                    dz = smooth_min_deriv({oz, newz[X]}, 1)*dznewdap;
+                    dz = smooth::min_deriv({oz, newz[X]}, 1)*dznewdap;
                 }
             } else {
                 for(size_t X = 0; X < tex_width; ++X){
@@ -484,7 +402,7 @@ void dzdap(const std::vector<double>& orig_z, double f, double ap, double vc, st
                     double& dz = dzdap[X + Y*tex_width];
                     newz[X] +=  std::tan(alpha2)*(y - mult*f) + line_root2;
                     double dznewdap = dlrdap2;
-                    dz = smooth_min_deriv({oz, newz[X]}, 1)*dznewdap;
+                    dz = smooth::min_deriv({oz, newz[X]}, 1)*dznewdap;
                 }
             }
         } else {
@@ -514,23 +432,23 @@ void dzdf(const std::vector<double>& orig_z, double f, double ap, double vc, std
     double di1 = 0;
     double di2 = 0;
     if(y1 + f/2 > 0){
-        intersec1 = smooth_min({0, line_root1});
-        di1 = smooth_min_deriv({0, line_root1}, 1)*dlrdf1;
+        intersec1 = smooth::min({0, line_root1});
+        di1 = smooth::min_deriv({0, line_root1}, 1)*dlrdf1;
     } else {
-        intersec1 = smooth_min({0, -std::sqrt(r*r - f*f/4) + r - ap});
-        di1 = smooth_min_deriv({0, -std::sqrt(r*r - f*f/4) + r - ap}, 1)*f/(4*std::sqrt(r*r-f*f/4));
+        intersec1 = smooth::min({0, -std::sqrt(r*r - f*f/4) + r - ap});
+        di1 = smooth::min_deriv({0, -std::sqrt(r*r - f*f/4) + r - ap}, 1)*f/(4*std::sqrt(r*r-f*f/4));
     }
     if(y2 + f/2 < f){
-        intersec2 = smooth_min({0, line_root2 + std::tan(alpha2)*f});
-        di2 = smooth_min_deriv({0, line_root2 + std::tan(alpha2)*f}, 1)*(dlrdf2 + std::tan(alpha2));
+        intersec2 = smooth::min({0, line_root2 + std::tan(alpha2)*f});
+        di2 = smooth::min_deriv({0, line_root2 + std::tan(alpha2)*f}, 1)*(dlrdf2 + std::tan(alpha2));
     } else {
-        intersec2 = smooth_min({0, -std::sqrt(r*r - f*f/4) + r - ap});
-        di2 = smooth_min_deriv({0, -std::sqrt(r*r - f*f/4) + r - ap}, 1)*f/(4*std::sqrt(r*r-f*f/4));
+        intersec2 = smooth::min({0, -std::sqrt(r*r - f*f/4) + r - ap});
+        di2 = smooth::min_deriv({0, -std::sqrt(r*r - f*f/4) + r - ap}, 1)*f/(4*std::sqrt(r*r-f*f/4));
     }
-    double max_intersec = -smooth_min({-intersec1, -intersec2});
+    double max_intersec = -smooth::min({-intersec1, -intersec2});
 
-    double dmi = -smooth_min_deriv({-intersec1, -intersec2}, 0)*(-di1) - smooth_min_deriv({-intersec1, -intersec2}, 1)*(-di2);
-    dmax_zdf = smooth_min_deriv({0, max_intersec}, 1)*dmi;
+    double dmi = -smooth::min_deriv({-intersec1, -intersec2}, 0)*(-di1) - smooth::min_deriv({-intersec1, -intersec2}, 1)*(-di2);
+    dmax_zdf = smooth::min_deriv({0, max_intersec}, 1)*dmi;
 
     double delta_uet = vc/f_uet;
     double dduet = 0;
@@ -539,8 +457,8 @@ void dzdf(const std::vector<double>& orig_z, double f, double ap, double vc, std
     for(size_t Y = 0; Y < tex_height; ++Y){
         double y = static_cast<double>(Y);
 
-        double mult = smooth_abs(smooth_floor((double) (y + YOFF) / f));
-        double dmult = smooth_abs_deriv(smooth_floor((double) (y + YOFF) / f))*smooth_floor_deriv((double)(y + YOFF) / f)*(-((double)y / (f*f)));
+        double mult = smooth::abs(smooth::floor((double) (y + YOFF) / f));
+        double dmult = smooth::abs_deriv(smooth::floor((double) (y + YOFF) / f))*smooth::floor_deriv((double)(y + YOFF) / f)*(-((double)y / (f*f)));
 
         double perimeter = 2*M_PI*cylinder_radius;
 
@@ -548,10 +466,10 @@ void dzdf(const std::vector<double>& orig_z, double f, double ap, double vc, std
         double dpdx = 2*M_PI*fx*dmult*perimeter*dimx/vc;
         double phase_diff_z = 2*M_PI*fz*mult*perimeter*dimx/vc + phiz;
         double dpdz = 2*M_PI*fz*dmult*perimeter*dimx/vc;
-        double phix_cur = phase_diff_x - smooth_floor((phase_diff_x)/(2*M_PI))*2*M_PI;
-        double dphix_cur = dpdx - smooth_floor_deriv((phase_diff_x)/(2*M_PI))*dpdx;
-        double phiz_cur = phase_diff_z - smooth_floor((phase_diff_z)/(2*M_PI))*2*M_PI;
-        double dphiz_cur = dpdz - smooth_floor_deriv((phase_diff_z)/(2*M_PI))*dpdz;
+        double phix_cur = phase_diff_x - smooth::floor((phase_diff_x)/(2*M_PI))*2*M_PI;
+        double dphix_cur = dpdx - smooth::floor_deriv((phase_diff_x)/(2*M_PI))*dpdx;
+        double phiz_cur = phase_diff_z - smooth::floor((phase_diff_z)/(2*M_PI))*2*M_PI;
+        double dphiz_cur = dpdz - smooth::floor_deriv((phase_diff_z)/(2*M_PI))*dpdz;
 
         double xoffset_uet = mult*perimeter;
         double dxoff_uet = dmult*perimeter;
@@ -569,8 +487,8 @@ void dzdf(const std::vector<double>& orig_z, double f, double ap, double vc, std
                 double xcirc = x + xoffset_uet;
                 double dxcirc = dxoff_uet;
 
-                double mult_uet = smooth_abs(smooth_floor(xcirc / delta_uet));
-                double dmult_uet = smooth_abs_deriv(smooth_floor(xcirc / delta_uet))*smooth_floor_deriv(xcirc / delta_uet)*dxcirc;
+                double mult_uet = smooth::abs(smooth::floor(xcirc / delta_uet));
+                double dmult_uet = smooth::abs_deriv(smooth::floor(xcirc / delta_uet))*smooth::floor_deriv(xcirc / delta_uet)*dxcirc;
 
                 double x_uet = (xcirc - mult_uet*delta_uet)*Ax_uet/delta_uet - Ax_uet/2;
                 double dx_uet = Ax_uet*dxcirc/delta_uet - Ax_uet*dmult_uet;
@@ -588,7 +506,7 @@ void dzdf(const std::vector<double>& orig_z, double f, double ap, double vc, std
                     double& dz = dzdf[X + Y*tex_width];
                     newz[X] += -std::tan(alpha1)*(y - mult*f) + line_root1;
                     dznewdf[X] += std::tan(alpha1)*(mult + dmult*f) + dlrdf1;
-                    dz = smooth_min_deriv({oz, newz[X]}, 1)*dznewdf[X];
+                    dz = smooth::min_deriv({oz, newz[X]}, 1)*dznewdf[X];
                 }
             } else if(y <= y2 + mult*f + f/2){
                 for(size_t X = 0; X < tex_width; ++X){
@@ -597,7 +515,7 @@ void dzdf(const std::vector<double>& orig_z, double f, double ap, double vc, std
                     double yy = y - mult*f - f/2;
                     newz[X] += -std::sqrt(r*r - yy*yy) + r - ap;
                     dznewdf[X] += 2*yy*(mult + dmult*f + 0.5)/std::sqrt(r*r - yy*yy);
-                    dz = smooth_min_deriv({oz, newz[X]}, 1)*dznewdf[X];
+                    dz = smooth::min_deriv({oz, newz[X]}, 1)*dznewdf[X];
                 }
             } else {
                 for(size_t X = 0; X < tex_width; ++X){
@@ -605,7 +523,7 @@ void dzdf(const std::vector<double>& orig_z, double f, double ap, double vc, std
                     double& dz = dzdf[X + Y*tex_width];
                     newz[X] += std::tan(alpha2)*(y - mult*f) + line_root2;
                     dznewdf[X] += -std::tan(alpha2)*(mult + dmult*f) + dlrdf2;
-                    dz = smooth_min_deriv({oz, newz[X]}, 1)*dznewdf[X];
+                    dz = smooth::min_deriv({oz, newz[X]}, 1)*dznewdf[X];
                 }
             }
         } else {
