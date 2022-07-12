@@ -5,6 +5,7 @@ set(SOURCES
     MMASolver.cpp
     render.cpp
     opt_func.cpp
+    texture.cpp
 )
 
 add_executable(${PROJECT_NAME} ${SOURCES})
