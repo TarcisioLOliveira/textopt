@@ -17,6 +17,12 @@
  *   along with textopt.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
+/**
+ * @file util.hpp
+ * @brief Utilities.
+ *
+ * Helper functions and classes.
+ */
 
 #ifndef UTIL_HPP
 #define UTIL_HPP
@@ -26,14 +32,28 @@
 
 namespace util{
 
+/**
+ * Structure representing a 3D point.
+ */
 struct Point{
     double x, y, z;
 };
 
+/**
+ * Structure representing a 3D vector.
+ */
 struct Vector{
     double x, y, z;
 };
 
+/**
+ * Calculates an area from three 3D points, as if it were a triangle.
+ * Inspired by (JENNESS, 2004).
+ *
+ * @param p Array of 3 Point instances.
+ *
+ * @return Calculated area.
+ */
 inline double triangle_area(std::array<Point, 3> p){
     Vector v1{p[1].x - p[0].x, p[1].y - p[0].y, p[1].z - p[0].z};
     Vector v2{p[2].x - p[0].x, p[2].y - p[0].y, p[2].z - p[0].z};
@@ -47,7 +67,16 @@ inline double triangle_area(std::array<Point, 3> p){
     return A;
 }
 
-
+/**
+ * Calculates the derivative of the triangle area in relation to some variable.
+ * For a variable 'a', does the calculation by dA/da = (dA/dz)(dz/da). The
+ * variable 'dz' is used for 'dz/da'.
+ *
+ * @param p Array of 3 Point instances.
+ * @param dz Array of derivatives of 'z',
+ *
+ * @return Derivative of the calculated area.
+ */
 inline double triangle_area_deriv(std::array<Point, 3> p, std::array<double, 3> dz){
     Vector v1{p[1].x - p[0].x, p[1].y - p[0].y, p[1].z - p[0].z};
     Vector v2{p[2].x - p[0].x, p[2].y - p[0].y, p[2].z - p[0].z};
