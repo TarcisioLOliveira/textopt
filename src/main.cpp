@@ -34,11 +34,7 @@
 #include "param.hpp"
 #include "smooth.hpp"
 #include "util.hpp"
-
-enum Colorscheme{
-    GRAYSCALE,
-    HSV
-};
+#include "render.hpp"
 
 void texture_map(std::vector<double>& map_z, const std::vector<double>& orig_z, double f, double ap, double vc){
     using namespace param;
@@ -495,56 +491,6 @@ void dzdf(const std::vector<double>& orig_z, double f, double ap, double vc, std
     }
 }
 
-void draw_texture(std::vector<sf::Uint8>& img, const std::vector<double>& map_z, double ap, size_t w, size_t h, Colorscheme colorscheme){
-    using namespace param;
-
-    if(colorscheme == Colorscheme::GRAYSCALE){
-        for(size_t x = 0; x < tex_width; ++x){
-            for(size_t y = 0; y < tex_height; ++y){
-                double z = map_z[tex_width*y + x];
-
-                sf::Uint8 rgb = (sf::Uint8)std::round(255*(1 + (z-max_z)/(max_z - min_z)));
-                img[(tex_width*y + x)*4+0] = rgb;
-                img[(tex_width*y + x)*4+1] = rgb;
-                img[(tex_width*y + x)*4+2] = rgb;
-                img[(tex_width*y + x)*4+3] = 255;
-            }
-        }
-    } else if(colorscheme == Colorscheme::HSV){
-        for(size_t x = 0; x < tex_width; ++x){
-            for(size_t y = 0; y < tex_height; ++y){
-                double z = map_z[tex_width*y + x];
-
-                double norm = -(z-max_z)/(max_z - min_z);
-                norm = std::max(0.0, std::min(1.0, norm));
-                double r, g, b;
-                if(norm <= 0.25){
-                    r = 1;
-                    g = norm*4;
-                    b = 0;
-                } else if(norm <= 0.5){
-                    r = 1 - (norm-0.25)*4;
-                    g = 1;
-                    b = 0;
-                } else if(norm <= 0.75){
-                    r = 0;
-                    g = 1;
-                    b = (norm-0.5)*4;
-                } else {
-                    r = 0;
-                    g = 1 - (norm-0.75)*4;
-                    b = 1;
-                }
-
-                img[(tex_width*y + x)*4+0] = (sf::Uint8)std::round(255*r);
-                img[(tex_width*y + x)*4+1] = (sf::Uint8)std::round(255*g);
-                img[(tex_width*y + x)*4+2] = (sf::Uint8)std::round(255*b);
-                img[(tex_width*y + x)*4+3] = 255;
-            }
-        }
-
-    }
-}
 
 double Sa(const std::vector<double>& map_z){
     using namespace param;
@@ -713,7 +659,7 @@ int main(int argc, char* argv[]){
             double ap = x[1];
             double vc = x[2];
             texture_map(map_z, orig_z, f, ap, vc);
-            draw_texture(px, map_z, ap, tex_width, tex_height, Colorscheme::HSV);
+            render::draw_texture(px, map_z, ap, tex_width, tex_height, render::Colorscheme::HSV);
             double surarea = -surface_area(map_z);
             double roughness = Sa(map_z) - max_roughness;
 
