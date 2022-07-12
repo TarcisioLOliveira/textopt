@@ -33,52 +33,12 @@
 #include "MMASolver.hpp"
 #include "param.hpp"
 #include "smooth.hpp"
-
-struct Point{
-    double x, y, z;
-};
-
-struct Vector{
-    double x, y, z;
-};
+#include "util.hpp"
 
 enum Colorscheme{
     GRAYSCALE,
     HSV
 };
-
-inline double triangle_area(std::array<Point, 3> p){
-    Vector v1{p[1].x - p[0].x, p[1].y - p[0].y, p[1].z - p[0].z};
-    Vector v2{p[2].x - p[0].x, p[2].y - p[0].y, p[2].z - p[0].z};
-
-    double A = 0.5*std::sqrt(
-        std::pow(v1.y*v2.z - v2.y*v1.z, 2) +
-        std::pow(v1.x*v2.z - v2.x*v1.z, 2) +
-        std::pow(v1.y*v2.x - v2.y*v1.x, 2)
-    );
-
-    return A;
-}
-
-
-inline double triangle_area_deriv(std::array<Point, 3> p, std::array<double, 3> dz){
-    Vector v1{p[1].x - p[0].x, p[1].y - p[0].y, p[1].z - p[0].z};
-    Vector v2{p[2].x - p[0].x, p[2].y - p[0].y, p[2].z - p[0].z};
-    double dv1 = dz[1] - dz[0];
-    double dv2 = dz[2] - dz[0];
-
-    double A = (0.25/std::sqrt(
-        std::pow(v1.y*v2.z - v2.y*v1.z, 2) +
-        std::pow(v1.x*v2.z - v2.x*v1.z, 2) +
-        std::pow(v1.y*v2.x - v2.y*v1.x, 2)
-    ))*(2*(v1.y*v2.z - v2.y*v1.z)*(v1.y*dv2 - v2.y*dv1) +
-        2*(v1.x*v2.z - v2.x*v1.z)*(v1.x*dv2 - v2.x*dv1) +
-        0
-    );
-
-    return A;
-}
-
 
 void texture_map(std::vector<double>& map_z, const std::vector<double>& orig_z, double f, double ap, double vc){
     using namespace param;
@@ -613,7 +573,7 @@ double surface_area(const std::vector<double>& map_z){
     double A = 0;
     for(size_t x = 0; x < tex_width; x+=2){
         for(size_t y = 0; y < tex_height; y+=2){
-            Point p[9];
+            util::Point p[9];
             size_t blockw = std::min(3ul, tex_width-x);
             size_t blockh = std::min(3ul, tex_height-y);
             if(blockw <= 1 || blockh <= 1){
@@ -621,7 +581,7 @@ double surface_area(const std::vector<double>& map_z){
             }
             for(size_t i = 0; i < blockw; ++i){
                 for(size_t j = 0; j < blockh; ++j){
-                    p[j*3+i] = Point{
+                    p[j*3+i] = util::Point{
                         dimx*(x+i),
                         dimy*(y+j),
                         dimz*map_z[tex_width*(y+j) + (x+i)]
@@ -629,20 +589,20 @@ double surface_area(const std::vector<double>& map_z){
                 }
             }
 
-            A += triangle_area({p[0], p[1], p[4]});
-            A += triangle_area({p[0], p[3], p[4]});
+            A += util::triangle_area({p[0], p[1], p[4]});
+            A += util::triangle_area({p[0], p[3], p[4]});
 
             if(blockw == 3){
-                A += triangle_area({p[1], p[2], p[4]});
-                A += triangle_area({p[2], p[4], p[5]});
+                A += util::triangle_area({p[1], p[2], p[4]});
+                A += util::triangle_area({p[2], p[4], p[5]});
             }
             if(blockh == 3){
-                A += triangle_area({p[3], p[4], p[6]});
-                A += triangle_area({p[4], p[6], p[7]});
+                A += util::triangle_area({p[3], p[4], p[6]});
+                A += util::triangle_area({p[4], p[6], p[7]});
             }
             if(blockw == 3 && blockh == 3){
-                A += triangle_area({p[4], p[5], p[8]});
-                A += triangle_area({p[4], p[7], p[8]});
+                A += util::triangle_area({p[4], p[5], p[8]});
+                A += util::triangle_area({p[4], p[7], p[8]});
             }
         }
     }
@@ -656,7 +616,7 @@ double surface_area_dz(const std::vector<double>& map_z, const std::vector<doubl
     double A = 0;
     for(size_t x = 0; x < tex_width; x+=2){
         for(size_t y = 0; y < tex_height; y+=2){
-            Point p[9];
+            util::Point p[9];
             double dz[9];
             size_t blockw = std::min(3ul, tex_width-x);
             size_t blockh = std::min(3ul, tex_height-y);
@@ -665,7 +625,7 @@ double surface_area_dz(const std::vector<double>& map_z, const std::vector<doubl
             }
             for(size_t i = 0; i < blockw; ++i){
                 for(size_t j = 0; j < blockh; ++j){
-                    p[j*3+i] = Point{
+                    p[j*3+i] = util::Point{
                         dimx*(x+i),
                         dimy*(y+j),
                         dimz*map_z[tex_width*(y+j) + (x+i)]
@@ -674,20 +634,20 @@ double surface_area_dz(const std::vector<double>& map_z, const std::vector<doubl
                 }
             }
 
-            A += triangle_area_deriv({p[0], p[1], p[4]}, {dz[0], dz[1], dz[4]});
-            A += triangle_area_deriv({p[0], p[3], p[4]}, {dz[0], dz[3], dz[4]});
+            A += util::triangle_area_deriv({p[0], p[1], p[4]}, {dz[0], dz[1], dz[4]});
+            A += util::triangle_area_deriv({p[0], p[3], p[4]}, {dz[0], dz[3], dz[4]});
 
             if(blockw == 3){
-                A += triangle_area_deriv({p[1], p[2], p[4]}, {dz[1], dz[2], dz[4]});
-                A += triangle_area_deriv({p[2], p[4], p[5]}, {dz[2], dz[4], dz[5]});
+                A += util::triangle_area_deriv({p[1], p[2], p[4]}, {dz[1], dz[2], dz[4]});
+                A += util::triangle_area_deriv({p[2], p[4], p[5]}, {dz[2], dz[4], dz[5]});
             }
             if(blockh == 3){
-                A += triangle_area_deriv({p[3], p[4], p[6]}, {dz[3], dz[4], dz[6]});
-                A += triangle_area_deriv({p[4], p[6], p[7]}, {dz[4], dz[6], dz[7]});
+                A += util::triangle_area_deriv({p[3], p[4], p[6]}, {dz[3], dz[4], dz[6]});
+                A += util::triangle_area_deriv({p[4], p[6], p[7]}, {dz[4], dz[6], dz[7]});
             }
             if(blockw == 3 && blockh == 3){
-                A += triangle_area_deriv({p[4], p[5], p[8]}, {dz[4], dz[5], dz[8]});
-                A += triangle_area_deriv({p[4], p[7], p[8]}, {dz[4], dz[7], dz[8]});
+                A += util::triangle_area_deriv({p[4], p[5], p[8]}, {dz[4], dz[5], dz[8]});
+                A += util::triangle_area_deriv({p[4], p[7], p[8]}, {dz[4], dz[7], dz[8]});
             }
         }
     }
