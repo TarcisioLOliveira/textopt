@@ -35,6 +35,7 @@
 #include "smooth.hpp"
 #include "util.hpp"
 #include "render.hpp"
+#include "opt_func.hpp"
 
 void texture_map(std::vector<double>& map_z, const std::vector<double>& orig_z, double f, double ap, double vc){
     using namespace param;
@@ -492,115 +493,6 @@ void dzdf(const std::vector<double>& orig_z, double f, double ap, double vc, std
 }
 
 
-double Sa(const std::vector<double>& map_z){
-    using namespace param;
-
-    size_t area = tex_width*tex_height;
-    double sum = -std::accumulate(map_z.begin(), map_z.end(), 0.0, std::plus<double>());
-    sum -= area*max_z; // Depth correction
-
-    return sum/area;
-}
-
-double dSa(const std::vector<double>& dzd, double dmax){
-    using namespace param;
-
-    size_t area = tex_width*tex_height;
-    double sum = -std::accumulate(dzd.begin(), dzd.end(), 0.0, std::plus<double>());
-    sum -= area*dmax; // Depth correction
-
-    return sum/area;
-}
-
-double surface_area(const std::vector<double>& map_z){
-    using namespace param;
-
-    // For a N*M matrix of points, the actual projected surface area is (dimx*dimy)*((N-1)*(M-1))
-    double A = 0;
-    for(size_t x = 0; x < tex_width; x+=2){
-        for(size_t y = 0; y < tex_height; y+=2){
-            util::Point p[9];
-            size_t blockw = std::min(3ul, tex_width-x);
-            size_t blockh = std::min(3ul, tex_height-y);
-            if(blockw <= 1 || blockh <= 1){
-                continue;
-            }
-            for(size_t i = 0; i < blockw; ++i){
-                for(size_t j = 0; j < blockh; ++j){
-                    p[j*3+i] = util::Point{
-                        dimx*(x+i),
-                        dimy*(y+j),
-                        dimz*map_z[tex_width*(y+j) + (x+i)]
-                    };
-                }
-            }
-
-            A += util::triangle_area({p[0], p[1], p[4]});
-            A += util::triangle_area({p[0], p[3], p[4]});
-
-            if(blockw == 3){
-                A += util::triangle_area({p[1], p[2], p[4]});
-                A += util::triangle_area({p[2], p[4], p[5]});
-            }
-            if(blockh == 3){
-                A += util::triangle_area({p[3], p[4], p[6]});
-                A += util::triangle_area({p[4], p[6], p[7]});
-            }
-            if(blockw == 3 && blockh == 3){
-                A += util::triangle_area({p[4], p[5], p[8]});
-                A += util::triangle_area({p[4], p[7], p[8]});
-            }
-        }
-    }
-
-    return A;
-}
-
-double surface_area_dz(const std::vector<double>& map_z, const std::vector<double>& dzd){
-    using namespace param;
-
-    double A = 0;
-    for(size_t x = 0; x < tex_width; x+=2){
-        for(size_t y = 0; y < tex_height; y+=2){
-            util::Point p[9];
-            double dz[9];
-            size_t blockw = std::min(3ul, tex_width-x);
-            size_t blockh = std::min(3ul, tex_height-y);
-            if(blockw <= 1 || blockh <= 1){
-                continue;
-            }
-            for(size_t i = 0; i < blockw; ++i){
-                for(size_t j = 0; j < blockh; ++j){
-                    p[j*3+i] = util::Point{
-                        dimx*(x+i),
-                        dimy*(y+j),
-                        dimz*map_z[tex_width*(y+j) + (x+i)]
-                    };
-                    dz[j*3+i] = dimz*dzd[tex_width*(y+j) + (x+i)];
-                }
-            }
-
-            A += util::triangle_area_deriv({p[0], p[1], p[4]}, {dz[0], dz[1], dz[4]});
-            A += util::triangle_area_deriv({p[0], p[3], p[4]}, {dz[0], dz[3], dz[4]});
-
-            if(blockw == 3){
-                A += util::triangle_area_deriv({p[1], p[2], p[4]}, {dz[1], dz[2], dz[4]});
-                A += util::triangle_area_deriv({p[2], p[4], p[5]}, {dz[2], dz[4], dz[5]});
-            }
-            if(blockh == 3){
-                A += util::triangle_area_deriv({p[3], p[4], p[6]}, {dz[3], dz[4], dz[6]});
-                A += util::triangle_area_deriv({p[4], p[6], p[7]}, {dz[4], dz[6], dz[7]});
-            }
-            if(blockw == 3 && blockh == 3){
-                A += util::triangle_area_deriv({p[4], p[5], p[8]}, {dz[4], dz[5], dz[8]});
-                A += util::triangle_area_deriv({p[4], p[7], p[8]}, {dz[4], dz[7], dz[8]});
-            }
-        }
-    }
-
-    return A;
-
-}
 
 int main(int argc, char* argv[]){
     using namespace param;
@@ -660,19 +552,19 @@ int main(int argc, char* argv[]){
             double vc = x[2];
             texture_map(map_z, orig_z, f, ap, vc);
             render::draw_texture(px, map_z, ap, tex_width, tex_height, render::Colorscheme::HSV);
-            double surarea = -surface_area(map_z);
-            double roughness = Sa(map_z) - max_roughness;
+            double surarea = -opt::surface_area(map_z);
+            double roughness = opt::Sa(map_z) - max_roughness;
 
             dzdf(orig_z, f, ap, vc, df);
             dzdap(orig_z, f, ap, vc, dap);
             dzdvc(orig_z, f, ap, vc, dvc);
 
-            double dsurareadf = -surface_area_dz(map_z, df);
-            double dSadf = dSa(df, dmax_zdf);
-            double dsurareadap = -surface_area_dz(map_z, dap);
-            double dSadap = dSa(dap, dmax_zdap);
-            double dsurareadvc = -surface_area_dz(map_z, dvc);
-            double dSadvc = dSa(dvc, dmax_zdvc);
+            double dsurareadf = -opt::surface_area_dz(map_z, df);
+            double dSadf = opt::dSa(df, dmax_zdf);
+            double dsurareadap = -opt::surface_area_dz(map_z, dap);
+            double dSadap = opt::dSa(dap, dmax_zdap);
+            double dsurareadvc = -opt::surface_area_dz(map_z, dvc);
+            double dSadvc = opt::dSa(dvc, dmax_zdvc);
 
             std::cout << std::endl;
             std::cout << dsurareadf << " " << dSadf << std::endl;

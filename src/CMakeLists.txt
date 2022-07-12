@@ -4,6 +4,7 @@ set(SOURCES
     main.cpp
     MMASolver.cpp
     render.cpp
+    opt_func.cpp
 )
 
 add_executable(${PROJECT_NAME} ${SOURCES})
