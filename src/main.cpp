@@ -50,7 +50,7 @@ int main(int argc, char* argv[]){
     sf::Sprite sprite(img);
     sprite.setPosition(sf::Vector2f(window_width/2-tex_width/2, window_height/2-tex_height/2));
 
-    std::vector<sf::Uint8> px(tex_width*tex_height*4);
+    std::vector<sf::Uint8> px(tex_width*tex_height*4, 255);
 
     std::vector<double> map_z  (tex_width*tex_height);
     std::vector<double> orig_z (tex_width*tex_height);

@@ -20,6 +20,7 @@
 
 #include "render.hpp"
 #include "param.hpp"
+#include <exception>
 
 namespace render{
 
@@ -27,50 +28,34 @@ void draw_texture(std::vector<sf::Uint8>& img, const std::vector<double>& map_z,
     using namespace param;
 
     if(colorscheme == Colorscheme::GRAYSCALE){
-        for(size_t x = 0; x < tex_width; ++x){
-            for(size_t y = 0; y < tex_height; ++y){
-                const double z = map_z[tex_width*y + x];
+        for(size_t i = 0; i < tex_width*tex_height; ++i){
+            const double z = map_z[i];
 
-                sf::Uint8 rgb = (sf::Uint8)std::round(255*(1 + (z-max_z)/(max_z - min_z)));
-                img[(tex_width*y + x)*4+0] = rgb;
-                img[(tex_width*y + x)*4+1] = rgb;
-                img[(tex_width*y + x)*4+2] = rgb;
-                img[(tex_width*y + x)*4+3] = 255;
-            }
+            const sf::Uint8 rgb = static_cast<sf::Uint8>(255*(1 - (max_z-z)/(max_z - min_z)));
+            img[i*4+0] = rgb;
+            img[i*4+1] = rgb;
+            img[i*4+2] = rgb;
         }
     } else if(colorscheme == Colorscheme::HSV){
-        for(size_t x = 0; x < tex_width; ++x){
-            for(size_t y = 0; y < tex_height; ++y){
-                const double z = map_z[tex_width*y + x];
+        const std::vector<double> R{1, 1, 0, 0, 0};
+        const std::vector<double> G{0, 1, 1, 1, 0};
+        const std::vector<double> B{0, 0, 0, 1, 1};
+        const size_t L = R.size()-1;
+        for(size_t i = 0; i < tex_width*tex_height; ++i){
+            const double z = map_z[i];
 
-                double norm = -(z-max_z)/(max_z - min_z);
-                norm = std::max(0.0, std::min(1.0, norm));
-                double r, g, b;
-                if(norm <= 0.25){
-                    r = 1;
-                    g = norm*4;
-                    b = 0;
-                } else if(norm <= 0.5){
-                    r = 1 - (norm-0.25)*4;
-                    g = 1;
-                    b = 0;
-                } else if(norm <= 0.75){
-                    r = 0;
-                    g = 1;
-                    b = (norm-0.5)*4;
-                } else {
-                    r = 0;
-                    g = 1 - (norm-0.75)*4;
-                    b = 1;
-                }
+            double norm = (max_z-z)/(max_z - min_z);
+            norm = std::max(0.0, std::min(1.0, norm));
+            const int low = norm*L;
+            const double rem = norm*L - low;
+            const double r = R[low] + rem*(R[low+1]-R[low]);
+            const double g = G[low] + rem*(G[low+1]-G[low]);
+            const double b = B[low] + rem*(B[low+1]-B[low]);
 
-                img[(tex_width*y + x)*4+0] = (sf::Uint8)std::round(255*r);
-                img[(tex_width*y + x)*4+1] = (sf::Uint8)std::round(255*g);
-                img[(tex_width*y + x)*4+2] = (sf::Uint8)std::round(255*b);
-                img[(tex_width*y + x)*4+3] = 255;
-            }
+            img[i*4+0] = static_cast<sf::Uint8>(255*r);
+            img[i*4+1] = static_cast<sf::Uint8>(255*g);
+            img[i*4+2] = static_cast<sf::Uint8>(255*b);
         }
-
     }
 }
 
