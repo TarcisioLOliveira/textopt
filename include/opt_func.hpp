@@ -17,6 +17,14 @@
  *   along with textopt.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
+/**
+ * @file opt_func.hpp
+ *
+ * @brief Optimization functions.
+ *
+ * Functions used for the optimization routine (objective function and
+ * restrictions) as well as their derivatives.
+ */
 
 #ifndef OPT_FUNC_HPP
 #define OPT_FUNC_HPP
@@ -25,12 +33,44 @@
 
 namespace opt{
 
+/**
+ * Mean surface roughness.
+ *
+ * @param map_z Texture.
+ *
+ * @return Mean surface roughness.
+ */
 double Sa(const std::vector<double>& map_z);
 
+/**
+ * Derivative of mean surface roughness.
+ *
+ * @param dzd Derivative of texture in relation to design variable.
+ * @param dmax Derivative of `max_z` in relation to design variable.
+ *
+ * @return Derivative of mean surface roughness.
+ */
 double dSa(const std::vector<double>& dzd, double dmax);
 
+/**
+ * Texture's surface area.
+ * Calculates the area by diving the 3D points into multiple triangles.
+ * Inspired by (JENNESS, 2004).
+ *
+ * @param map_z Texture.
+ *
+ * @return Texture's surface area.
+ */
 double surface_area(const std::vector<double>& map_z);
 
+/**
+ * Derivative of texture's surface area.
+ *
+ * @param map_z Texture.
+ * @param dzd Derivative of texture in relation to design variable.
+ *
+ * @return Derivative of texture's surface area.
+ */
 double surface_area_dz(const std::vector<double>& map_z, const std::vector<double>& dzd);
 
 }
