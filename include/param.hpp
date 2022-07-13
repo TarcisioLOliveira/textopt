@@ -52,6 +52,7 @@ inline const double dimy = dim;
 inline const double dimz = dim;
 
 // Tool parameters
+// Currently only alpha1 == alpha2 is supported.
 inline const double alpha1 = 60*M_PI/180; // Back angle (descending)
 inline const double alpha2 = 60*M_PI/180; // Front angle (ascending)
 inline const double r = 20/dim; // [um] Tool radius
