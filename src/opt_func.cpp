@@ -29,7 +29,7 @@ namespace opt{
 double Sa(const std::vector<double>& map_z){
     using namespace param;
 
-    size_t area = tex_width*tex_height;
+    const size_t area = tex_width*tex_height;
     double sum = -std::accumulate(map_z.begin(), map_z.end(), 0.0, std::plus<double>());
     sum -= area*max_z; // Depth correction
 
@@ -39,7 +39,7 @@ double Sa(const std::vector<double>& map_z){
 double dSa(const std::vector<double>& dzd, double dmax){
     using namespace param;
 
-    size_t area = tex_width*tex_height;
+    const size_t area = tex_width*tex_height;
     double sum = -std::accumulate(dzd.begin(), dzd.end(), 0.0, std::plus<double>());
     sum -= area*dmax; // Depth correction
 
@@ -54,8 +54,8 @@ double surface_area(const std::vector<double>& map_z){
     for(size_t x = 0; x < tex_width; x+=2){
         for(size_t y = 0; y < tex_height; y+=2){
             util::Point p[9];
-            size_t blockw = std::min(3ul, tex_width-x);
-            size_t blockh = std::min(3ul, tex_height-y);
+            const size_t blockw = std::min(3ul, tex_width-x);
+            const size_t blockh = std::min(3ul, tex_height-y);
             if(blockw <= 1 || blockh <= 1){
                 continue;
             }
@@ -98,8 +98,8 @@ double surface_area_dz(const std::vector<double>& map_z, const std::vector<doubl
         for(size_t y = 0; y < tex_height; y+=2){
             util::Point p[9];
             double dz[9];
-            size_t blockw = std::min(3ul, tex_width-x);
-            size_t blockh = std::min(3ul, tex_height-y);
+            const size_t blockw = std::min(3ul, tex_width-x);
+            const size_t blockh = std::min(3ul, tex_height-y);
             if(blockw <= 1 || blockh <= 1){
                 continue;
             }

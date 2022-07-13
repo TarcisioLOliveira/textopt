@@ -29,7 +29,7 @@ void draw_texture(std::vector<sf::Uint8>& img, const std::vector<double>& map_z,
     if(colorscheme == Colorscheme::GRAYSCALE){
         for(size_t x = 0; x < tex_width; ++x){
             for(size_t y = 0; y < tex_height; ++y){
-                double z = map_z[tex_width*y + x];
+                const double z = map_z[tex_width*y + x];
 
                 sf::Uint8 rgb = (sf::Uint8)std::round(255*(1 + (z-max_z)/(max_z - min_z)));
                 img[(tex_width*y + x)*4+0] = rgb;
@@ -41,7 +41,7 @@ void draw_texture(std::vector<sf::Uint8>& img, const std::vector<double>& map_z,
     } else if(colorscheme == Colorscheme::HSV){
         for(size_t x = 0; x < tex_width; ++x){
             for(size_t y = 0; y < tex_height; ++y){
-                double z = map_z[tex_width*y + x];
+                const double z = map_z[tex_width*y + x];
 
                 double norm = -(z-max_z)/(max_z - min_z);
                 norm = std::max(0.0, std::min(1.0, norm));

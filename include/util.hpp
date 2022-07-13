@@ -54,11 +54,11 @@ struct Vector{
  *
  * @return Calculated area.
  */
-inline double triangle_area(std::array<Point, 3> p){
-    Vector v1{p[1].x - p[0].x, p[1].y - p[0].y, p[1].z - p[0].z};
-    Vector v2{p[2].x - p[0].x, p[2].y - p[0].y, p[2].z - p[0].z};
+inline double triangle_area(const std::array<Point, 3>& p){
+    const Vector v1{p[1].x - p[0].x, p[1].y - p[0].y, p[1].z - p[0].z};
+    const Vector v2{p[2].x - p[0].x, p[2].y - p[0].y, p[2].z - p[0].z};
 
-    double A = 0.5*std::sqrt(
+    const double A = 0.5*std::sqrt(
         std::pow(v1.y*v2.z - v2.y*v1.z, 2) +
         std::pow(v1.x*v2.z - v2.x*v1.z, 2) +
         std::pow(v1.y*v2.x - v2.y*v1.x, 2)
@@ -77,13 +77,13 @@ inline double triangle_area(std::array<Point, 3> p){
  *
  * @return Derivative of the calculated area.
  */
-inline double triangle_area_deriv(std::array<Point, 3> p, std::array<double, 3> dz){
-    Vector v1{p[1].x - p[0].x, p[1].y - p[0].y, p[1].z - p[0].z};
-    Vector v2{p[2].x - p[0].x, p[2].y - p[0].y, p[2].z - p[0].z};
-    double dv1 = dz[1] - dz[0];
-    double dv2 = dz[2] - dz[0];
+inline double triangle_area_deriv(const std::array<Point, 3>& p, const std::array<double, 3>& dz){
+    const Vector v1{p[1].x - p[0].x, p[1].y - p[0].y, p[1].z - p[0].z};
+    const Vector v2{p[2].x - p[0].x, p[2].y - p[0].y, p[2].z - p[0].z};
+    const double dv1 = dz[1] - dz[0];
+    const double dv2 = dz[2] - dz[0];
 
-    double A = (0.25/std::sqrt(
+    const double A = (0.25/std::sqrt(
         std::pow(v1.y*v2.z - v2.y*v1.z, 2) +
         std::pow(v1.x*v2.z - v2.x*v1.z, 2) +
         std::pow(v1.y*v2.x - v2.y*v1.x, 2)

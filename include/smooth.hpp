@@ -63,32 +63,32 @@ inline double floor(double v){
     // swt[x_] := (1 + trg[(2 x - 1)/4] sqr[x/2])/2;
     // flr[x_] := x-swt[x]
 
-    double p1x = (1.0 - param::FLOORD)*std::sin(2*M_PI*((2*v-1)/4));
-    double p2x = std::sin(2*M_PI*(v/2))/param::FLOORD;
+    const double p1x = (1.0 - param::FLOORD)*std::sin(2*M_PI*((2*v-1)/4));
+    const double p2x = std::sin(2*M_PI*(v/2))/param::FLOORD;
 
-    double p1 = 1 - 2*std::acos(p1x)/M_PI;
-    double p2 = 2 * std::atan(p2x)/M_PI;
-    double sawtooth = (1 + p1 * p2)/2;
+    const double p1 = 1 - 2*std::acos(p1x)/M_PI;
+    const double p2 = 2 * std::atan(p2x)/M_PI;
+    const double sawtooth = (1 + p1 * p2)/2;
 
-    double result = v - sawtooth;
+    const double result = v - sawtooth;
 
     return result;
 }
 
 inline double floor_deriv(double v){
-    double p1x = (1.0 - param::FLOORD)*std::sin(2*M_PI*((2*v-1)/4));
-    double dp1x = (1.0 - param::FLOORD)*std::cos(2*M_PI*((2*v-1)/4))*2*M_PI*2/4;
+    const double p1x = (1.0 - param::FLOORD)*std::sin(2*M_PI*((2*v-1)/4));
+    const double dp1x = (1.0 - param::FLOORD)*std::cos(2*M_PI*((2*v-1)/4))*2*M_PI*2/4;
 
-    double p2x = std::sin(2*M_PI*(v/2))/param::FLOORD;
-    double dp2x = (std::cos(2*M_PI*(v/2))/param::FLOORD)*2*M_PI/2;
+    const double p2x = std::sin(2*M_PI*(v/2))/param::FLOORD;
+    const double dp2x = (std::cos(2*M_PI*(v/2))/param::FLOORD)*2*M_PI/2;
 
-    double p1 = 1 - 2*std::acos(p1x)/M_PI;
-    double dp1 = (2.0/(std::sqrt(1 - p1x*p1x)*M_PI))*dp1x;
-    double p2 = 2 * std::atan(p2x)/M_PI;
-    double dp2 = (2.0/((p2x*p2x + 1)*M_PI))*dp2x;
-    double dsawtooth = (1 + dp1 * p2 + p1 * dp2)/2;
+    const double p1 = 1 - 2*std::acos(p1x)/M_PI;
+    const double dp1 = (2.0/(std::sqrt(1 - p1x*p1x)*M_PI))*dp1x;
+    const double p2 = 2 * std::atan(p2x)/M_PI;
+    const double dp2 = (2.0/((p2x*p2x + 1)*M_PI))*dp2x;
+    const double dsawtooth = (1 + dp1 * p2 + p1 * dp2)/2;
 
-    double result = 1.0 - dsawtooth;
+    const double result = 1.0 - dsawtooth;
     
     return result;
 }

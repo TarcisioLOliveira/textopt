@@ -86,24 +86,24 @@ int main(int argc, char* argv[]){
         window.clear(sf::Color::Black);
 
         if(ch > 1e-8){
-            double f = x[0];
-            double ap = x[1];
-            double vc = x[2];
+            const double f = x[0];
+            const double ap = x[1];
+            const double vc = x[2];
             texture::map(map_z, orig_z, f, ap, vc);
             render::draw_texture(px, map_z, ap, tex_width, tex_height, render::Colorscheme::HSV);
-            double surarea = -opt::surface_area(map_z);
-            double roughness = opt::Sa(map_z) - max_roughness;
+            const double surarea = -opt::surface_area(map_z);
+            const double roughness = opt::Sa(map_z) - max_roughness;
 
             texture::dzdf(orig_z, f, ap, vc, df);
             texture::dzdap(orig_z, f, ap, vc, dap);
             texture::dzdvc(orig_z, f, ap, vc, dvc);
 
-            double dsurareadf = -opt::surface_area_dz(map_z, df);
-            double dSadf = opt::dSa(df, dmax_zdf);
-            double dsurareadap = -opt::surface_area_dz(map_z, dap);
-            double dSadap = opt::dSa(dap, dmax_zdap);
-            double dsurareadvc = -opt::surface_area_dz(map_z, dvc);
-            double dSadvc = opt::dSa(dvc, dmax_zdvc);
+            const double dsurareadf = -opt::surface_area_dz(map_z, df);
+            const double dSadf = opt::dSa(df, dmax_zdf);
+            const double dsurareadap = -opt::surface_area_dz(map_z, dap);
+            const double dSadap = opt::dSa(dap, dmax_zdap);
+            const double dsurareadvc = -opt::surface_area_dz(map_z, dvc);
+            const double dSadvc = opt::dSa(dvc, dmax_zdvc);
 
             std::cout << std::endl;
             std::cout << dsurareadf << " " << dSadf << std::endl;
