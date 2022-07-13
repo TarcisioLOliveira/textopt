@@ -17,6 +17,13 @@
  *   along with textopt.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
+/**
+ * @file param.hpp
+ *
+ * @brief Simulation parameters.
+ *
+ * Collection of global variables used as parameters for many functions.
+ */
 
 #ifndef PARAM_HPP
 #define PARAM_HPP
@@ -25,6 +32,7 @@
 
 namespace param{
 
+// Texture dimensions
 inline const size_t tex_width = 600;
 inline const size_t tex_height = 600;
 
@@ -33,17 +41,29 @@ inline const double FLOORD = 1e-10; // smooth_floor() precision
 inline const double ABS_EPS = 1e-15; // smooth_abs() precision
 inline const double YOFF = 0.001; // Workaround over smooth_floor() being off by -0.5 for integers
 
+// Unit scaling. Currently defaulting to um as base unit for texture.
+// There is naive support for different scales in different directions,
+// but it may break tool radius and ellipse shape if their different.
+// Defaults to same scale to all sides.
 inline const double dim_scale = 1e6; // m to um
 inline const double dim = 1;
 inline const double dimx = dim;
 inline const double dimy = dim;
 inline const double dimz = dim;
 
-inline const double alpha1 = 60*M_PI/180;
-inline const double alpha2 = 60*M_PI/180;
-inline const double r = 20/dim; // um
-inline double max_z = 0; // Used to calculate Sa, so uses smooth_min
+// Tool parameters
+inline const double alpha1 = 60*M_PI/180; // Back angle (descending)
+inline const double alpha2 = 60*M_PI/180; // Front angle (ascending)
+inline const double r = 20/dim; // [um] Tool radius
+                                
+// Maximum and minimum 
+inline double max_z = 0; // Used to calculate Sa, so uses smooth::min().
+                         // It's actually just an estimate, and ends up
+                         // falling slightly short because of the oscillations
+                         // calculated in. Using smooth::min() for the entire
+                         // texture would be impossible, though.
 inline double min_z = 0; // Used only for texture display, so uses std::min()
+// Derivatives of max_z
 inline double dmax_zdf = 0; 
 inline double dmax_zdap = 0; 
 inline double dmax_zdvc = 0; 
@@ -60,7 +80,7 @@ inline const double fz = 51*1e5;
 // Phase [rad]
 inline const double phix = 20*M_PI/180;
 inline const double phiz = 0;
-
+// Cyrlinder radius, to simulate the phase change with the turn of the cylinder.
 inline const double cylinder_radius = 6*1e-3*dim_scale; // [um]
 
 // Ultrasonic elliptical turning
