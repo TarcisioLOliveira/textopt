@@ -17,6 +17,13 @@
  *   along with textopt.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
+/**
+ * @file render.hpp
+ *
+ * @brief Texture rendering.
+ *
+ * Functions and utilities to render the calculated texture.
+ */
 
 #ifndef RENDER_HPP
 #define RENDER_HPP
@@ -25,11 +32,21 @@
 
 namespace render{
 
+/**
+ * Available colorschemes.
+ */
 enum Colorscheme{
     GRAYSCALE,
     HSV
 };
 
+/**
+ * Draws the texture using the desired colorscheme.
+ * 
+ * @param img Image vector.
+ * @param map_z Texture.
+ * @param colorscheme Colorscheme to be used.
+ */
 void draw_texture(std::vector<sf::Uint8>& img, const std::vector<double>& map_z, Colorscheme colorscheme);
 
 }

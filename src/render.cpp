@@ -37,6 +37,8 @@ void draw_texture(std::vector<sf::Uint8>& img, const std::vector<double>& map_z,
             img[i*4+2] = rgb;
         }
     } else if(colorscheme == Colorscheme::HSV){
+        // Uses the HSV colorscheme, going from red to blue passing through
+        // green, imitating a common colorscheme used in surface topography.
         const std::vector<double> R{1, 1, 0, 0, 0};
         const std::vector<double> G{0, 1, 1, 1, 0};
         const std::vector<double> B{0, 0, 0, 1, 1};
