@@ -24,7 +24,7 @@
 
 namespace render{
 
-void draw_texture(std::vector<sf::Uint8>& img, const std::vector<double>& map_z, double ap, size_t w, size_t h, Colorscheme colorscheme){
+void draw_texture(std::vector<sf::Uint8>& img, const std::vector<double>& map_z, Colorscheme colorscheme){
     using namespace param;
 
     if(colorscheme == Colorscheme::GRAYSCALE){

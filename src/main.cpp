@@ -90,7 +90,7 @@ int main(int argc, char* argv[]){
             const double ap = x[1];
             const double vc = x[2];
             texture::map(map_z, orig_z, f, ap, vc);
-            render::draw_texture(px, map_z, ap, tex_width, tex_height, render::Colorscheme::HSV);
+            render::draw_texture(px, map_z, render::Colorscheme::HSV);
             const double surarea = -opt::surface_area(map_z);
             const double roughness = opt::Sa(map_z) - max_roughness;
 
