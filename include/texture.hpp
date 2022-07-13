@@ -25,12 +25,51 @@
 
 namespace texture{
 
+/**
+ * Generate texture based on cutting parameters, parameters in param.hpp, and
+ * the original texture.
+ *
+ * Current tests haven't been using orig_z, so it's not currently supported.
+ *
+ * @param map_z Resulting texture.
+ * @param orig_z Original texture.
+ * @param f Feed rate.
+ * @param ap Cutting depth.
+ * @param vc Cutting velocity.
+ */
 void map(std::vector<double>& map_z, const std::vector<double>& orig_z, double f, double ap, double vc);
 
+/**
+ * Calculate derivative of depth (z) in relation to cutting velocity (vc).
+ *
+ * @param orig_z Original texture.
+ * @param f Feed rate.
+ * @param ap Cutting depth.
+ * @param vc Cutting velocity.
+ * @param dzdvc Resulting derivative at every point.
+ */
 void dzdvc(const std::vector<double>& orig_z, double f, double ap, double vc, std::vector<double>& dzdvc);
 
+/**
+ * Calculate derivative of depth (z) in relation to cutting depth (ap).
+ *
+ * @param orig_z Original texture.
+ * @param f Feed rate.
+ * @param ap Cutting depth.
+ * @param vc Cutting velocity.
+ * @param dzdap Resulting derivative at every point.
+ */
 void dzdap(const std::vector<double>& orig_z, double f, double ap, double vc, std::vector<double>& dzdap);
 
+/**
+ * Calculate derivative of depth (z) in relation to feed rate (f).
+ *
+ * @param orig_z Original texture.
+ * @param f Feed rate.
+ * @param ap Cutting depth.
+ * @param vc Cutting velocity.
+ * @param dzdf Resulting derivative at every point.
+ */
 void dzdf(const std::vector<double>& orig_z, double f, double ap, double vc, std::vector<double>& dzdf);
 
 }

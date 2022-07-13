@@ -30,6 +30,8 @@ void map(std::vector<double>& map_z, const std::vector<double>& orig_z, double f
     using namespace param;
 
     vc *= dim_scale;
+
+    // Line parameters for tool slopes.
     const double y1 = -std::sqrt((std::pow(std::tan(alpha1)*r, 2))/(std::pow(std::tan(alpha1), 2)+1));
     const double y2 =  std::sqrt((std::pow(std::tan(alpha2)*r, 2))/(std::pow(std::tan(alpha2), 2)+1));
 
