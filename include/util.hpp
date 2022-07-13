@@ -47,8 +47,7 @@ struct Vector{
 };
 
 /**
- * Calculates an area from three 3D points, as if it were a triangle.
- * Inspired by (JENNESS, 2004).
+ * Calculates the area of a triangle.
  *
  * @param p Array of 3 Point instances.
  *
