@@ -15,6 +15,7 @@ set(CMAKE_CXX_STANDARD 17)
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 find_package(SFML COMPONENTS system window graphics REQUIRED)
+find_package(OpenMP)
 
 if(WIN32 OR CYGWIN)
     list(APPEND GMSH_LIB winmm wsock32 ws2_32 psapi)

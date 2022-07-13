@@ -10,7 +10,12 @@ set(SOURCES
 
 add_executable(${PROJECT_NAME} ${SOURCES})
 
-target_link_libraries(${PROJECT_NAME} sfml-graphics)
+set(REQ_LIBS sfml-graphics)
+if(OpenMP_CXX_FOUND)
+    target_link_libraries(${PROJECT_NAME} ${REQ_LIBS} OpenMP::OpenMP_CXX)
+else()
+    target_link_libraries(${PROJECT_NAME} ${REQ_LIBS})
+endif()
 
 install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION .
                                 LIBRARY DESTINATION .
