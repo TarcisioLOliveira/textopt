@@ -187,7 +187,7 @@ void dzdvc(const std::vector<double>& orig_z, double f, double ap, double vc, st
         const double y = static_cast<double>(Y);
 
         const double mult = smooth::abs(smooth::floor( (y + YOFF) / f));
-        const double dmult = 0;
+        // const double dmult = 0;
 
         const double perimeter = 2*M_PI*cylinder_radius;
 
@@ -201,7 +201,6 @@ void dzdvc(const std::vector<double>& orig_z, double f, double ap, double vc, st
         const double dphiz_cur = dpdz - smooth::floor_deriv((phase_diff_z)/(2*M_PI))*dpdz;
 
         const double xoffset_uet = mult*perimeter;
-        const double dxoff_uet = dmult*perimeter;
 
         if(y >= line_root1/std::tan(alpha1) + mult*f && y <= -line_root2/std::tan(alpha2) + mult*f){
             for(size_t X = 0; X < tex_width; ++X){
@@ -214,13 +213,12 @@ void dzdvc(const std::vector<double>& orig_z, double f, double ap, double vc, st
                 const double doscilldvc = Az*std::cos(2*M_PI*fz*newx*dimx/vc + phiz_cur)*(2*M_PI*fz*(dnewxdvc*dimx*vc - newx*dimx)/(vc*vc) + dphiz_cur);
 
                 const double xcirc = x + xoffset_uet;
-                const double dxcirc = dxoff_uet;
 
                 const double mult_uet = smooth::abs(smooth::floor(xcirc / delta_uet));
-                const double dmult_uet = smooth::abs_deriv(smooth::floor(xcirc / delta_uet))*smooth::floor_deriv(xcirc / delta_uet)*(dxcirc*delta_uet - dduetdvc*xcirc)/(delta_uet*delta_uet);
+                const double dmult_uet = smooth::abs_deriv(smooth::floor(xcirc / delta_uet))*smooth::floor_deriv(xcirc / delta_uet)*(-xcirc)/(delta_uet*delta_uet)*dduetdvc;
 
                 const double x_uet = (xcirc - mult_uet*delta_uet)*Ax_uet/delta_uet - Ax_uet/2;
-                const double dx_uet = Ax_uet*(dxcirc*delta_uet - dduetdvc*xcirc)/(delta_uet*delta_uet) - Ax_uet*dmult_uet;
+                const double dx_uet = -((Ax_uet*xcirc)/(delta_uet*delta_uet))*dduetdvc - Ax_uet*dmult_uet;
 
                 const double uet_effect = Az_uet*(1.0 - std::sqrt(1.0 - std::pow(x_uet/Ax_uet, 2)));
                 const double duet = -0.5*(Az_uet/std::sqrt(1.0 - std::pow(x_uet/Ax_uet, 2)))*(-2)*(x_uet/Ax_uet)*(dx_uet/Ax_uet);
