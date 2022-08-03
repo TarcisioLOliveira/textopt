@@ -436,7 +436,7 @@ void dzdf(const std::vector<double>& orig_z, double f, double ap, double vc, std
                 const double dxcirc = dxoff_uet;
 
                 const double mult_uet = smooth::abs(smooth::floor(xcirc / delta_uet));
-                const double dmult_uet = smooth::abs_deriv(smooth::floor(xcirc / delta_uet))*smooth::floor_deriv(xcirc / delta_uet)*dxcirc;
+                const double dmult_uet = smooth::abs_deriv(smooth::floor(xcirc / delta_uet))*smooth::floor_deriv(xcirc / delta_uet)*dxcirc/delta_uet;
 
                 const double x_uet = (xcirc - mult_uet*delta_uet)*Ax_uet/delta_uet - Ax_uet/2;
                 const double dx_uet = Ax_uet*dxcirc/delta_uet - Ax_uet*dmult_uet;
