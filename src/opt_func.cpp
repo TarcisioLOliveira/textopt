@@ -31,9 +31,9 @@ double Sa(const std::vector<double>& map_z){
 
     const size_t area = tex_width*tex_height;
     double sum = -std::accumulate(map_z.begin(), map_z.end(), 0.0, std::plus<double>());
-    sum -= area*max_z; // Depth correction
+    sum /= area;
 
-    return sum/area;
+    return sum + max_z; // Depth correction
 }
 
 double dSa(const std::vector<double>& dzd, double dmax){
@@ -41,9 +41,9 @@ double dSa(const std::vector<double>& dzd, double dmax){
 
     const size_t area = tex_width*tex_height;
     double sum = -std::accumulate(dzd.begin(), dzd.end(), 0.0, std::plus<double>());
-    sum -= area*dmax; // Depth correction
+    sum /= area;
 
-    return sum/area;
+    return sum + dmax; // Depth correction
 }
 
 double surface_area(const std::vector<double>& map_z){
