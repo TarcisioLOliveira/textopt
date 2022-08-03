@@ -23,6 +23,7 @@
 #include "texture.hpp"
 #include "param.hpp"
 #include "smooth.hpp"
+#include <iostream>
 
 namespace texture{
 
@@ -63,8 +64,8 @@ void map(std::vector<double>& map_z, const std::vector<double>& orig_z, double f
     const double max_intersec = -smooth::min({-intersec1, -intersec2});
     // If one is greater than zero, max_z must be zero. Otherwise, it's
     // the lesser one.
-    max_z = smooth::min({0, max_intersec});
-    min_z = 0;
+    max_z = smooth::min({0, max_intersec}) + Az;// + Az_uet;
+    min_z = -(ap + Az);
 
     const double delta_uet = vc/f_uet;
     std::vector<double> newz(tex_width);
@@ -143,7 +144,6 @@ void map(std::vector<double>& map_z, const std::vector<double>& orig_z, double f
             }
         }
     }
-    min_z = *std::min_element(map_z.begin(), map_z.end());
 }
 
 void dzdvc(const std::vector<double>& orig_z, double f, double ap, double vc, std::vector<double>& dzdvc){

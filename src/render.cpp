@@ -31,7 +31,7 @@ void draw_texture(std::vector<sf::Uint8>& img, const std::vector<double>& map_z,
         for(size_t i = 0; i < tex_width*tex_height; ++i){
             const double z = map_z[i];
 
-            const sf::Uint8 rgb = static_cast<sf::Uint8>(255*(1 - (max_z-z)/(max_z - min_z)));
+            const sf::Uint8 rgb = static_cast<sf::Uint8>(255*(1 - (max_z - z)/(max_z - min_z)));
             img[i*4+0] = rgb;
             img[i*4+1] = rgb;
             img[i*4+2] = rgb;
@@ -46,9 +46,8 @@ void draw_texture(std::vector<sf::Uint8>& img, const std::vector<double>& map_z,
         for(size_t i = 0; i < tex_width*tex_height; ++i){
             const double z = map_z[i];
 
-            double norm = (max_z-z)/(max_z - min_z);
-            norm = std::max(0.0, std::min(1.0, norm));
-            const int low = norm*L;
+            double norm = (max_z - z)/(max_z - min_z);
+            const double low = std::floor(norm*L);
             const double rem = norm*L - low;
             const double r = R[low] + rem*(R[low+1]-R[low]);
             const double g = G[low] + rem*(G[low+1]-G[low]);
