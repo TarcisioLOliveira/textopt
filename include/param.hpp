@@ -33,8 +33,8 @@
 namespace param{
 
 // Texture dimensions
-inline const size_t tex_width = 600;
-inline const size_t tex_height = 600;
+inline const size_t tex_width  = 400;
+inline const size_t tex_height = 400;
 
 inline const double MULT = -1; // Exponent for smooth_min()
 inline const double FLOORD = 1e-10; // smooth_floor() precision
@@ -45,7 +45,7 @@ inline const double YOFF = 0.001; // Workaround over smooth_floor() being off by
 // There is naive support for different scales in different directions,
 // but it may break tool radius and ellipse shape if their different.
 // Defaults to same scale to all sides.
-inline const double dim_scale = 1e6; // m to um
+inline const double dim_scale = 1e3; // mm to um
 inline const double dim = 1;
 inline const double dimx = dim;
 inline const double dimy = dim;
@@ -77,13 +77,13 @@ inline double dmax_zdvc = 0;
 inline const double Ax = 0.5;
 inline const double Az = 0.1;
 // Frequency [Hz]
-inline const double fx = 19*1e5;
-inline const double fz = 51*1e5;
+inline const double fx = 19*1e6;
+inline const double fz = 51*1e6;
 // Phase [rad]
 inline const double phix = 20*M_PI/180;
 inline const double phiz = 0;
 // Cyrlinder radius, to simulate the phase change with the turn of the cylinder.
-inline const double cylinder_radius = 6*1e-3*dim_scale; // [um]
+inline const double cylinder_radius = 6*dim_scale; // [um]
 
 // Ultrasonic elliptical turning
 inline const double f_uet = 20000; // [Hz]
