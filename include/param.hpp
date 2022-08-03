@@ -63,7 +63,8 @@ inline double max_z = 0; // Used to calculate Sa, so uses smooth::min().
                          // falling slightly short because of the oscillations
                          // calculated in. Using smooth::min() for the entire
                          // texture would be impossible, though.
-inline double min_z = 0; // Used only for texture display, so uses std::min()
+                         
+inline double min_z = 0; // Used only for texture display, so uses std::min().
 // Derivatives of max_z
 inline double dmax_zdf = 0; 
 inline double dmax_zdap = 0; 
