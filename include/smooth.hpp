@@ -78,9 +78,10 @@ inline double min_deriv(std::initializer_list<double> x, size_t i){
         frac_bot += exp;
     }
 
-    double sm = frac_top/frac_bot;
+    const double sm = frac_top/frac_bot;
+    const double xj = *(x.begin()+i);
 
-    return (std::exp(param::MULT*(*(x.begin()+i)))/frac_bot)*(1+param::MULT*((*(x.begin()+i))-sm));
+    return (std::exp(param::MULT*xj)/frac_bot)*(1+param::MULT*(xj-sm));
 };
 
 /**
