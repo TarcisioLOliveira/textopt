@@ -63,14 +63,14 @@ int main(int argc, char* argv[]){
     double old_surarea = 1;
 
     const size_t N = 3;
-    double x[N] = {20, 30, 20};
+    double x[N] = {40, 30, 20};
     double xmax[N] = {100, 100, 100};
     double xmin[N] = {0.1, 0.01, 0.01};
     double dSa_vec[N] = {0, 0, 0};
     double dsurarea_vec[N] = {0, 0, 0};
 
     MMASolver mma(N, 1, 0, 1e8, 1);
-    mma.SetAsymptotes(0.001, 0.7, 1.2);
+    mma.SetAsymptotes(0.1, 0.7, 1.2);
 
     while(window.isOpen()){
         sf::Event event;
