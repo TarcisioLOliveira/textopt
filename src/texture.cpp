@@ -96,7 +96,8 @@ void map(std::vector<double>& map_z, const std::vector<double>& orig_z, double f
             // Ultrasonic turning effects
             const double xcirc = x + xoffset_uet;
             const double mult_uet = smooth::abs(smooth::floor(xcirc / delta_uet));
-            const double x_uet = (xcirc - mult_uet*delta_uet)*Ax_uet/delta_uet - Ax_uet/2;
+            // const double x_uet = (xcirc - mult_uet*delta_uet)*Ax_uet/delta_uet - Ax_uet/2;
+            const double x_uet = Ax_uet*(xcirc/delta_uet - mult_uet - 0.5);
             const double uet_effect = Az_uet*(1.0 - std::sqrt(1.0 - std::pow(x_uet/Ax_uet, 2)));
 
             newz[X] = oscillation + uet_effect;
@@ -204,7 +205,8 @@ void dzdvc(const std::vector<double>& orig_z, double f, double ap, double vc, st
             const double mult_uet = smooth::abs(smooth::floor(xcirc / delta_uet));
             const double dmult_uet = smooth::abs_deriv(smooth::floor(xcirc / delta_uet))*smooth::floor_deriv(xcirc / delta_uet)*((-xcirc)/(delta_uet*delta_uet))*dduetdvc;
 
-            const double x_uet = (xcirc - mult_uet*delta_uet)*Ax_uet/delta_uet - Ax_uet/2;
+            // const double x_uet = (xcirc - mult_uet*delta_uet)*Ax_uet/delta_uet - Ax_uet/2;
+            const double x_uet = Ax_uet*(xcirc/delta_uet - mult_uet - 0.5);
             const double dx_uet = -((Ax_uet*xcirc)/(delta_uet*delta_uet))*dduetdvc - Ax_uet*dmult_uet;
 
             const double uet_effect = Az_uet*(1.0 - std::sqrt(1.0 - std::pow(x_uet/Ax_uet, 2)));
@@ -300,7 +302,8 @@ void dzdap(const std::vector<double>& orig_z, double f, double ap, double vc, st
 
             const double xcirc = x + xoffset_uet;
             const double mult_uet = smooth::abs(smooth::floor(xcirc / delta_uet));
-            const double x_uet = (xcirc - mult_uet*delta_uet)*Ax_uet/delta_uet - Ax_uet/2;
+            // const double x_uet = (xcirc - mult_uet*delta_uet)*Ax_uet/delta_uet - Ax_uet/2;
+            const double x_uet = Ax_uet*(xcirc/delta_uet - mult_uet - 0.5);
             const double uet_effect = Az_uet*(1.0 - std::sqrt(1.0 - std::pow(x_uet/Ax_uet, 2)));
 
             newz[X] = oscillation + uet_effect;
@@ -411,7 +414,8 @@ void dzdf(const std::vector<double>& orig_z, double f, double ap, double vc, std
             const double mult_uet = smooth::abs(smooth::floor(xcirc / delta_uet));
             const double dmult_uet = smooth::abs_deriv(smooth::floor(xcirc / delta_uet))*smooth::floor_deriv(xcirc / delta_uet)*dxcirc/delta_uet;
 
-            const double x_uet = (xcirc - mult_uet*delta_uet)*Ax_uet/delta_uet - Ax_uet/2;
+            // const double x_uet = (xcirc - mult_uet*delta_uet)*Ax_uet/delta_uet - Ax_uet/2;
+            const double x_uet = Ax_uet*(xcirc/delta_uet - mult_uet - 0.5);
             const double dx_uet = Ax_uet*dxcirc/delta_uet - Ax_uet*dmult_uet;
 
             const double uet_effect = Az_uet*(1.0 - std::sqrt(1.0 - std::pow(x_uet/Ax_uet, 2)));
