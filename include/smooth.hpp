@@ -151,31 +151,26 @@ inline double floor_deriv(double v){
 }
 
 /**
- * Used mostly to fix smooth::floor() becoming negative when close to zero.
- *
- * Not really smooth, yes, but it's actually more of a workaround. It works
- * better this way, as smooth::abs_deriv() was introducing instability into
- * the optimization process.
+ * Smooth version of the absolute function, based on the square root of squared
+ * number, along with a constant, in order to smooth it at `v=0`.
  *
  * @param v Number to be taken the absolute from.
  *
  * @return Absolute of v.
  */
 inline double abs(double v){
-    return std::abs(v);
-    // return std::sqrt(v*v+ABS_EPS);
+    return std::sqrt(v*v+param::ABS_EPS);
 }
 
 /**
- * Also a workaround. Just returns 1 currently.
+ * Derivative of the smooth version of the absolute function.
  *
  * @param v Number to be taken the absolute from.
  *
  * @return Derivative of smooth::abs(v).
  */
 inline double abs_deriv(double v){
-    // return v/std::sqrt(v*v+ABS_EPS);
-    return 1;
+    return v/std::sqrt(v*v+param::ABS_EPS);
 }
 
 }
