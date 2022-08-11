@@ -63,7 +63,7 @@ int main(int argc, char* argv[]){
     double old_surarea = 1;
 
     const size_t N = 3;
-    double x[N] = {40, 30, 20};
+    double x[N] = {30, 30, 20};
     double xmax[N] = {100, 100, 100};
     double xmin[N] = {0.1, 0.01, 0.01};
     double dSa_vec[N] = {0, 0, 0};
@@ -99,11 +99,11 @@ int main(int argc, char* argv[]){
             texture::dzdvc(orig_z, f, ap, vc, dvc);
 
             const double dsurareadf = -opt::surface_area_dz(map_z, df);
-            const double dSadf = opt::dSa(df, dmax_zdf);
+            const double dSadf = opt::dSa(df, map_z, dmax_zdf, 0);
             const double dsurareadap = -opt::surface_area_dz(map_z, dap);
-            const double dSadap = opt::dSa(dap, dmax_zdap);
+            const double dSadap = opt::dSa(dap, map_z, dmax_zdap, -1);
             const double dsurareadvc = -opt::surface_area_dz(map_z, dvc);
-            const double dSadvc = opt::dSa(dvc, dmax_zdvc);
+            const double dSadvc = opt::dSa(dvc, map_z, dmax_zdvc, 0);
 
             std::cout << std::endl;
             std::cout << dsurareadf << " " << dSadf << std::endl;

@@ -46,11 +46,13 @@ double Sa(const std::vector<double>& map_z);
  * Derivative of mean surface roughness.
  *
  * @param dzd Derivative of texture in relation to design variable.
+ * @param map_z Texture.
  * @param dmax Derivative of `max_z` in relation to design variable.
+ * @param dmax Derivative of `min_z` in relation to design variable.
  *
  * @return Derivative of mean surface roughness.
  */
-double dSa(const std::vector<double>& dzd, double dmax);
+double dSa(const std::vector<double>& dzd, const std::vector<double>& map_z, double dmax, double dmin);
 
 /**
  * Texture's surface area.

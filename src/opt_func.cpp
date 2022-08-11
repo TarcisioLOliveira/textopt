@@ -23,27 +23,37 @@
 #include "opt_func.hpp"
 #include "param.hpp"
 #include "util.hpp"
+#include "smooth.hpp"
 
 namespace opt{
 
 double Sa(const std::vector<double>& map_z){
     using namespace param;
 
+    const double avg = (max_z + min_z)/2;
     const size_t area = tex_width*tex_height;
-    double sum = -std::accumulate(map_z.begin(), map_z.end(), 0.0, std::plus<double>());
-    sum /= area;
+    double Sa = 0;
+    for(double z:map_z){
+        Sa += smooth::abs(z - avg);
+    }
+    Sa /= area;
 
-    return sum + max_z; // Depth correction
+    return Sa;
 }
 
-double dSa(const std::vector<double>& dzd, double dmax){
+double dSa(const std::vector<double>& dzd, const std::vector<double>& map_z, double dmax, double dmin){
     using namespace param;
 
+    const double avg = (max_z + min_z)/2;
+    const double davg = (dmax + dmin)/2;
     const size_t area = tex_width*tex_height;
-    double sum = -std::accumulate(dzd.begin(), dzd.end(), 0.0, std::plus<double>());
-    sum /= area;
+    double dSa = 0;
+    for(size_t i = 0; i < area; ++i){
+        dSa += smooth::abs_deriv(map_z[i] - avg)*(dzd[i] - davg);
+    }
+    dSa /= area;
 
-    return sum + dmax; // Depth correction
+    return dSa;
 }
 
 double surface_area(const std::vector<double>& map_z){
