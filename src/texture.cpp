@@ -30,7 +30,7 @@ namespace texture{
 void map(std::vector<double>& map_z, const std::vector<double>& orig_z, double f, double ap, double vc){
     using namespace param;
 
-    vc *= dim_scale;
+    vc *= 1e6/60;
 
     // Line parameters for tool slopes.
     const double y1 = -std::sqrt((std::pow(std::tan(alpha1)*r, 2))/(std::pow(std::tan(alpha1), 2)+1));
@@ -138,7 +138,7 @@ void map(std::vector<double>& map_z, const std::vector<double>& orig_z, double f
 void dzdvc(const std::vector<double>& orig_z, double f, double ap, double vc, std::vector<double>& dzdvc){
     using namespace param;
 
-    vc *= dim_scale;
+    vc *= 1e6/60;
     const double y1 = -std::sqrt((std::pow(std::tan(alpha1)*r, 2))/(std::pow(std::tan(alpha1), 2)+1));
     const double y2 =  std::sqrt((std::pow(std::tan(alpha2)*r, 2))/(std::pow(std::tan(alpha2), 2)+1));
 
@@ -245,7 +245,7 @@ void dzdvc(const std::vector<double>& orig_z, double f, double ap, double vc, st
 void dzdap(const std::vector<double>& orig_z, double f, double ap, double vc, std::vector<double>& dzdap){
     using namespace param;
 
-    vc *= dim_scale;
+    vc *= 1e6/60;
     const double y1 = -std::sqrt((std::pow(std::tan(alpha1)*r, 2))/(std::pow(std::tan(alpha1), 2)+1));
     const double y2 =  std::sqrt((std::pow(std::tan(alpha2)*r, 2))/(std::pow(std::tan(alpha2), 2)+1));
 
@@ -342,7 +342,7 @@ void dzdap(const std::vector<double>& orig_z, double f, double ap, double vc, st
 void dzdf(const std::vector<double>& orig_z, double f, double ap, double vc, std::vector<double>& dzdf){
     using namespace param;
 
-    vc *= dim_scale;
+    vc *= 1e6/60;
     const double y1 = -std::sqrt((std::pow(std::tan(alpha1)*r, 2))/(std::pow(std::tan(alpha1), 2)+1));
     const double y2 =  std::sqrt((std::pow(std::tan(alpha2)*r, 2))/(std::pow(std::tan(alpha2), 2)+1));
 
