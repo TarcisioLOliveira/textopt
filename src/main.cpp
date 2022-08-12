@@ -63,9 +63,16 @@ int main(int argc, char* argv[]){
     double old_surarea = 1;
 
     const size_t N = 3;
-    double x[N] = {50, 30, 20};
+    double x[N] = {60, 30, 20};
     double xmax[N] = {100, 100, 100};
-    double xmin[N] = {0.1, 0.01, 0.01};
+    double xmin[N] = {2, 0.01, 0.01};
+    // Workaround. When the angles are different, you can't assume that both
+    // edges have the same height when at least one side is within the tool
+    // radius zone. Not sure if it's worth it to adapt to this case, as it
+    // may involve a larger refactor, but this will do for now.
+    if(alpha1 != alpha2){
+        xmin[0] = 2*r;
+    }
     double dSa_vec[N] = {0, 0, 0};
     double dsurarea_vec[N] = {0, 0, 0};
 

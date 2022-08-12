@@ -32,12 +32,28 @@ void map(std::vector<double>& map_z, const std::vector<double>& orig_z, double f
 
     vc *= 1e6/60;
 
-    // Line parameters for tool slopes.
-    const double y1 = -std::sqrt((std::pow(std::tan(alpha1)*r, 2))/(std::pow(std::tan(alpha1), 2)+1));
-    const double y2 =  std::sqrt((std::pow(std::tan(alpha2)*r, 2))/(std::pow(std::tan(alpha2), 2)+1));
+    const double tan1 = std::tan(alpha1);
+    const double tan2 = std::tan(alpha2);
 
-    const double line_root1 = -std::sqrt(r*r - y1*y1) + r - ap + std::tan(alpha1)*(y1+f/2);//-ap + std::tan(alpha1)*f/2;
-    const double line_root2 = -std::sqrt(r*r - y2*y2) + r - ap - std::tan(alpha2)*(y2+f/2); //-ap - std::tan(alpha2)*f/2;
+    // Line parameters for tool slopes.
+    const double y1 = -std::sqrt((std::pow(tan1*r, 2))/(std::pow(tan1, 2)+1));
+    const double y2 =  std::sqrt((std::pow(tan2*r, 2))/(std::pow(tan2, 2)+1));
+
+    // Where the slope lines intersect, so that the height at the edges is the
+    // same for both
+    const double yc = tan2*f/(tan1+tan2);
+
+    // Value of z for y = 0 (with circle center at y = 0).
+    const double b1off = -std::sqrt(r*r - y1*y1) + r - ap + tan1*y1;
+    const double b2off = -std::sqrt(r*r - y2*y2) + r - ap - tan2*y2;
+
+    // Position of the intersection of the two lines relative to the circle's
+    // center
+    const double ycoff = (b1off - b2off)/(tan1 + tan2);
+
+    // Value of z for y = 0 (global)
+    const double line_root1 = -std::sqrt(r*r - y1*y1) + r - ap + tan1*(yc-ycoff+y1);
+    const double line_root2 = -std::sqrt(r*r - y2*y2) + r - ap - tan2*(yc-ycoff+y2);
 
     // Calculate whether the angles of the cutting tool intercept the surface
     // first or are stopped by the feed rate.
@@ -45,26 +61,21 @@ void map(std::vector<double>& map_z, const std::vector<double>& orig_z, double f
     // Check the intersection with the feed rate edges. If they're greater than
     // zero, the cut line is narrower than the feed line, so max height is
     // zero. Otherwise, it's the height at the intersection
-    double intersec1 = 0;
-    double intersec2 = 0;
-    if(y1 + f/2 > 0){
-        // If the radius is smaller than the feed rate, check for the line
-        intersec1 = smooth::min({0, line_root1});
+    //
+    // Both intersections always have the same height, so we only need to check
+    // one of them
+    double intersec = 0;
+    if(yc - ycoff + y1 > 0){
+        // If the intersection between line 1 and the circle is at y > 0, then
+        // the intersection is equal to the line's constant.
+        intersec = line_root1;
     } else {
-        // Check for the circle
-        intersec1 = smooth::min({0, -std::sqrt(r*r - f*f/4) + r - ap});
+        // Otherwise, check where it intersects the circle
+        const double yi = 0 - (yc - ycoff);
+        intersec = -std::sqrt(r*r - yi*yi) + r - ap;
     }
-    if(y2 + f/2 < f){
-        // If the radius is smaller than the feed rate...
-        intersec2 = smooth::min({0, line_root2 + std::tan(alpha2)*f});
-    } else {
-        intersec2 = smooth::min({0, -std::sqrt(r*r - f*f/4) + r - ap});
-    }
-    // Check if one of them is greater than zero
-    const double max_intersec = -smooth::min({-intersec1, -intersec2});
-    // If one is greater than zero, max_z must be zero. Otherwise, it's
-    // the lesser one.
-    max_z = smooth::min({0, max_intersec}) + Az;// + Az_uet;
+    // If it's greater than zero, max_z must be zero
+    max_z = smooth::min({0, intersec}) + Az;// + Az_uet;
     min_z = -(ap + Az);
 
     const double delta_uet = vc/f_uet;
@@ -105,12 +116,13 @@ void map(std::vector<double>& map_z, const std::vector<double>& orig_z, double f
 
         // Tool shape
         double shape_z;
-        if(y <= y1 + mult*f + f/2){
-            shape_z = -std::tan(alpha1)*(y - mult*f) + line_root1;
-        } else if(y <= y2 + mult*f + f/2){
-            shape_z = -std::sqrt(r*r - std::pow(y - mult*f - f/2, 2)) + r - ap;
+        if(y <= y1 + mult*f + (yc - ycoff)){
+            shape_z = -tan1*(y - mult*f) + line_root1;
+        } else if(y <= y2 + mult*f + (yc - ycoff)){
+            const double yy = y - mult*f - (yc - ycoff);
+            shape_z = -std::sqrt(r*r - yy*yy) + r - ap;
         } else {
-            shape_z = std::tan(alpha2)*(y - mult*f) + line_root2;
+            shape_z = tan2*(y - mult*f) + line_root2;
         }
 
         for(size_t X = 0; X < tex_width; ++X){
@@ -139,34 +151,24 @@ void dzdvc(const std::vector<double>& orig_z, double f, double ap, double vc, st
     using namespace param;
 
     vc *= 1e6/60;
-    const double y1 = -std::sqrt((std::pow(std::tan(alpha1)*r, 2))/(std::pow(std::tan(alpha1), 2)+1));
-    const double y2 =  std::sqrt((std::pow(std::tan(alpha2)*r, 2))/(std::pow(std::tan(alpha2), 2)+1));
 
-    const double line_root1 = -std::sqrt(r*r - y1*y1) + r - ap + std::tan(alpha1)*(y1+f/2);//-ap + std::tan(alpha1)*f/2;
-    const double line_root2 = -std::sqrt(r*r - y2*y2) + r - ap - std::tan(alpha2)*(y2+f/2); //-ap - std::tan(alpha2)*f/2;
+    const double tan1 = std::tan(alpha1);
+    const double tan2 = std::tan(alpha2);
+
+    const double y1 = -std::sqrt((std::pow(tan1*r, 2))/(std::pow(tan1, 2)+1));
+    const double y2 =  std::sqrt((std::pow(tan2*r, 2))/(std::pow(tan2, 2)+1));
+
+    const double yc = tan2*f/(tan1+tan2);
+
+    const double b1off = -std::sqrt(r*r - y1*y1) + r - ap + tan1*y1;
+    const double b2off = -std::sqrt(r*r - y2*y2) + r - ap - tan2*y2;
+
+    const double ycoff = (b1off - b2off)/(tan1 + tan2);
+
+    const double line_root1 = -std::sqrt(r*r - y1*y1) + r - ap + tan1*(yc-ycoff+y1);
+    const double line_root2 = -std::sqrt(r*r - y2*y2) + r - ap - tan2*(yc-ycoff+y2);
     
-    // const double dlrdvc1 = 0;
-    // const double dlrdvc2 = 0;
-
-    // double intersec1 = 0;
-    // double intersec2 = 0;
-    // // always zero
-    // double di1 = 0;
-    // double di2 = 0;
-    // if(y1 + f/2 > 0){
-    //     intersec1 = smooth::min({0, line_root1});
-    // } else {
-    //     intersec1 = smooth::min({0, -std::sqrt(r*r - f*f/4) + r - ap});
-    // }
-    // if(y2 + f/2 < f){
-    //     intersec2 = smooth::min({0, line_root2 + std::tan(alpha2)*f});
-    // } else {
-    //     intersec2 = smooth::min({0, -std::sqrt(r*r - f*f/4) + r - ap});
-    // }
-    // double max_intersec = -smooth::min({-intersec1, -intersec2});
-
-    // double dmi = 0;//-smooth::min_deriv({-intersec1, -intersec2}, -intersec1)*(-di1) - smooth::min_deriv({-intersec1, -intersec2}, -intersec2)*(-di2);
-    // dmax_zdvc = 0;//smooth::min_deriv({0, max_intersec}, max_intersec)*dmi;
+    dmax_zdvc = 0;
 
     const double delta_uet = vc/f_uet;
     const double dduetdvc = 1.0/f_uet;
@@ -217,12 +219,13 @@ void dzdvc(const std::vector<double>& orig_z, double f, double ap, double vc, st
         }
             
         double shape_z;
-        if(y <= y1 + mult*f + f/2){
-            shape_z = -std::tan(alpha1)*(y - mult*f) + line_root1;
-        } else if(y <= y2 + mult*f + f/2){
-            shape_z = -std::sqrt(r*r - std::pow(y - mult*f - f/2, 2)) + r - ap;
+        if(y <= y1 + mult*f + (yc - ycoff)){
+            shape_z = -tan1*(y - mult*f) + line_root1;
+        } else if(y <= y2 + mult*f + (yc - ycoff)){
+            const double yy = y - mult*f - (yc - ycoff);
+            shape_z = -std::sqrt(r*r - yy*yy) + r - ap;
         } else {
-            shape_z = std::tan(alpha2)*(y - mult*f) + line_root2;
+            shape_z = tan2*(y - mult*f) + line_root2;
         }
 
         for(size_t X = 0; X < tex_width; ++X){
@@ -246,37 +249,46 @@ void dzdap(const std::vector<double>& orig_z, double f, double ap, double vc, st
     using namespace param;
 
     vc *= 1e6/60;
-    const double y1 = -std::sqrt((std::pow(std::tan(alpha1)*r, 2))/(std::pow(std::tan(alpha1), 2)+1));
-    const double y2 =  std::sqrt((std::pow(std::tan(alpha2)*r, 2))/(std::pow(std::tan(alpha2), 2)+1));
 
-    const double line_root1 = -std::sqrt(r*r - y1*y1) + r - ap + std::tan(alpha1)*(y1+f/2);//-ap + std::tan(alpha1)*f/2;
-    const double line_root2 = -std::sqrt(r*r - y2*y2) + r - ap - std::tan(alpha2)*(y2+f/2); //-ap - std::tan(alpha2)*f/2;
+    const double tan1 = std::tan(alpha1);
+    const double tan2 = std::tan(alpha2);
 
-    const double dlrdap1 = -1;
-    const double dlrdap2 = -1;
+    const double y1 = -std::sqrt((std::pow(tan1*r, 2))/(std::pow(tan1, 2)+1));
+    const double y2 =  std::sqrt((std::pow(tan2*r, 2))/(std::pow(tan2, 2)+1));
 
-    double intersec1 = 0;
-    double intersec2 = 0;
-    double di1 = 0;
-    double di2 = 0;
-    if(y1 + f/2 > 0){
-        intersec1 = smooth::min({0, line_root1});
-        di1 = smooth::min_deriv({0, line_root1}, 1)*dlrdap1;
+    const double yc = tan2*f/(tan1+tan2);
+
+    const double b1off = -std::sqrt(r*r - y1*y1) + r - ap + tan1*y1;
+    const double b2off = -std::sqrt(r*r - y2*y2) + r - ap - tan2*y2;
+
+    const double db1off = -1;
+    const double db2off = -1;
+
+    const double ycoff = (b1off - b2off)/(tan1 + tan2);
+    const double dycoff = (db1off - db2off)/(tan1 + tan2);
+
+    const double line_root1 = -std::sqrt(r*r - y1*y1) + r - ap + tan1*(yc-ycoff+y1);
+    const double line_root2 = -std::sqrt(r*r - y2*y2) + r - ap - tan2*(yc-ycoff+y2);
+
+    const double dlrdap1 = -1 + tan1*(-dycoff);
+    const double dlrdap2 = -1 - tan2*(-dycoff);
+
+    double intersec = 0;
+    double di = 0;
+    if(yc - ycoff + y1 > 0){
+        intersec = line_root1;
+        di = dlrdap1;
     } else {
-        intersec1 = smooth::min({0, -std::sqrt(r*r - f*f/4) + r - ap});
-        di1 = smooth::min_deriv({0, -std::sqrt(r*r - f*f/4) + r - ap}, 1)*(-1);
-    }
-    if(y2 + f/2 < f){
-        intersec2 = smooth::min({0, line_root2 + std::tan(alpha2)*f});
-        di2 = smooth::min_deriv({0, line_root2 + std::tan(alpha2)*f}, 1)*dlrdap2;
-    } else {
-        intersec2 = smooth::min({0, -std::sqrt(r*r - f*f/4) + r - ap});
-        di2 = smooth::min_deriv({0, -std::sqrt(r*r - f*f/4) + r - ap}, 1)*(-1);
-    }
-    const double max_intersec = -smooth::min({-intersec1, -intersec2});
+        const double yi = 0 - (yc - ycoff);
+        const double dyi = dycoff;
 
-    const double dmi = -smooth::min_deriv({-intersec1, -intersec2}, 0)*(-di1) - smooth::min_deriv({-intersec1, -intersec2}, 1)*(-di2);
-    dmax_zdap = smooth::min_deriv({0, max_intersec}, 1)*dmi;
+        const double circ = std::sqrt(r*r - yi*yi);
+        const double dcirc = -yi*dyi/circ;
+
+        intersec = -circ + r - ap;
+        di = -dcirc - 1;
+    }
+    dmax_zdap = smooth::min_deriv({0, intersec}, 1)*di;
 
     const double delta_uet = vc/f_uet;
     std::vector<double> newz(tex_width);
@@ -311,14 +323,20 @@ void dzdap(const std::vector<double>& orig_z, double f, double ap, double vc, st
 
         double shape_z;
         double dznewdap;
-        if(y <= y1 + mult*f + f/2){
-            shape_z = -std::tan(alpha1)*(y - mult*f) + line_root1;
+        if(y <= y1 + mult*f + (yc - ycoff)){
+            shape_z = -tan1*(y - mult*f) + line_root1;
             dznewdap = dlrdap1;
-        } else if(y <= y2 + mult*f + f/2){
-            shape_z = -std::sqrt(r*r - std::pow(y - mult*f - f/2, 2)) + r - ap;
-            dznewdap = -1;
+        } else if(y <= y2 + mult*f + (yc - ycoff)){
+            const double yy = y - mult*f - (yc - ycoff);
+            const double dyy = dycoff;
+
+            const double circ = std::sqrt(r*r - yy*yy);
+            const double dcirc = -yy*dyy/circ;
+
+            shape_z = -circ + r - ap;
+            dznewdap = -dcirc - 1;
         } else {
-            shape_z = std::tan(alpha2)*(y - mult*f) + line_root2;
+            shape_z = tan2*(y - mult*f) + line_root2;
             dznewdap = dlrdap2;
         }
 
@@ -343,37 +361,43 @@ void dzdf(const std::vector<double>& orig_z, double f, double ap, double vc, std
     using namespace param;
 
     vc *= 1e6/60;
-    const double y1 = -std::sqrt((std::pow(std::tan(alpha1)*r, 2))/(std::pow(std::tan(alpha1), 2)+1));
-    const double y2 =  std::sqrt((std::pow(std::tan(alpha2)*r, 2))/(std::pow(std::tan(alpha2), 2)+1));
 
-    const double line_root1 = -std::sqrt(r*r - y1*y1) + r - ap + std::tan(alpha1)*(y1+f/2);//-ap + std::tan(alpha1)*f/2;
-    const double line_root2 = -std::sqrt(r*r - y2*y2) + r - ap - std::tan(alpha2)*(y2+f/2); //-ap - std::tan(alpha2)*f/2;
+    const double tan1 = std::tan(alpha1);
+    const double tan2 = std::tan(alpha2);
 
-    const double dlrdf1 =  std::tan(alpha1)/2;
-    const double dlrdf2 = -std::tan(alpha2)/2;
+    const double y1 = -std::sqrt((std::pow(tan1*r, 2))/(std::pow(tan1, 2)+1));
+    const double y2 =  std::sqrt((std::pow(tan2*r, 2))/(std::pow(tan2, 2)+1));
 
-    double intersec1 = 0;
-    double intersec2 = 0;
-    double di1 = 0;
-    double di2 = 0;
-    if(y1 + f/2 > 0){
-        intersec1 = smooth::min({0, line_root1});
-        di1 = smooth::min_deriv({0, line_root1}, 1)*dlrdf1;
+    const double yc = tan2*f/(tan1+tan2);
+    const double dyc = tan2/(tan1+tan2);
+
+    const double b1off = -std::sqrt(r*r - y1*y1) + r - ap + tan1*y1;
+    const double b2off = -std::sqrt(r*r - y2*y2) + r - ap - tan2*y2;
+
+    const double ycoff = (b1off - b2off)/(tan1 + tan2);
+
+    const double line_root1 = -std::sqrt(r*r - y1*y1) + r - ap + tan1*(yc-ycoff+y1);
+    const double line_root2 = -std::sqrt(r*r - y2*y2) + r - ap - tan2*(yc-ycoff+y2);
+
+    const double dlrdf1 =  tan1*dyc;
+    const double dlrdf2 = -tan2*dyc;
+
+    double intersec = 0;
+    double di = 0;
+    if(yc - ycoff + y1 > 0){
+        intersec = line_root1;
+        di = dlrdf1;
     } else {
-        intersec1 = smooth::min({0, -std::sqrt(r*r - f*f/4) + r - ap});
-        di1 = smooth::min_deriv({0, -std::sqrt(r*r - f*f/4) + r - ap}, 1)*f/(2*std::sqrt(4*r*r-f*f));
-    }
-    if(y2 + f/2 < f){
-        intersec2 = smooth::min({0, line_root2 + std::tan(alpha2)*f});
-        di2 = smooth::min_deriv({0, line_root2 + std::tan(alpha2)*f}, 1)*(dlrdf2 + std::tan(alpha2));
-    } else {
-        intersec2 = smooth::min({0, -std::sqrt(r*r - f*f/4) + r - ap});
-        di2 = smooth::min_deriv({0, -std::sqrt(r*r - f*f/4) + r - ap}, 1)*f/(2*std::sqrt(4*r*r-f*f));
-    }
-    const double max_intersec = -smooth::min({-intersec1, -intersec2});
+        const double yi = 0 - (yc - ycoff);
+        const double dyi = -dyc;
 
-    const double dmi = -smooth::min_deriv({-intersec1, -intersec2}, 0)*(-di1) - smooth::min_deriv({-intersec1, -intersec2}, 1)*(-di2);
-    dmax_zdf = smooth::min_deriv({0, max_intersec}, 1)*dmi;
+        const double circ = std::sqrt(r*r - yi*yi);
+        const double dcirc = -yi*dyi/circ;
+
+        intersec = -circ + r - ap;
+        di = -dcirc;
+    }
+    dmax_zdf = smooth::min_deriv({0, intersec}, 1)*di;
 
     const double delta_uet = vc/f_uet;
     //const double dduet = 0;
@@ -427,16 +451,21 @@ void dzdf(const std::vector<double>& orig_z, double f, double ap, double vc, std
 
         double shape_z;
         double dshape_z;
-        if(y <= y1 + mult*f + f/2){
-            shape_z  = -std::tan(alpha1)*(y - mult*f) + line_root1;
-            dshape_z =  std::tan(alpha1)*(mult + dmult*f) + dlrdf1;
-        } else if(y <= y2 + mult*f + f/2){
-            const double yy = y - mult*f - f/2;
-            shape_z  = -std::sqrt(r*r - yy*yy) + r - ap;
-            dshape_z = -yy*(mult + dmult*f + 0.5)/std::sqrt(r*r - yy*yy);
+        if(y <= y1 + mult*f + (yc - ycoff)){
+            shape_z = -tan1*(y - mult*f) + line_root1;
+            dshape_z =  tan1*(mult + dmult*f) + dlrdf1;
+        } else if(y <= y2 + mult*f + (yc - ycoff)){
+            const double yy = y - mult*f - (yc - ycoff);
+            const double dyy = -mult - dmult*f - dyc;
+
+            const double circ = std::sqrt(r*r - yy*yy);
+            const double dcirc = -yy*dyy/circ;
+
+            shape_z = -circ + r - ap;
+            dshape_z = -dcirc;
         } else {
-            shape_z  =  std::tan(alpha2)*(y - mult*f) + line_root2;
-            dshape_z = -std::tan(alpha2)*(mult + dmult*f) + dlrdf2;
+            shape_z = tan2*(y - mult*f) + line_root2;
+            dshape_z = -tan2*(mult + dmult*f) + dlrdf2;
         }
 
         for(size_t X = 0; X < tex_width; ++X){
