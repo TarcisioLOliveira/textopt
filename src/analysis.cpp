@@ -55,4 +55,30 @@ void plot_fxap(const std::tuple<double, double>& f, const std::tuple<double, dou
     file.close();
 }
 
+void plot_vc(const double f, const double ap, const std::tuple<double, double>& vc, const double step, std::vector<double>& map_z, const std::vector<double>& orig_z){
+    // Cache resulting string into memory, as it's faster than continually
+    // writing to disk
+    std::stringstream result;
+
+    const double diff = std::get<1>(vc) - std::get<0>(vc);
+    std::cout << "Calculating plot points..." << std::endl;
+    for(double vci = std::get<0>(vc); vci <= std::get<1>(vc); vci += step){
+        std::cout << "\r" << (vci - std::get<0>(vc))*100/diff << "%      " << std::flush;
+        texture::map(map_z, orig_z, f, ap, vci);
+        const double surarea = opt::surface_area(map_z);
+        const double roughness = opt::Sa(map_z);
+        result << surarea << " " << roughness << std::endl;
+    }
+    std::cout << "\r100%      " << std::endl;
+    std::ofstream file;
+    file.open("plot_vc.txt");
+    // Write ranges
+    file << std::get<0>(vc) << " " << std::get<1>(vc) << " " << step << std::endl;
+
+    // Write values for surface area and roughness
+    file << result.str();
+    file.close();
+
+}
+
 }
