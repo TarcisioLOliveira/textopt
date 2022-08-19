@@ -4,8 +4,13 @@ import matplotlib.pyplot as plt
 from matplotlib import cm
 import numpy as np
 from mpl_toolkits.mplot3d import Axes3D
+import sys
 
-file = open("plot_fxap.txt", "r")
+path = "plot_fxap.txt"
+if len(sys.argv) > 1:
+    path = sys.argv[1]
+
+file = open(path, "r")
 
 f = file.readline().split(" ");
 fi = float(f[0])

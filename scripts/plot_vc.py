@@ -3,8 +3,13 @@
 import matplotlib.pyplot as plt
 from matplotlib import cm
 import numpy as np
+import sys
 
-file = open("plot_vc.txt", "r")
+path = "plot_vc.txt"
+if len(sys.argv) > 1:
+    path = sys.argv[1]
+
+file = open(path, "r")
 
 vc = file.readline().split(" ");
 vci = float(vc[0])
