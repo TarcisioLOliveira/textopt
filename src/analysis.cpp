@@ -28,7 +28,11 @@
 namespace analysis{
 
 void plot_fxap(const std::tuple<double, double>& f, const std::tuple<double, double>& ap, const double vc, const double step, std::vector<double>& map_z, const std::vector<double>& orig_z){
+
+    // Cache resulting string into memory, as it's faster than continually
+    // writing to disk
     std::stringstream result;
+
     const double diff = std::get<1>(f) - std::get<0>(f);
     std::cout << "Calculating plot points..." << std::endl;
     for(double fi = std::get<0>(f); fi <= std::get<1>(f); fi += step){
@@ -43,8 +47,11 @@ void plot_fxap(const std::tuple<double, double>& f, const std::tuple<double, dou
     std::cout << "\r100%      " << std::flush;
     std::ofstream file;
     file.open("plot_fxap.txt");
+    // Write ranges
     file << std::get<0>(f) << " " << std::get<1>(f) << " " << step << std::endl;
     file << std::get<0>(ap) << " " << std::get<1>(ap) << " " << step << std::endl;
+
+    // Write values for surface area and roughness
     file << result.str();
     file.close();
 }

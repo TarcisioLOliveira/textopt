@@ -26,6 +26,18 @@
 
 namespace analysis{
 
+/**
+ * Generates points from surface area an roughness within the specified range
+ * for f and ap, with constant vc. Used for figuring out the resulting shape
+ * and specifying the correct optimization method.
+ *
+ * @param f Range for feed rate
+ * @param ap Range for cutting depth
+ * @param vc Constant cutting velocity
+ * @param step Step for getting points within ranges
+ * @param map_z Memory space used for texture calculations
+ * @param orig_z Original texture
+ */
 void plot_fxap(const std::tuple<double, double>& f, const std::tuple<double, double>& ap, const double vc, const double step, std::vector<double>& map_z, const std::vector<double>& orig_z);
 
 }
