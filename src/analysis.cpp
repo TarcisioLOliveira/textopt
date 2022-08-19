@@ -28,7 +28,6 @@
 namespace analysis{
 
 void plot_fxap(const std::tuple<double, double>& f, const std::tuple<double, double>& ap, const double vc, const double step, std::vector<double>& map_z, const std::vector<double>& orig_z){
-
     // Cache resulting string into memory, as it's faster than continually
     // writing to disk
     std::stringstream result;
@@ -44,7 +43,7 @@ void plot_fxap(const std::tuple<double, double>& f, const std::tuple<double, dou
             result << surarea << " " << roughness << std::endl;
         }
     }
-    std::cout << "\r100%      " << std::flush;
+    std::cout << "\r100%      " << std::endl;
     std::ofstream file;
     file.open("plot_fxap.txt");
     // Write ranges
