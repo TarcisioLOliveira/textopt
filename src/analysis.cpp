@@ -34,9 +34,9 @@ void plot_fxap(const std::tuple<double, double>& f, const std::tuple<double, dou
 
     const double diff = std::get<1>(f) - std::get<0>(f);
     std::cout << "Calculating plot points..." << std::endl;
-    for(double fi = std::get<0>(f); fi <= std::get<1>(f); fi += step){
+    for(double fi = std::get<0>(f); fi <= std::get<1>(f)+1e-7; fi += step){
         std::cout << "\r" << (fi - std::get<0>(f))*100/diff << "%      " << std::flush;
-        for(double api = std::get<0>(ap); api <= std::get<1>(ap); api += step){
+        for(double api = std::get<0>(ap); api <= std::get<1>(ap)+1e-7; api += step){
             texture::map(map_z, orig_z, fi, api, vc);
             const double surarea = opt::surface_area(map_z);
             const double roughness = opt::Sa(map_z);
@@ -62,7 +62,7 @@ void plot_vc(const double f, const double ap, const std::tuple<double, double>& 
 
     const double diff = std::get<1>(vc) - std::get<0>(vc);
     std::cout << "Calculating plot points..." << std::endl;
-    for(double vci = std::get<0>(vc); vci <= std::get<1>(vc); vci += step){
+    for(double vci = std::get<0>(vc); vci <= std::get<1>(vc)+1e-7; vci += step){
         std::cout << "\r" << (vci - std::get<0>(vc))*100/diff << "%      " << std::flush;
         texture::map(map_z, orig_z, f, ap, vci);
         const double surarea = opt::surface_area(map_z);
