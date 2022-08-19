@@ -27,7 +27,7 @@
 
 namespace analysis{
 
-void plot(const std::tuple<double, double>& f, const std::tuple<double, double>& ap, const double vc, const double step, std::vector<double>& map_z, const std::vector<double>& orig_z){
+void plot_fxap(const std::tuple<double, double>& f, const std::tuple<double, double>& ap, const double vc, const double step, std::vector<double>& map_z, const std::vector<double>& orig_z){
     std::stringstream result;
     const double diff = std::get<1>(f) - std::get<0>(f);
     std::cout << "Calculating plot points..." << std::endl;
@@ -42,7 +42,7 @@ void plot(const std::tuple<double, double>& f, const std::tuple<double, double>&
     }
     std::cout << "\r100%      " << std::flush;
     std::ofstream file;
-    file.open("plot.txt");
+    file.open("plot_fxap.txt");
     file << std::get<0>(f) << " " << std::get<1>(f) << " " << step << std::endl;
     file << std::get<0>(ap) << " " << std::get<1>(ap) << " " << step << std::endl;
     file << result.str();

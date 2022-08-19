@@ -5,7 +5,7 @@ from matplotlib import cm
 import numpy as np
 from mpl_toolkits.mplot3d import Axes3D
 
-file = open("plot.txt", "r")
+file = open("plot_fxap.txt", "r")
 
 f = file.readline().split(" ");
 fi = float(f[0])
