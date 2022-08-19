@@ -23,11 +23,15 @@ file.close()
 
 fig1 = plt.figure()
 ax1 = fig1.add_subplot(111)
+ax1.set_xlabel("vc [m/min]")
+ax1.set_ylabel("A [um^2]")
 ax1.plot(vc, A)
            
 
 fig2 = plt.figure()
 ax2 = fig2.add_subplot(111)
+ax2.set_xlabel("vc [m/min]")
+ax2.set_ylabel("Sa [um]")
 ax2.plot(vc, Sa)
 
 plt.show()

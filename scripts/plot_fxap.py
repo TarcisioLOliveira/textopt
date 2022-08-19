@@ -33,11 +33,17 @@ f, ap = np.meshgrid(f, ap)
 
 fig1 = plt.figure()
 ax1 = fig1.add_subplot(111, projection='3d')
+ax1.set_xlabel("f [um/rev]")
+ax1.set_ylabel("ap [um]")
+ax1.set_zlabel("A [um^2]")
 ax1.plot_surface(f, ap, A, cmap=cm.coolwarm,
                        linewidth=0, antialiased=False)
 
 fig2 = plt.figure()
 ax2 = fig2.add_subplot(111, projection='3d')
+ax2.set_xlabel("f [um/rev]")
+ax2.set_ylabel("ap [um]")
+ax2.set_zlabel("Sa [um]")
 ax2.plot_surface(f, ap, Sa, cmap=cm.coolwarm,
                        linewidth=0, antialiased=False)
 
