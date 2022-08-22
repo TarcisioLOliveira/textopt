@@ -7,6 +7,7 @@ set(SOURCES
     opt_func.cpp
     texture.cpp
     analysis.cpp
+    slp.cpp
 )
 
 add_executable(${PROJECT_NAME} ${SOURCES})

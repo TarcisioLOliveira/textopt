@@ -32,6 +32,8 @@
 #include "render.hpp"
 #include "opt_func.hpp"
 #include "texture.hpp"
+#include "analysis.hpp"
+#include "slp.hpp"
 
 int main(int argc, char* argv[]){
     using namespace param;
@@ -58,12 +60,22 @@ int main(int argc, char* argv[]){
     std::vector<double> dap    (tex_width*tex_height);
     std::vector<double> dvc    (tex_width*tex_height);
 
+    // Overall view
+    // analysis::plot_fxap({1, 100}, {1, 100}, 50, 1, map_z, orig_z);
+    // Detail view (shows area spikes)
+    // analysis::plot_fxap({50, 60}, {50, 60}, 50, 0.1, map_z, orig_z);
+    // analysis::plot_vc(50, 50, {1,100}, 0.1, map_z, orig_z);
+
+    // return 0;
+
     double ch = 1;
     size_t it = 1;
     double old_surarea = 1;
 
     const size_t N = 3;
-    double x[N] = {60, 30, 20};
+    //std::vector<double> x{60, 30, 20};
+    //std::vector<double> x{50, 50, 50};
+    std::vector<double> x{200, 200, 200};
     double xmax[N] = {100, 100, 100};
     double xmin[N] = {2, 0.01, 0.01};
     // Workaround. When the angles are different, you can't assume that both
@@ -73,11 +85,13 @@ int main(int argc, char* argv[]){
     if(alpha1 != alpha2){
         xmin[0] = 2*r;
     }
-    double dSa_vec[N] = {0, 0, 0};
-    double dsurarea_vec[N] = {0, 0, 0};
+    std::vector<double> dSa_vec{0, 0, 0};
+    std::vector<double> dsurarea_vec{0, 0, 0};
 
-    MMASolver mma(N, 1, 0, 1e5, 1);
-    mma.SetAsymptotes(0.1, 0.7, 1.2);
+    // Only works if starting from an exterior point, for some reason
+    SLP slp(N, 1);
+    // MMASolver mma(N, 1, 0, 1e5, 1);
+    // mma.SetAsymptotes(0.1, 0.7, 1.2);
 
     while(window.isOpen()){
         sf::Event event;
@@ -124,7 +138,8 @@ int main(int argc, char* argv[]){
             dsurarea_vec[2] = dsurareadvc;
             dSa_vec[2] = dSadvc;
 
-            mma.Update(x, dsurarea_vec, &roughness, dSa_vec, xmin, xmax); 
+            slp.update(x, dsurarea_vec, {roughness}, dSa_vec); 
+            //mma.Update(x.data(), dsurarea_vec.data(), &roughness, dSa_vec.data(), xmin, xmax); 
 
             ch = std::abs(1 - surarea/old_surarea);
             old_surarea = surarea;
