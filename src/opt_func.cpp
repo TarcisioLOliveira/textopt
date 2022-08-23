@@ -33,6 +33,7 @@ double Sa(const std::vector<double>& map_z){
     const double avg = (max_z + min_z)/2;
     const size_t area = tex_width*tex_height;
     double Sa = 0;
+    #pragma omp parallel for reduction(+:Sa)
     for(double z:map_z){
         Sa += smooth::abs(z - avg);
     }
@@ -48,6 +49,7 @@ double dSa(const std::vector<double>& dzd, const std::vector<double>& map_z, dou
     const double davg = (dmax + dmin)/2;
     const size_t area = tex_width*tex_height;
     double dSa = 0;
+    #pragma omp parallel for reduction(+:dSa)
     for(size_t i = 0; i < area; ++i){
         dSa += smooth::abs_deriv(map_z[i] - avg)*(dzd[i] - davg);
     }
@@ -61,6 +63,7 @@ double surface_area(const std::vector<double>& map_z){
 
     // For a N*M matrix of points, the actual projected surface area is (dimx*dimy)*((N-1)*(M-1))
     double A = 0;
+    #pragma omp parallel for reduction(+:A)
     for(size_t x = 0; x < tex_width; x+=2){
         for(size_t y = 0; y < tex_height; y+=2){
             util::Point p[9];
@@ -104,6 +107,7 @@ double surface_area_dz(const std::vector<double>& map_z, const std::vector<doubl
     using namespace param;
 
     double A = 0;
+    #pragma omp parallel for reduction(+:A)
     for(size_t x = 0; x < tex_width; x+=2){
         for(size_t y = 0; y < tex_height; y+=2){
             util::Point p[9];
