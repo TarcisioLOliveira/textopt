@@ -140,14 +140,6 @@ void map(std::vector<double>& map_z, const std::vector<double>& orig_z, double f
                 // Write results
                 z = smooth::min({oz, end_z});
             }
-            // } else {
-            //     for(size_t X = 0; X < tex_width; ++X){
-            //         // Get pixels
-            //         double& z = map_z[X + Y*tex_width];
-            //         const double oz = orig_z[X + Y*tex_width];
-            //         z = oz;
-            //     }
-            // }
         }
     }
 }
@@ -245,12 +237,6 @@ void dzdvc(const std::vector<double>& orig_z, double f, double ap, double vc, st
 
                 dz = smooth::min_deriv({oz, end_z}, 1)*dznewdvc[X];
             }
-            // } else {
-            //     for(size_t X = 0; X < tex_width; ++X){
-            //         double& dz = dzdvc[X + Y*tex_width];
-            //         dz = 0;
-            //     }
-            // }
         }
     }
 }
@@ -362,12 +348,6 @@ void dzdap(const std::vector<double>& orig_z, double f, double ap, double vc, st
 
                 dz = smooth::min_deriv({oz, end_z}, 1)*dznewdap;
             }
-            // } else {
-            //     for(size_t X = 0; X < tex_width; ++X){
-            //         double& dz = dzdap[X + Y*tex_width];
-            //         dz = 0;
-            //     }
-            // }
         }
     }
 }
@@ -495,12 +475,6 @@ void dzdf(const std::vector<double>& orig_z, double f, double ap, double vc, std
 
                 dz = smooth::min_deriv({oz, end_z}, 1)*dend_z;
             }
-            // } else {
-            //     for(size_t X = 0; X < tex_width; ++X){
-            //         double& dz = dzdf[X + Y*tex_width];
-            //         dz = 0;
-            //     }
-            // }
         }
     }
 }
