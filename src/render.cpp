@@ -28,6 +28,7 @@ void draw_texture(std::vector<sf::Uint8>& img, const std::vector<double>& map_z,
     using namespace param;
 
     if(colorscheme == Colorscheme::GRAYSCALE){
+        #pragma omp parallel for
         for(size_t i = 0; i < tex_width*tex_height; ++i){
             const double z = map_z[i];
 
@@ -43,6 +44,7 @@ void draw_texture(std::vector<sf::Uint8>& img, const std::vector<double>& map_z,
         const std::vector<double> G{0, 1, 1, 1, 0};
         const std::vector<double> B{0, 0, 0, 1, 1};
         const size_t L = R.size()-1;
+        #pragma omp parallel for
         for(size_t i = 0; i < tex_width*tex_height; ++i){
             const double z = map_z[i];
 
