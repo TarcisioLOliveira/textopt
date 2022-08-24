@@ -100,7 +100,7 @@ double surface_area(const std::vector<double>& map_z){
         }
     }
 
-    return A;
+    return A/param::base_area;
 }
 
 double surface_area_dz(const std::vector<double>& map_z, const std::vector<double>& dzd){
@@ -146,8 +146,7 @@ double surface_area_dz(const std::vector<double>& map_z, const std::vector<doubl
         }
     }
 
-    return A;
-
+    return A/param::base_area;
 }
 
 }

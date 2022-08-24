@@ -35,6 +35,7 @@ namespace param{
 // Texture dimensions
 inline const size_t tex_width  = 400;
 inline const size_t tex_height = 400;
+inline const double base_area = (tex_width-1)*(tex_height-1);
 
 inline const double MULT = -1; // Exponent for smooth_min()
 inline const double FLOORD = 1e-10; // smooth_floor() precision
