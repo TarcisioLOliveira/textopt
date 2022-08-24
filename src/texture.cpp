@@ -36,8 +36,8 @@ void map(std::vector<double>& map_z, const std::vector<double>& orig_z, double f
     const double tan2 = std::tan(alpha2);
 
     // Line parameters for tool slopes.
-    const double y1 = -std::sqrt((std::pow(tan1*r, 2))/(std::pow(tan1, 2)+1));
-    const double y2 =  std::sqrt((std::pow(tan2*r, 2))/(std::pow(tan2, 2)+1));
+    const double y1 = -std::sqrt((tan1*r*tan1*r)/(tan1*tan1+1));
+    const double y2 =  std::sqrt((tan2*r*tan2*r)/(tan2*tan2+1));
 
     // Where the slope lines intersect, so that the height at the edges is the
     // same for both
@@ -113,7 +113,7 @@ void map(std::vector<double>& map_z, const std::vector<double>& orig_z, double f
                 const double mult_uet = smooth::abs(smooth::floor(xcirc / delta_uet));
                 // const double x_uet = (xcirc - mult_uet*delta_uet)/delta_uet - 0.5;
                 const double x_uet = xcirc/delta_uet - mult_uet - 0.5;
-                const double uet_effect = Az_uet*(1.0 - std::sqrt(1.0 - std::pow(x_uet/Ax_uet, 2)));
+                const double uet_effect = Az_uet*(1.0 - std::sqrt(1.0 - (x_uet*x_uet)/(Ax_uet*Ax_uet)));
 
                 newz[X] = oscillation + uet_effect;
             }
@@ -152,8 +152,8 @@ void dzdvc(const std::vector<double>& orig_z, double f, double ap, double vc, st
     const double tan1 = std::tan(alpha1);
     const double tan2 = std::tan(alpha2);
 
-    const double y1 = -std::sqrt((std::pow(tan1*r, 2))/(std::pow(tan1, 2)+1));
-    const double y2 =  std::sqrt((std::pow(tan2*r, 2))/(std::pow(tan2, 2)+1));
+    const double y1 = -std::sqrt((tan1*r*tan1*r)/(tan1*tan1+1));
+    const double y2 =  std::sqrt((tan2*r*tan2*r)/(tan2*tan2+1));
 
     const double yc = tan2*f/(tan1+tan2);
 
@@ -212,8 +212,8 @@ void dzdvc(const std::vector<double>& orig_z, double f, double ap, double vc, st
                 const double x_uet = xcirc/delta_uet - mult_uet - 0.5;
                 const double dx_uet = -(xcirc/(delta_uet*delta_uet))*dduetdvc - dmult_uet;
 
-                const double uet_effect = Az_uet*(1.0 - std::sqrt(1.0 - std::pow(x_uet/Ax_uet, 2)));
-                const double duet = -0.5*(Az_uet/std::sqrt(1.0 - std::pow(x_uet/Ax_uet, 2)))*(-2)*(x_uet/Ax_uet)*(dx_uet/Ax_uet);
+                const double uet_effect = Az_uet*(1.0 - std::sqrt(1.0 - (x_uet*x_uet)/(Ax_uet*Ax_uet)));
+                const double duet = -0.5*(Az_uet/std::sqrt(1.0 - (x_uet*x_uet)/(Ax_uet*Ax_uet)))*(-2)*(x_uet/Ax_uet)*(dx_uet/Ax_uet);
 
                 newz[X] = oscillation + uet_effect;
                 dznewdvc[X] = doscilldvc + duet;
@@ -249,8 +249,8 @@ void dzdap(const std::vector<double>& orig_z, double f, double ap, double vc, st
     const double tan1 = std::tan(alpha1);
     const double tan2 = std::tan(alpha2);
 
-    const double y1 = -std::sqrt((std::pow(tan1*r, 2))/(std::pow(tan1, 2)+1));
-    const double y2 =  std::sqrt((std::pow(tan2*r, 2))/(std::pow(tan2, 2)+1));
+    const double y1 = -std::sqrt((tan1*r*tan1*r)/(tan1*tan1+1));
+    const double y2 =  std::sqrt((tan2*r*tan2*r)/(tan2*tan2+1));
 
     const double yc = tan2*f/(tan1+tan2);
 
@@ -316,7 +316,7 @@ void dzdap(const std::vector<double>& orig_z, double f, double ap, double vc, st
                 const double mult_uet = smooth::abs(smooth::floor(xcirc / delta_uet));
                 // const double x_uet = (xcirc - mult_uet*delta_uet)/delta_uet - 0.5;
                 const double x_uet = xcirc/delta_uet - mult_uet - 0.5;
-                const double uet_effect = Az_uet*(1.0 - std::sqrt(1.0 - std::pow(x_uet/Ax_uet, 2)));
+                const double uet_effect = Az_uet*(1.0 - std::sqrt(1.0 - (x_uet*x_uet)/(Ax_uet*Ax_uet)));
 
                 newz[X] = oscillation + uet_effect;
             }
@@ -360,8 +360,8 @@ void dzdf(const std::vector<double>& orig_z, double f, double ap, double vc, std
     const double tan1 = std::tan(alpha1);
     const double tan2 = std::tan(alpha2);
 
-    const double y1 = -std::sqrt((std::pow(tan1*r, 2))/(std::pow(tan1, 2)+1));
-    const double y2 =  std::sqrt((std::pow(tan2*r, 2))/(std::pow(tan2, 2)+1));
+    const double y1 = -std::sqrt((tan1*r*tan1*r)/(tan1*tan1+1));
+    const double y2 =  std::sqrt((tan2*r*tan2*r)/(tan2*tan2+1));
 
     const double yc = tan2*f/(tan1+tan2);
     const double dyc = tan2/(tan1+tan2);
@@ -440,8 +440,8 @@ void dzdf(const std::vector<double>& orig_z, double f, double ap, double vc, std
                 const double x_uet = xcirc/delta_uet - mult_uet - 0.5;
                 const double dx_uet = dxcirc/delta_uet - dmult_uet;
 
-                const double uet_effect = Az_uet*(1.0 - std::sqrt(1.0 - std::pow(x_uet/Ax_uet, 2)));
-                const double duet = -0.5*(Az_uet/std::sqrt(1.0 - std::pow(x_uet/Ax_uet, 2)))*(-2)*(x_uet/Ax_uet)*(dx_uet/Ax_uet);
+                const double uet_effect = Az_uet*(1.0 - std::sqrt(1.0 - (x_uet*x_uet)/(Ax_uet*Ax_uet)));
+                const double duet = -0.5*(Az_uet/std::sqrt(1.0 - (x_uet*x_uet)/(Ax_uet*Ax_uet)))*(-2)*(x_uet/Ax_uet)*(dx_uet/Ax_uet);
 
                 newz[X] = oscillation + uet_effect;
                 dznewdf[X] = doscilldf + duet;
