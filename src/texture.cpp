@@ -27,6 +27,130 @@
 
 namespace texture{
 
+void map_exact(std::vector<double>& map_z, const std::vector<double>& orig_z, double f, double ap, double vc){
+    using namespace param;
+
+    vc *= 1e6/60;
+
+    const double tan1 = std::tan(alpha1);
+    const double tan2 = std::tan(alpha2);
+
+    // Line parameters for tool slopes.
+    const double y1 = -std::sqrt((tan1*r*tan1*r)/(tan1*tan1+1));
+    const double y2 =  std::sqrt((tan2*r*tan2*r)/(tan2*tan2+1));
+
+    // Where the slope lines intersect, so that the height at the edges is the
+    // same for both
+    const double yc = tan2*f/(tan1+tan2);
+
+    // Value of z for y = 0 (with circle center at y = 0).
+    const double b1off = -std::sqrt(r*r - y1*y1) + r - ap + tan1*y1;
+    const double b2off = -std::sqrt(r*r - y2*y2) + r - ap - tan2*y2;
+
+    // Position of the intersection of the two lines relative to the circle's
+    // center
+    const double ycoff = (b1off - b2off)/(tan1 + tan2);
+
+    // Value of z for y = 0 (global)
+    const double line_root1 = -std::sqrt(r*r - y1*y1) + r - ap + tan1*(yc-ycoff+y1);
+    const double line_root2 = -std::sqrt(r*r - y2*y2) + r - ap - tan2*(yc-ycoff+y2);
+
+    // Calculate whether the angles of the cutting tool intercept the surface
+    // first or are stopped by the feed rate.
+    //
+    // Check the intersection with the feed rate edges. If they're greater than
+    // zero, the cut line is narrower than the feed line, so max height is
+    // zero. Otherwise, it's the height at the intersection
+    //
+    // Both intersections always have the same height, so we only need to check
+    // one of them
+    double intersec = 0;
+    if(yc - ycoff + y1 > 0){
+        // If the intersection between line 1 and the circle is at y > 0, then
+        // the intersection is equal to the line's constant.
+        intersec = line_root1;
+    } else {
+        // Otherwise, check where it intersects the circle
+        const double yi = 0.0 - (yc - ycoff);
+        intersec = -std::sqrt(r*r - yi*yi) + r - ap;
+    }
+    // If it's greater than zero, max_z must be zero
+    max_z = std::min(0.0, intersec) + Az;// + Az_uet;
+    min_z = -(ap + Az);
+
+    const double delta_uet = vc/f_uet;
+    
+    #pragma omp parallel
+    {
+        std::vector<double> newz(tex_width);
+        double prev_mult = -1;
+        #pragma omp for
+        for(size_t Y = 0; Y < tex_height; ++Y){
+            const double y = static_cast<double>(Y);
+
+            // Calculate current row
+            // Apply `abs()` to prevent it from becoming less than zero
+            // when close to zero
+            const double mult = std::floor(y  / f);
+
+            // As `mult` is always exact, we can use this optimization, meaning
+            // the oscillations/ellipses along a row are calculated only once
+            // per `mult`.
+            if(mult > prev_mult){
+                prev_mult = mult;
+
+                // Phase differences
+                const double perimeter = 2*M_PI*cylinder_radius;
+
+                const double phase_diff_x = 2*M_PI*fx*mult*perimeter*dimx/vc + phix;
+                const double phase_diff_z = 2*M_PI*fz*mult*perimeter*dimx/vc + phiz;
+                const double phix_cur = phase_diff_x - std::floor((phase_diff_x)/(2*M_PI))*2*M_PI;
+                const double phiz_cur = phase_diff_z - std::floor((phase_diff_z)/(2*M_PI))*2*M_PI;
+
+                const double xoffset_uet = mult*perimeter;
+
+                for(size_t X = 0; X < tex_width; ++X){
+                    const double x = static_cast<double>(X);
+                    // Random oscillation
+                    const double newx = x + Ax*std::sin(2*M_PI*fx*x*dimx/vc + phix_cur);
+                    const double oscillation = Az*std::sin(2*M_PI*fz*newx*dimx/vc + phiz_cur);
+
+                    // Ultrasonic turning effects
+                    const double xcirc = x + xoffset_uet;
+                    const double mult_uet = std::floor(xcirc / delta_uet);
+                    // const double x_uet = (xcirc - mult_uet*delta_uet)/delta_uet - 0.5;
+                    const double x_uet = xcirc/delta_uet - mult_uet - 0.5;
+                    const double uet_effect = Az_uet*(1.0 - std::sqrt(1.0 - (x_uet*x_uet)/(Ax_uet*Ax_uet)));
+
+                    newz[X] = oscillation + uet_effect;
+                }
+            }
+
+            // Tool shape
+            double shape_z;
+            if(y <= y1 + mult*f + (yc - ycoff)){
+                shape_z = -tan1*(y - mult*f) + line_root1;
+            } else if(y <= y2 + mult*f + (yc - ycoff)){
+                const double yy = y - mult*f - (yc - ycoff);
+                shape_z = -std::sqrt(r*r - yy*yy) + r - ap;
+            } else {
+                shape_z = tan2*(y - mult*f) + line_root2;
+            }
+
+            for(size_t X = 0; X < tex_width; ++X){
+                // Get pixels
+                double& z = map_z[X + Y*tex_width];
+                const double oz = orig_z[X + Y*tex_width];
+
+                // Calculate final depth
+                const double end_z = newz[X] + shape_z;
+
+                // Write results
+                z = std::min(oz, end_z);
+            }
+        }
+    }
+}
 void map(std::vector<double>& map_z, const std::vector<double>& orig_z, double f, double ap, double vc){
     using namespace param;
 

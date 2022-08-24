@@ -26,6 +26,21 @@
 namespace texture{
 
 /**
+ * Exact version of `map()`, that is, without using smooth approximations. it's
+ * non-differentiable, meaning it shouldn't be used for optimization, but it's
+ * faster and exact, making it useful for plotting and comparing results.
+ *
+ * Current tests haven't been using orig_z, so it's not currently supported.
+ *
+ * @param map_z Resulting texture.
+ * @param orig_z Original texture.
+ * @param f Feed rate.
+ * @param ap Cutting depth.
+ * @param vc Cutting velocity.
+ */
+void map_exact(std::vector<double>& map_z, const std::vector<double>& orig_z, double f, double ap, double vc);
+
+/**
  * Generate texture based on cutting parameters, parameters in param.hpp, and
  * the original texture.
  *
