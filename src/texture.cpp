@@ -102,6 +102,15 @@ void map(std::vector<double>& map_z, const std::vector<double>& orig_z, double f
 
             const double xoffset_uet = mult*perimeter;
 
+            // It would be nice if it were possible to just cache these results
+            // for a few iterations. Technically, they're constant for each row.
+            // However, trying to cache them based on that made the algorithm
+            // work incorrectly.
+            //
+            // Cheating and making `mult` actually exact _might_ be an option,
+            // but last time I tried it just gave out NaNs.
+            // 
+            // So, for now, this will hog performance for a bit, unfortunately.
             for(size_t X = 0; X < tex_width; ++X){
                 const double x = static_cast<double>(X);
                 // Random oscillation
