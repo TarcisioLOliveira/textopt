@@ -152,6 +152,9 @@ int main(int argc, char* argv[]){
             std::cout << "f: " << f << std::endl;
             std::cout << "ap: " << ap << std::endl;
             std::cout << "vc: " << vc << std::endl;
+            std::cout << "max z: " << param::max_z << " (red)" << std::endl;
+            std::cout << "mid z: " << (param::max_z+param::min_z)/2.0 << " (green)" << std::endl;
+            std::cout << "min z: " << param::min_z << " (blue)" << std::endl;
             std::cout << "Change: " << ch << std::endl;
             ++it;
         }
