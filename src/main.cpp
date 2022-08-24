@@ -45,8 +45,6 @@ int main(int argc, char* argv[]){
 
     auto resolution = sf::VideoMode::getDesktopMode();
 
-    sf::RenderWindow window(sf::VideoMode(window_width, window_height), "textopt");
-    window.setPosition(sf::Vector2i((resolution.width - window_width)/2, (resolution.height - window_height)/2));
     sf::Texture img;
     img.create(tex_width, tex_height);
     sf::Sprite sprite(img);
@@ -92,6 +90,9 @@ int main(int argc, char* argv[]){
     SLP slp(N, 1);
     // MMASolver mma(N, 1, 0, 1e5, 1);
     // mma.SetAsymptotes(0.1, 0.7, 1.2);
+
+    sf::RenderWindow window(sf::VideoMode(window_width, window_height), "textopt");
+    window.setPosition(sf::Vector2i((resolution.width - window_width)/2, (resolution.height - window_height)/2));
 
     while(window.isOpen()){
         sf::Event event;
