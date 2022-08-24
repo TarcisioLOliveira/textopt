@@ -27,7 +27,7 @@
 namespace analysis{
 
 /**
- * Generates points from surface area an roughness within the specified range
+ * Generates points from surface area and roughness within the specified range
  * for f and ap, with constant vc. Used for figuring out the resulting shape
  * and specifying the correct optimization method.
  *
@@ -40,6 +40,19 @@ namespace analysis{
  */
 void plot_fxap(const std::tuple<double, double>& f, const std::tuple<double, double>& ap, const double vc, const double step, std::vector<double>& map_z, const std::vector<double>& orig_z);
 
+/**
+ * Generates points from surface area and roughness within the specified range
+ * for vc, with constant f and ap. Used for figuring out the resulting shape
+ * and specifying the correct optimization method. However, vc doesn't seem
+ * to affect roughness and surface area too much, except with vc -> 0.
+ *
+ * @param f Constant feed rate
+ * @param ap Constant cutting depth
+ * @param vc Range for cutting velocity
+ * @param step Step for getting points within ranges
+ * @param map_z Memory space used for texture calculations
+ * @param orig_z Original texture
+ */
 void plot_vc(const double f, const double ap, const std::tuple<double, double>& vc, const double step, std::vector<double>& map_z, const std::vector<double>& orig_z);
 
 }
