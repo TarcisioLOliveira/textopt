@@ -23,6 +23,7 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
 endif()
 
 find_package(SFML COMPONENTS system window graphics REQUIRED)
+find_package(YAML-CPP REQUIRED)
 
 if(NOT NO_OPENMP)
     find_package(OpenMP)
@@ -47,6 +48,7 @@ include_directories(
     ${PROJECT_SOURCE_DIR}/include
     SYSTEM
     ${SFML_INCLUDE_DIR}
+    ${YAML_CPP_INCLUDE_DIR}
 )
    
 add_subdirectory(src)

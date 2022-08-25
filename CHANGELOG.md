@@ -10,5 +10,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Cutting parameter optimization
 - Basic plotting functions and scripts
 - MMA and SLP optimization methods
+- YAML-based configuration files
 
 
