@@ -34,142 +34,153 @@
 #include "texture.hpp"
 #include "analysis.hpp"
 #include "slp.hpp"
+#include "config.hpp"
 
 int main(int argc, char* argv[]){
     using namespace param;
 
-    size_t window_width = 600;
-    size_t window_height = 600;
-
-    double max_roughness = 2;
-
-    auto resolution = sf::VideoMode::getDesktopMode();
-
-    sf::Texture img;
-    img.create(tex_width, tex_height);
-    sf::Sprite sprite(img);
-    sprite.setPosition(sf::Vector2f(window_width/2-tex_width/2, window_height/2-tex_height/2));
-
-    std::vector<sf::Uint8> px(tex_width*tex_height*4, 255);
+    if(argc > 1){
+        config::load(argv[1]);
+    } else {
+        std::cout << "Error: configuration file missing." << std::endl;
+        throw;
+    }
 
     std::vector<double> map_z  (tex_width*tex_height);
     std::vector<double> orig_z (tex_width*tex_height);
-    std::vector<double> df     (tex_width*tex_height);
-    std::vector<double> dap    (tex_width*tex_height);
-    std::vector<double> dvc    (tex_width*tex_height);
 
-    // Overall view
-    // analysis::plot_fxap({1, 100}, {1, 100}, 50, 1, map_z, orig_z);
-    // Detail view (shows area spikes)
-    // analysis::plot_fxap({50, 60}, {50, 60}, 50, 0.1, map_z, orig_z);
-    // analysis::plot_vc(50, 50, {1,100}, 0.1, map_z, orig_z);
-
-    // return 0;
-
-    double ch = 1;
-    size_t it = 1;
-    double old_surarea = 1;
-
-    const size_t N = 3;
-    //std::vector<double> x{60, 30, 20};
-    //std::vector<double> x{50, 50, 50};
-    std::vector<double> x{200, 200, 200};
-    double xmax[N] = {100, 100, 100};
-    double xmin[N] = {2, 0.01, 0.01};
-    // Workaround. When the angles are different, you can't assume that both
-    // edges have the same height when at least one side is within the tool
-    // radius zone. Not sure if it's worth it to adapt to this case, as it
-    // may involve a larger refactor, but this will do for now.
-    if(alpha1 != alpha2){
-        xmin[0] = 2*r;
-    }
-    std::vector<double> dSa_vec{0, 0, 0};
-    std::vector<double> dsurarea_vec{0, 0, 0};
-
-    // Only works if starting from an exterior point, for some reason
-    SLP slp(N, 1);
-    // MMASolver mma(N, 1, 0, 1e5, 1);
-    // mma.SetAsymptotes(0.1, 0.7, 1.2);
-
-    sf::RenderWindow window(sf::VideoMode(window_width, window_height), "textopt");
-    window.setPosition(sf::Vector2i((resolution.width - window_width)/2, (resolution.height - window_height)/2));
-
-    while(window.isOpen()){
-        sf::Event event;
-        while (window.pollEvent(event)){
-            if (event.type == sf::Event::Closed){
-                window.close();
-            }
-            if(event.type == sf::Event::Resized){
-                sf::FloatRect view(0, 0, event.size.width, event.size.height);
-                window.setView(sf::View(view));
-            }
+    if(analysis_type == AnalysisType::PLOT){
+        if(plot_method == PlotMethod::FXAP){
+            analysis::plot_fxap({f_min, f_max}, {ap_min, ap_max}, vc, step, map_z, orig_z);
+        } else if(plot_method == PlotMethod::VC){
+            analysis::plot_vc(f, ap, {vc_min, vc_max}, step, map_z, orig_z);
         }
-        window.clear(sf::Color::Black);
+    } else {
+        std::vector<double> df (tex_width*tex_height);
+        std::vector<double> dap(tex_width*tex_height);
+        std::vector<double> dvc(tex_width*tex_height);
 
-        if(ch > 1e-8){
-            const double f = x[0];
-            const double ap = x[1];
-            const double vc = x[2];
-            texture::map(map_z, orig_z, f, ap, vc);
-            render::draw_texture(px, map_z, render::Colorscheme::HSV);
-            const double surarea = -opt::surface_area(map_z);
-            const double roughness = opt::Sa(map_z) - max_roughness;
+        auto resolution = sf::VideoMode::getDesktopMode();
 
-            texture::dzdf(orig_z, f, ap, vc, df);
-            texture::dzdap(orig_z, f, ap, vc, dap);
-            texture::dzdvc(orig_z, f, ap, vc, dvc);
-
-            const double dsurareadf = -opt::surface_area_dz(map_z, df);
-            const double dSadf = opt::dSa(df, map_z, dmax_zdf, 0);
-            const double dsurareadap = -opt::surface_area_dz(map_z, dap);
-            const double dSadap = opt::dSa(dap, map_z, dmax_zdap, -1);
-            const double dsurareadvc = -opt::surface_area_dz(map_z, dvc);
-            const double dSadvc = opt::dSa(dvc, map_z, dmax_zdvc, 0);
-
-            std::cout << std::endl;
-            std::cout << dsurareadf << " " << dSadf << std::endl;
-            std::cout << dsurareadap << " " << dSadap << std::endl;
-            std::cout << dsurareadvc << " " << dSadvc << std::endl;
-
-            dsurarea_vec[0] = dsurareadf;
-            dSa_vec[0] = dSadf;
-            dsurarea_vec[1] = dsurareadap;
-            dSa_vec[1] = dSadap;
-            dsurarea_vec[2] = dsurareadvc;
-            dSa_vec[2] = dSadvc;
-
-            slp.update(x, dsurarea_vec, {roughness}, dSa_vec); 
-            //mma.Update(x.data(), dsurarea_vec.data(), &roughness, dSa_vec.data(), xmin, xmax); 
-
-            ch = std::abs(1 - surarea/old_surarea);
-            old_surarea = surarea;
-
-            std::cout << std::endl;
-            std::cout << "Iteration: " << it << std::endl;
-            std::cout << "Surface area: " << -surarea << std::endl;
-            std::cout << "Roughness: " << roughness + max_roughness << std::endl;
-            std::cout << "f: " << f << std::endl;
-            std::cout << "ap: " << ap << std::endl;
-            std::cout << "vc: " << vc << std::endl;
-            std::cout << "max z: " << param::max_z << " (red)" << std::endl;
-            std::cout << "mid z: " << (param::max_z+param::min_z)/2.0 << " (green)" << std::endl;
-            std::cout << "min z: " << param::min_z << " (blue)" << std::endl;
-            std::cout << "Change: " << ch << std::endl;
-            ++it;
-        }
-
-        img.update(px.data());
-        auto wsize = window.getSize();
-        window_width = wsize.x;
-        window_height = wsize.y;
+        sf::Texture img;
+        img.create(tex_width, tex_height);
+        sf::Sprite sprite(img);
         sprite.setPosition(sf::Vector2f(window_width/2-tex_width/2, window_height/2-tex_height/2));
 
-        window.draw(sprite);
-        window.display();
-    }
+        std::vector<sf::Uint8> px(tex_width*tex_height*4, 255);
 
-    img.copyToImage().saveToFile("result.png");
+        sf::RenderWindow window(sf::VideoMode(window_width, window_height), "textopt");
+        window.setPosition(sf::Vector2i((resolution.width - window_width)/2, (resolution.height - window_height)/2));
+        
+        if(analysis_type == AnalysisType::SINGLE){
+
+
+        } else if(analysis_type == AnalysisType::OPT){
+
+            double ch = 1;
+            size_t it = 1;
+            double old_surarea = 1;
+
+            const size_t N = 3;
+            std::vector<double> x{f, ap, vc};
+            std::vector<double> xmin{f_min, ap_min, vc_min};
+            std::vector<double> xmax{f_max, ap_max, vc_max};
+            // Workaround. When the angles are different, you can't assume that both
+            // edges have the same height when at least one side is within the tool
+            // radius zone. Not sure if it's worth it to adapt to this case, as it
+            // may involve a larger refactor, but this will do for now.
+            if(alpha1 != alpha2){
+                xmin[0] = 2*r;
+            }
+            std::vector<double> dSa_vec{0, 0, 0};
+            std::vector<double> dsurarea_vec{0, 0, 0};
+
+            // Only works if starting from an exterior point, for some reason
+            SLP slp(N, 1);
+            MMASolver mma(N, 1, 0, 1e5, 1);
+            mma.SetAsymptotes(0.1, 0.7, 1.2);
+
+            while(window.isOpen()){
+                sf::Event event;
+                while (window.pollEvent(event)){
+                    if (event.type == sf::Event::Closed){
+                        window.close();
+                    }
+                    if(event.type == sf::Event::Resized){
+                        sf::FloatRect view(0, 0, event.size.width, event.size.height);
+                        window.setView(sf::View(view));
+                    }
+                }
+                window.clear(sf::Color::Black);
+
+                if(ch > 1e-8){
+                    const double f = x[0];
+                    const double ap = x[1];
+                    const double vc = x[2];
+                    texture::map(map_z, orig_z, f, ap, vc);
+                    render::draw_texture(px, map_z, render::Colorscheme::HSV);
+                    const double surarea = -opt::surface_area(map_z);
+                    const double roughness = opt::Sa(map_z) - max_roughness;
+
+                    texture::dzdf(orig_z, f, ap, vc, df);
+                    texture::dzdap(orig_z, f, ap, vc, dap);
+                    texture::dzdvc(orig_z, f, ap, vc, dvc);
+
+                    const double dsurareadf = -opt::surface_area_dz(map_z, df);
+                    const double dSadf = opt::dSa(df, map_z, dmax_zdf, 0);
+                    const double dsurareadap = -opt::surface_area_dz(map_z, dap);
+                    const double dSadap = opt::dSa(dap, map_z, dmax_zdap, -1);
+                    const double dsurareadvc = -opt::surface_area_dz(map_z, dvc);
+                    const double dSadvc = opt::dSa(dvc, map_z, dmax_zdvc, 0);
+
+                    std::cout << std::endl;
+                    std::cout << dsurareadf << " " << dSadf << std::endl;
+                    std::cout << dsurareadap << " " << dSadap << std::endl;
+                    std::cout << dsurareadvc << " " << dSadvc << std::endl;
+
+                    dsurarea_vec[0] = dsurareadf;
+                    dSa_vec[0] = dSadf;
+                    dsurarea_vec[1] = dsurareadap;
+                    dSa_vec[1] = dSadap;
+                    dsurarea_vec[2] = dsurareadvc;
+                    dSa_vec[2] = dSadvc;
+
+                    if(opt_method == OptMethod::SLP){
+                        slp.update(x, dsurarea_vec, {roughness}, dSa_vec);
+                    } else if(opt_method == OptMethod::MMA){
+                        mma.Update(x.data(), dsurarea_vec.data(), &roughness, dSa_vec.data(), xmin.data(), xmax.data());
+                    }
+
+                    ch = std::abs(1 - surarea/old_surarea);
+                    old_surarea = surarea;
+
+                    std::cout << std::endl;
+                    std::cout << "Iteration: " << it << std::endl;
+                    std::cout << "Surface area: " << -surarea << std::endl;
+                    std::cout << "Roughness: " << roughness + max_roughness << std::endl;
+                    std::cout << "f: " << f << std::endl;
+                    std::cout << "ap: " << ap << std::endl;
+                    std::cout << "vc: " << vc << std::endl;
+                    std::cout << "max z: " << param::max_z << " (red)" << std::endl;
+                    std::cout << "mid z: " << (param::max_z+param::min_z)/2.0 << " (green)" << std::endl;
+                    std::cout << "min z: " << param::min_z << " (blue)" << std::endl;
+                    std::cout << "Change: " << ch << std::endl;
+                    ++it;
+                }
+
+                img.update(px.data());
+                auto wsize = window.getSize();
+                window_width = wsize.x;
+                window_height = wsize.y;
+                sprite.setPosition(sf::Vector2f(window_width/2-tex_width/2, window_height/2-tex_height/2));
+
+                window.draw(sprite);
+                window.display();
+            }
+
+            img.copyToImage().saveToFile("result.png");
+        }
+    }
 
     return 0;
 }

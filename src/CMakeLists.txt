@@ -8,6 +8,7 @@ set(SOURCES
     texture.cpp
     analysis.cpp
     slp.cpp
+    config.cpp
 )
 
 add_executable(${PROJECT_NAME} ${SOURCES})
