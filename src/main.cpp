@@ -73,7 +73,116 @@ int main(int argc, char* argv[]){
         window.setPosition(sf::Vector2i((resolution.width - window_width)/2, (resolution.height - window_height)/2));
         
         if(analysis_type == AnalysisType::SINGLE){
+            std::vector<double> dSa_vec{0, 0, 0};
+            std::vector<double> dsurarea_vec{0, 0, 0};
 
+            std::cout << std::endl;
+            std::cout << "===========================" << std::endl;
+            std::cout << "========   EXACT    =======" << std::endl;
+            std::cout << "===========================" << std::endl;
+
+            texture::map_exact(map_z, orig_z, f, ap, vc);
+            render::draw_texture(px, map_z, render::Colorscheme::HSV);
+            const double surarea_ex = -opt::surface_area(map_z);
+            const double roughness_ex = opt::Sa(map_z) - max_roughness;
+
+            std::cout << std::endl;
+            std::cout << "Surface area: " << -surarea_ex << std::endl;
+            std::cout << "Roughness: " << roughness_ex + max_roughness << std::endl;
+            std::cout << std::endl;
+            std::cout << "f: " << f << std::endl;
+            std::cout << "ap: " << ap << std::endl;
+            std::cout << "vc: " << vc << std::endl;
+            std::cout << std::endl;
+            std::cout << "max z: " << param::max_z << " (red)" << std::endl;
+            std::cout << "mid z: " << (param::max_z+param::min_z)/2.0 << " (green)" << std::endl;
+            std::cout << "min z: " << param::min_z << " (blue)" << std::endl;
+
+            std::cout << std::endl;
+            std::cout << "===========================" << std::endl;
+            std::cout << "========   SMOOTH   =======" << std::endl;
+            std::cout << "===========================" << std::endl;
+
+            texture::map(map_z, orig_z, f, ap, vc);
+            render::draw_texture(px, map_z, render::Colorscheme::HSV);
+            const double surarea = -opt::surface_area(map_z);
+            const double roughness = opt::Sa(map_z) - max_roughness;
+
+            texture::dzdf(orig_z, f, ap, vc, df);
+            texture::dzdap(orig_z, f, ap, vc, dap);
+            texture::dzdvc(orig_z, f, ap, vc, dvc);
+
+            const double dsurareadf = -opt::surface_area_dz(map_z, df);
+            const double dSadf = opt::dSa(df, map_z, dmax_zdf, 0);
+            const double dsurareadap = -opt::surface_area_dz(map_z, dap);
+            const double dSadap = opt::dSa(dap, map_z, dmax_zdap, -1);
+            const double dsurareadvc = -opt::surface_area_dz(map_z, dvc);
+            const double dSadvc = opt::dSa(dvc, map_z, dmax_zdvc, 0);
+
+            std::cout << std::endl;
+            std::cout << "dAdf:   " << dsurareadf << std::endl;
+            std::cout << "dSadf:  " << dSadf << std::endl;
+            std::cout << std::endl;
+            std::cout << "dAdap:  " << dsurareadap << std::endl;
+            std::cout << "dSadap: " << dSadap << std::endl;
+            std::cout << std::endl;
+            std::cout << "dAdvc:  " << dsurareadvc << std::endl;
+            std::cout << "dSadvc: " << dSadvc << std::endl;
+
+            dsurarea_vec[0] = dsurareadf;
+            dSa_vec[0] = dSadf;
+            dsurarea_vec[1] = dsurareadap;
+            dSa_vec[1] = dSadap;
+            dsurarea_vec[2] = dsurareadvc;
+            dSa_vec[2] = dSadvc;
+
+            std::cout << std::endl;
+            std::cout << "Surface area: " << -surarea << std::endl;
+            std::cout << "Roughness: " << roughness + max_roughness << std::endl;
+            std::cout << std::endl;
+            std::cout << "f: " << f << std::endl;
+            std::cout << "ap: " << ap << std::endl;
+            std::cout << "vc: " << vc << std::endl;
+            std::cout << std::endl;
+            std::cout << "max z: " << param::max_z << " (red)" << std::endl;
+            std::cout << "mid z: " << (param::max_z+param::min_z)/2.0 << " (green)" << std::endl;
+            std::cout << "min z: " << param::min_z << " (blue)" << std::endl;
+
+            std::cout << std::endl;
+            std::cout << "===========================" << std::endl;
+            std::cout << "========   ERROR    =======" << std::endl;
+            std::cout << "===========================" << std::endl;
+
+            std::cout << std::endl;
+            std::cout << "Surface area: " << -surarea+surarea_ex << std::endl;
+            std::cout << "Roughness: " << roughness - roughness_ex << std::endl;
+
+            std::cout << std::endl;
+
+            while(window.isOpen()){
+                sf::Event event;
+                while (window.pollEvent(event)){
+                    if (event.type == sf::Event::Closed){
+                        window.close();
+                    }
+                    if(event.type == sf::Event::Resized){
+                        sf::FloatRect view(0, 0, event.size.width, event.size.height);
+                        window.setView(sf::View(view));
+                    }
+                }
+                window.clear(sf::Color::Black);
+
+                img.update(px.data());
+                auto wsize = window.getSize();
+                window_width = wsize.x;
+                window_height = wsize.y;
+                sprite.setPosition(sf::Vector2f(window_width/2-tex_width/2, window_height/2-tex_height/2));
+
+                window.draw(sprite);
+                window.display();
+            }
+
+            img.copyToImage().saveToFile("result.png");
 
         } else if(analysis_type == AnalysisType::OPT){
 
