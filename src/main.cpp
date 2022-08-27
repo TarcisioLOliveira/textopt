@@ -42,7 +42,7 @@ int main(int argc, char* argv[]){
     if(argc > 1){
         config::load(argv[1]);
     } else {
-        std::cout << "Error: configuration file missing." << std::endl;
+        std::cout << "Error: missing path to configuration file." << std::endl;
         throw;
     }
 
