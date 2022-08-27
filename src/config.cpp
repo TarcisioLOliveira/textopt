@@ -20,14 +20,22 @@
 
 #include "config.hpp"
 #include "param.hpp"
+#include <yaml-cpp/exceptions.h>
 #include <yaml-cpp/node/impl.h>
+#include <yaml-cpp/node/node.h>
 #include <yaml-cpp/node/type.h>
 
 namespace config{
 
 void load(const std::string& path){
-   
-    YAML::Node config = YAML::LoadFile(path);
+ 
+    YAML ::Node config;
+    try{ 
+        config = YAML::LoadFile(path);
+    } catch(YAML::BadFile& e){
+        std::cout << std::endl << "Error: inserted file path leads to a non existent file." << std::endl << std::endl;
+        throw;
+    }
 
     required(config, "analysis", YAML::NodeType::Map);
     auto at = get_scalar<std::string>(config["analysis"], "type");
@@ -39,7 +47,8 @@ void load(const std::string& path){
         } else if(am == "mma"){
             param::opt_method = param::OptMethod::MMA;
         } else {
-            std::cout << "Unknown method for " << at << ": " << am << std::endl;
+            std::cout << std::endl << "Unknown method for " << at << ": " << am << std::endl << std::endl;
+            throw;
         }
         param::max_roughness = get_scalar<double>(config["analysis"], "max_roughness");
     } else if(at == "plot"){
@@ -49,7 +58,8 @@ void load(const std::string& path){
         } else if(am == "vc"){
             param::plot_method = param::PlotMethod::VC;
         } else {
-            std::cout << "Unknown method for " << at << ": " << am << std::endl;
+            std::cout << std::endl << "Unknown method for " << at << ": " << am << std::endl << std::endl;
+            throw;
         }
         param::step = get_scalar<double>(config["analysis"], "step");
     } else if(at == "single"){
@@ -59,10 +69,11 @@ void load(const std::string& path){
         } else if(am == "smooth"){
             param::single_method = param::SingleMethod::SMOOTH;
         } else {
-            std::cout << "Unknown method for " << at << ": " << am << std::endl;
+            std::cout << std::endl << "Unknown method for " << at << ": " << am << std::endl << std::endl;
+            throw;
         }
     } else {
-        std::cout << "Unknown analysis type: " << at << std::endl;
+        std::cout << std::endl << "Unknown analysis type: " << at << std::endl << std::endl;
         throw;
     }
 

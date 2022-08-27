@@ -31,6 +31,7 @@
 
 #include <iostream>
 #include <string>
+#include <yaml-cpp/exceptions.h>
 #include <yaml-cpp/node/type.h>
 #include <yaml-cpp/yaml.h>
 
@@ -42,16 +43,21 @@ inline bool valid(const YAML::Node& n, YAML::NodeType::value type){
     return n.Type() == type;
 }
 
-inline bool null(const YAML::Node& n, YAML::NodeType::value type){
-    return n.Type() == YAML::NodeType::Null;
+inline bool exists(const YAML::Node& n, const std::string& obj){
+    try{
+        return !n[obj].IsNull();
+    } catch(YAML::InvalidNode& e){
+        return false;
+    }
+    return true;
 }
 
 inline bool required(const YAML::Node& n, const std::string obj, YAML::NodeType::value type){
-    if(null(n[obj], type)){
-        std::cout << "Missing parameter: " << obj << std::endl;
+    if(!exists(n, obj)){
+        std::cout << std::endl << "Missing parameter: " << obj << std::endl << std::endl;
         throw;
     } else if(!valid(n[obj], type)){
-        std::cout << "Parameter \"" << obj << "\" has invalid type" << std::endl;
+        std::cout << std::endl << "Parameter \"" << obj << "\" has invalid type" << std::endl << std::endl;
         throw;
     }
     return true;
@@ -60,7 +66,7 @@ inline bool required(const YAML::Node& n, const std::string obj, YAML::NodeType:
 inline bool required_size(const YAML::Node& n, const std::string obj, size_t size){
     required(n, obj, YAML::NodeType::Sequence);
     if(n[obj].size() < size){
-        std::cout << "Incorrect number of elements for sequence " << obj << ": has " << n[obj].size() << ", must be at least " << size << std::endl;
+        std::cout << std::endl << "Incorrect number of elements for sequence " << obj << ": has " << n[obj].size() << ", must be at least " << size << std::endl << std::endl;
         throw;
     }
     return true;
@@ -68,17 +74,16 @@ inline bool required_size(const YAML::Node& n, const std::string obj, size_t siz
 
 template<class T>
 inline T get_scalar(const YAML::Node& n, const std::string obj){
-    if(required(n, obj, YAML::NodeType::Scalar)){
+    try{
         return n[obj].as<T>();
+    } catch(YAML::InvalidNode& e){
+        std::cout << std::endl << "Error: missing parameter: " << obj << std::endl << std::endl;
+        throw;
+    } catch(YAML::TypedBadConversion<T>& e){
+        std::cout << std::endl << "Error: parameter has invalid type: " << obj << std::endl << std::endl;
+        throw;
     }
     return 0;
-}
-
-template<class T>
-inline T get_array(const YAML::Node& n, const std::string obj){
-    if(required(n, obj, YAML::NodeType::Sequence)){
-        return n[obj].as<T>();
-    }
 }
 
 }
