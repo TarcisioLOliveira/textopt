@@ -1,0 +1,72 @@
+# Analysis type, e.g. optimization ("opt") or plotting ("plot")
+analysis:
+  type: plot   # Plot optimization functions
+  method: vc   # vc (2D plot) (use "fxap" for f x ap analysis
+  step: 0.1      # Step for calculating points
+
+# Window dimensions
+window:
+  window_width: 600
+  window_height: 600
+
+# Information related to texture dimensions and scaling.
+texture:
+  # Dimensions of the region being analyzed (in number of equally spaced points).
+  # E.g. a 400x400 space has 360000 points. With each one being spaced by 1 um,
+  # that gives a base area of 399x399 = 159201 um^2.
+  tex_width: 400
+  tex_height: 400
+  # Unit scaling. Currently defaulting to um as base unit for texture.
+  # There is naive support for different scales in different directions,
+  # but it may break tool radius and ellipse shape if they're different.
+  # Defaults to same scale to all sides.
+  dim: 1
+
+# Cutting parameters and ranges
+# Upper bound is unused for SLP
+# For plotting, depends on plotting method
+# Starting values are unused for plotting
+cutting:
+  f: 200             # Starting feed rate
+  f_range:  [1, 100] # Feed rate range
+  ap: 200            # Starting cutting depth
+  ap_range: [1, 100] # Cutting depth range
+  vc: 200            # Starting cutting velocity
+  vc_range: [1, 100] # Cutting velocity range
+
+# Constants used for the smooth approximations
+approx_constants:
+  MULT: -1.0       # Exponent for smooth::min()
+  FLOORD: 1.0e-10  # smooth::floor() precision
+  ABS_EPS: 1.0e-15 # smooth::abs() precision
+  YOFF: 0.001      # Workaround over smooth::floor() being off by -0.5 for
+                   # integers
+
+# Tool parameters
+tool:
+  alpha1: 60 # [degrees] Back angle (descending)
+  alpha2: 60 # [degrees] Front angle (ascending)
+  r: 20      # [um] Tool radius
+
+# "Random" oscillation
+# Models height variation along the tool path
+oscillation:
+  # Amplitude [dim], e.g. [um]
+  Ax: 0.5
+  Az: 0.1
+  # Frequency [Hz]
+  fx: 19.0e6
+  fz: 51.0e6
+  # Phase [degrees]
+  phix: 20
+  phiz: 0
+  # Cylinder radius, to simulate the phase change with the turn of the cylinder.
+  cylinder_radius: 6 # [mm]
+
+# Ultrasonic elliptical turning
+ellipse:
+  # Frequency
+  f_uet: 20000 # [Hz]
+  # Amplitudes
+  Ax_uet: 1    # [um]
+  Az_uet: 2    # [um]
