@@ -243,9 +243,19 @@ int main(int argc, char* argv[]){
                     const double dSadvc = opt::dSa(dvc, map_z, dmax_zdvc, 0);
 
                     std::cout << std::endl;
-                    std::cout << dsurareadf << " " << dSadf << std::endl;
-                    std::cout << dsurareadap << " " << dSadap << std::endl;
-                    std::cout << dsurareadvc << " " << dSadvc << std::endl;
+                    std::cout << "===========================" << std::endl;
+                    std::cout << "Iteration: " << it << std::endl;
+                    std::cout << "===========================" << std::endl;
+
+                    std::cout << std::endl;
+                    std::cout << "dAdf:   " << dsurareadf << std::endl;
+                    std::cout << "dSadf:  " << dSadf << std::endl;
+                    std::cout << std::endl;
+                    std::cout << "dAdap:  " << dsurareadap << std::endl;
+                    std::cout << "dSadap: " << dSadap << std::endl;
+                    std::cout << std::endl;
+                    std::cout << "dAdvc:  " << dsurareadvc << std::endl;
+                    std::cout << "dSadvc: " << dSadvc << std::endl;
 
                     dsurarea_vec[0] = dsurareadf;
                     dSa_vec[0] = dSadf;
@@ -264,15 +274,17 @@ int main(int argc, char* argv[]){
                     old_surarea = surarea;
 
                     std::cout << std::endl;
-                    std::cout << "Iteration: " << it << std::endl;
                     std::cout << "Surface area: " << -surarea << std::endl;
                     std::cout << "Roughness: " << roughness + max_roughness << std::endl;
+                    std::cout << std::endl;
                     std::cout << "f: " << f << std::endl;
                     std::cout << "ap: " << ap << std::endl;
                     std::cout << "vc: " << vc << std::endl;
+                    std::cout << std::endl;
                     std::cout << "max z: " << param::max_z << " (red)" << std::endl;
                     std::cout << "mid z: " << (param::max_z+param::min_z)/2.0 << " (green)" << std::endl;
                     std::cout << "min z: " << param::min_z << " (blue)" << std::endl;
+                    std::cout << std::endl;
                     std::cout << "Change: " << ch << std::endl;
                     ++it;
                 }
