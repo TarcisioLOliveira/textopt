@@ -102,9 +102,7 @@ void map_exact(std::vector<double>& map_z, const std::vector<double>& orig_z, do
                 // Phase differences
                 const double perimeter = 2*M_PI*cylinder_radius;
 
-                const double phase_diff_x = 2*M_PI*fx*mult*perimeter*dimx/vc + phix;
                 const double phase_diff_z = 2*M_PI*fz*mult*perimeter*dimx/vc + phiz;
-                const double phix_cur = phase_diff_x - std::floor((phase_diff_x)/(2*M_PI))*2*M_PI;
                 const double phiz_cur = phase_diff_z - std::floor((phase_diff_z)/(2*M_PI))*2*M_PI;
 
                 const double xoffset_uet = mult*perimeter;
@@ -112,8 +110,7 @@ void map_exact(std::vector<double>& map_z, const std::vector<double>& orig_z, do
                 for(size_t X = 0; X < tex_width; ++X){
                     const double x = static_cast<double>(X);
                     // Random oscillation
-                    const double newx = x + Ax*std::sin(2*M_PI*fx*x*dimx/vc + phix_cur);
-                    const double oscillation = Az*std::sin(2*M_PI*fz*newx*dimx/vc + phiz_cur);
+                    const double oscillation = Az*std::sin(2*M_PI*fz*x*dimx/vc + phiz_cur);
 
                     // Ultrasonic turning effects
                     const double xcirc = x + xoffset_uet;
@@ -219,9 +216,7 @@ void map(std::vector<double>& map_z, const std::vector<double>& orig_z, double f
             // Phase differences
             const double perimeter = 2*M_PI*cylinder_radius;
 
-            const double phase_diff_x = 2*M_PI*fx*mult*perimeter*dimx/vc + phix;
             const double phase_diff_z = 2*M_PI*fz*mult*perimeter*dimx/vc + phiz;
-            const double phix_cur = phase_diff_x - smooth::floor((phase_diff_x)/(2*M_PI))*2*M_PI;
             const double phiz_cur = phase_diff_z - smooth::floor((phase_diff_z)/(2*M_PI))*2*M_PI;
 
             const double xoffset_uet = mult*perimeter;
@@ -238,8 +233,7 @@ void map(std::vector<double>& map_z, const std::vector<double>& orig_z, double f
             for(size_t X = 0; X < tex_width; ++X){
                 const double x = static_cast<double>(X);
                 // Random oscillation
-                const double newx = x + Ax*std::sin(2*M_PI*fx*x*dimx/vc + phix_cur);
-                const double oscillation = Az*std::sin(2*M_PI*fz*newx*dimx/vc + phiz_cur);
+                const double oscillation = Az*std::sin(2*M_PI*fz*x*dimx/vc + phiz_cur);
 
                 // Ultrasonic turning effects
                 const double xcirc = x + xoffset_uet;
@@ -316,12 +310,8 @@ void dzdvc(const std::vector<double>& orig_z, double f, double ap, double vc, st
 
             const double perimeter = 2*M_PI*cylinder_radius;
 
-            const double phase_diff_x = 2*M_PI*fx*mult*perimeter*dimx/vc + phix;
-            const double dpdx = -2*M_PI*fx*mult*perimeter*dimx/(vc*vc);
             const double phase_diff_z = 2*M_PI*fz*mult*perimeter*dimx/vc + phiz;
             const double dpdz = -2*M_PI*fz*mult*perimeter*dimx/(vc*vc);
-            const double phix_cur = phase_diff_x - smooth::floor((phase_diff_x)/(2*M_PI))*2*M_PI;
-            const double dphix_cur = dpdx - smooth::floor_deriv((phase_diff_x)/(2*M_PI))*dpdx;
             const double phiz_cur = phase_diff_z - smooth::floor((phase_diff_z)/(2*M_PI))*2*M_PI;
             const double dphiz_cur = dpdz - smooth::floor_deriv((phase_diff_z)/(2*M_PI))*dpdz;
 
@@ -330,11 +320,8 @@ void dzdvc(const std::vector<double>& orig_z, double f, double ap, double vc, st
             for(size_t X = 0; X < tex_width; ++X){
                 const double x = static_cast<double>(X);
 
-                const double newx = x + Ax*std::sin(2*M_PI*fx*x*dimx/vc + phix_cur);
-                const double dnewxdvc = Ax*std::cos(2*M_PI*fx*x*dimx/vc + phix_cur)*((-2)*M_PI*fx*x*dimx/(vc*vc) + dphix_cur);
-
-                const double oscillation = Az*std::sin(2*M_PI*fz*newx*dimx/vc + phiz_cur);
-                const double doscilldvc = Az*std::cos(2*M_PI*fz*newx*dimx/vc + phiz_cur)*(2*M_PI*fz*(dnewxdvc*dimx*vc - newx*dimx)/(vc*vc) + dphiz_cur);
+                const double oscillation = Az*std::sin(2*M_PI*fz*x*dimx/vc + phiz_cur);
+                const double doscilldvc = Az*std::cos(2*M_PI*fz*x*dimx/vc + phiz_cur)*(-2*M_PI*fz*x*dimx/(vc*vc) + dphiz_cur);
 
                 const double xcirc = x + xoffset_uet;
 
@@ -432,9 +419,7 @@ void dzdap(const std::vector<double>& orig_z, double f, double ap, double vc, st
 
             const double perimeter = 2*M_PI*cylinder_radius;
 
-            const double phase_diff_x = 2*M_PI*fx*mult*perimeter*dimx/vc + phix;
             const double phase_diff_z = 2*M_PI*fz*mult*perimeter*dimx/vc + phiz;
-            const double phix_cur = phase_diff_x - smooth::floor((phase_diff_x)/(2*M_PI))*2*M_PI;
             const double phiz_cur = phase_diff_z - smooth::floor((phase_diff_z)/(2*M_PI))*2*M_PI;
 
             const double xoffset_uet = mult*perimeter;
@@ -442,8 +427,7 @@ void dzdap(const std::vector<double>& orig_z, double f, double ap, double vc, st
             for(size_t X = 0; X < tex_width; ++X){
                 const double x = static_cast<double>(X);
 
-                const double newx = x + Ax*std::sin(2*M_PI*fx*x*dimx/vc + phix_cur);
-                const double oscillation = Az*std::sin(2*M_PI*fz*newx*dimx/vc + phiz_cur);
+                const double oscillation = Az*std::sin(2*M_PI*fz*x*dimx/vc + phiz_cur);
 
                 const double xcirc = x + xoffset_uet;
                 const double mult_uet = smooth::abs(smooth::floor(xcirc / delta_uet));
@@ -542,12 +526,8 @@ void dzdf(const std::vector<double>& orig_z, double f, double ap, double vc, std
 
             const double perimeter = 2*M_PI*cylinder_radius;
 
-            const double phase_diff_x = 2*M_PI*fx*mult*perimeter*dimx/vc + phix;
-            const double dpdx = 2*M_PI*fx*dmult*perimeter*dimx/vc;
             const double phase_diff_z = 2*M_PI*fz*mult*perimeter*dimx/vc + phiz;
             const double dpdz = 2*M_PI*fz*dmult*perimeter*dimx/vc;
-            const double phix_cur = phase_diff_x - smooth::floor((phase_diff_x)/(2*M_PI))*2*M_PI;
-            const double dphix_cur = dpdx - smooth::floor_deriv((phase_diff_x)/(2*M_PI))*dpdx;
             const double phiz_cur = phase_diff_z - smooth::floor((phase_diff_z)/(2*M_PI))*2*M_PI;
             const double dphiz_cur = dpdz - smooth::floor_deriv((phase_diff_z)/(2*M_PI))*dpdz;
 
@@ -557,11 +537,8 @@ void dzdf(const std::vector<double>& orig_z, double f, double ap, double vc, std
             for(size_t X = 0; X < tex_width; ++X){
                 const double x = static_cast<double>(X);
 
-                const double newx = x + Ax*std::sin(2*M_PI*fx*x*dimx/vc + phix_cur);
-                const double dnewxdf = Ax*std::cos(2*M_PI*fx*x*dimx/vc + phix_cur)*dphix_cur;
-
-                const double oscillation = Az*std::sin(2*M_PI*fz*newx*dimx/vc + phiz_cur);
-                const double doscilldf = Az*std::cos(2*M_PI*fz*newx*dimx/vc + phiz_cur)*(2*M_PI*fz*dnewxdf*dimx/vc + dphiz_cur);
+                const double oscillation = Az*std::sin(2*M_PI*fz*x*dimx/vc + phiz_cur);
+                const double doscilldf = Az*std::cos(2*M_PI*fz*x*dimx/vc + phiz_cur)*dphiz_cur;
 
                 const double xcirc = x + xoffset_uet;
                 const double dxcirc = dxoff_uet;
