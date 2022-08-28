@@ -145,7 +145,7 @@ void load(const std::string& path){
     param::fz = get_scalar<double>(config["oscillation"], "fz");
     param::phix = get_scalar<double>(config["oscillation"], "phix") * M_PI / 180.0;
     param::phiz = get_scalar<double>(config["oscillation"], "phiz") * M_PI / 180.0;
-    param::cylinder_radius = get_scalar<double>(config["oscillation"], "cylinder_radius");
+    param::cylinder_radius = 1000*get_scalar<double>(config["oscillation"], "cylinder_radius");
 
     required(config, "ellipse", YAML::NodeType::Map);
     param::f_uet = get_scalar<double>(config["ellipse"], "f_uet");
