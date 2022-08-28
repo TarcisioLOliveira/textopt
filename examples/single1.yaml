@@ -54,7 +54,7 @@ oscillation:
   # Amplitude [dim], e.g. [um]
   Az: 0.1
   # Frequency [Hz]
-  fz: 51.0e6
+  fz: 3000.0e6
   # Phase [degrees]
   phiz: 0
   # Cylinder radius, to simulate the phase change with the turn of the cylinder.
