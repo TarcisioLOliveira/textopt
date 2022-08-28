@@ -141,11 +141,8 @@ void load(const std::string& path){
     param::alpha2 = get_scalar<double>(config["tool"], "alpha2") * M_PI / 180.0;
 
     required(config, "oscillation", YAML::NodeType::Map);
-    param::Ax = get_scalar<double>(config["oscillation"], "Ax");
     param::Az = get_scalar<double>(config["oscillation"], "Az");
-    param::fx = get_scalar<double>(config["oscillation"], "fx");
     param::fz = get_scalar<double>(config["oscillation"], "fz");
-    param::phix = get_scalar<double>(config["oscillation"], "phix") * M_PI / 180.0;
     param::phiz = get_scalar<double>(config["oscillation"], "phiz") * M_PI / 180.0;
     param::cylinder_radius = 1000*get_scalar<double>(config["oscillation"], "cylinder_radius");
 

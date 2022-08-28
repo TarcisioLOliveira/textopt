@@ -120,13 +120,10 @@ inline double dmax_zdvc = 0;
 // Models height variation along the tool path
 
 // Amplitude [dim], e.g. [um]
-inline double Ax = 0.5;
 inline double Az = 0.1;
 // Frequency [Hz]
-inline double fx = 19*1e6;
 inline double fz = 51*1e6;
 // Phase [rad]
-inline double phix = 20*M_PI/180;
 inline double phiz = 0;
 // Cylinder radius, to simulate the phase change with the turn of the cylinder.
 inline double cylinder_radius = 6*dim_scale; // [um]

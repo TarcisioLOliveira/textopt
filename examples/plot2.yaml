@@ -52,13 +52,10 @@ tool:
 # Models height variation along the tool path
 oscillation:
   # Amplitude [dim], e.g. [um]
-  Ax: 0.5
   Az: 0.1
   # Frequency [Hz]
-  fx: 19.0e6
   fz: 51.0e6
   # Phase [degrees]
-  phix: 20
   phiz: 0
   # Cylinder radius, to simulate the phase change with the turn of the cylinder.
   cylinder_radius: 6 # [mm]
