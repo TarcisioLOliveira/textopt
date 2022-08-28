@@ -84,7 +84,9 @@ void load(const std::string& path){
     required(config, "texture", YAML::NodeType::Map);
     param::tex_width = get_scalar<size_t>(config["texture"], "tex_width");
     param::tex_height = get_scalar<size_t>(config["texture"], "tex_height");
+    param::base_area = (param::tex_width-1)*(param::tex_height-1);
     param::dim = get_scalar<double>(config["texture"], "dim");
+    param::dimx = param::dimy = param::dimz = param::dim;
 
     required(config, "cutting", YAML::NodeType::Map);
     if(param::analysis_type != param::AnalysisType::PLOT){
