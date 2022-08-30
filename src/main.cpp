@@ -35,6 +35,7 @@
 #include "analysis.hpp"
 #include "slp.hpp"
 #include "config.hpp"
+#include "texture_shallow.hpp"
 
 int main(int argc, char* argv[]){
     using namespace param;
@@ -81,7 +82,12 @@ int main(int argc, char* argv[]){
             std::cout << "========   EXACT    =======" << std::endl;
             std::cout << "===========================" << std::endl;
 
-            texture::map_exact(map_z, orig_z, f, ap, vc);
+            if(param::opt_ap){
+                texture::map_exact(map_z, orig_z, f, ap, vc);
+            } else {
+                texture_shallow::map_exact(map_z, f, vc);
+            }
+
             if(param::single_method == param::SingleMethod::EXACT){
                 std::cout << "== (CURRENTLY RENDERED)  ==" << std::endl;
                 std::cout << "===========================" << std::endl;
@@ -107,7 +113,11 @@ int main(int argc, char* argv[]){
             std::cout << "========   SMOOTH   =======" << std::endl;
             std::cout << "===========================" << std::endl;
 
-            texture::map(map_z, orig_z, f, ap, vc);
+            if(param::opt_ap){
+                texture::map(map_z, orig_z, f, ap, vc);
+            } else {
+                texture_shallow::map(map_z, f, vc);
+            }
             if(param::single_method == param::SingleMethod::SMOOTH){
                 std::cout << "== (CURRENTLY RENDERED)  ==" << std::endl;
                 std::cout << "===========================" << std::endl;
@@ -116,33 +126,43 @@ int main(int argc, char* argv[]){
             const double surarea = -opt::surface_area(map_z);
             const double roughness = opt::Sa(map_z) - max_roughness;
 
-            texture::dzdf(orig_z, f, ap, vc, df);
-            texture::dzdap(orig_z, f, ap, vc, dap);
-            texture::dzdvc(orig_z, f, ap, vc, dvc);
+            if(param::opt_ap){
+                texture::dzdf(orig_z, f, ap, vc, df);
+                texture::dzdap(orig_z, f, ap, vc, dap);
+                texture::dzdvc(orig_z, f, ap, vc, dvc);
 
-            const double dsurareadf = -opt::surface_area_dz(map_z, df);
-            const double dSadf = opt::dSa(df, map_z, dmax_zdf, 0);
-            const double dsurareadap = -opt::surface_area_dz(map_z, dap);
-            const double dSadap = opt::dSa(dap, map_z, dmax_zdap, -1);
-            const double dsurareadvc = -opt::surface_area_dz(map_z, dvc);
-            const double dSadvc = opt::dSa(dvc, map_z, dmax_zdvc, 0);
+                const double dsurareadf = -opt::surface_area_dz(map_z, df);
+                const double dSadf = opt::dSa(df, map_z, dmax_zdf, 0);
+                const double dsurareadap = -opt::surface_area_dz(map_z, dap);
+                const double dSadap = opt::dSa(dap, map_z, dmax_zdap, -1);
+                const double dsurareadvc = -opt::surface_area_dz(map_z, dvc);
+                const double dSadvc = opt::dSa(dvc, map_z, dmax_zdvc, 0);
 
-            std::cout << std::endl;
-            std::cout << "dAdf:   " << dsurareadf << std::endl;
-            std::cout << "dSadf:  " << dSadf << std::endl;
-            std::cout << std::endl;
-            std::cout << "dAdap:  " << dsurareadap << std::endl;
-            std::cout << "dSadap: " << dSadap << std::endl;
-            std::cout << std::endl;
-            std::cout << "dAdvc:  " << dsurareadvc << std::endl;
-            std::cout << "dSadvc: " << dSadvc << std::endl;
+                std::cout << std::endl;
+                std::cout << "dAdf:   " << dsurareadf << std::endl;
+                std::cout << "dSadf:  " << dSadf << std::endl;
+                std::cout << std::endl;
+                std::cout << "dAdap:  " << dsurareadap << std::endl;
+                std::cout << "dSadap: " << dSadap << std::endl;
+                std::cout << std::endl;
+                std::cout << "dAdvc:  " << dsurareadvc << std::endl;
+                std::cout << "dSadvc: " << dSadvc << std::endl;
+            } else {
+                texture_shallow::dzdf(f, vc, df);
+                texture_shallow::dzdvc(f, vc, dvc);
 
-            dsurarea_vec[0] = dsurareadf;
-            dSa_vec[0] = dSadf;
-            dsurarea_vec[1] = dsurareadap;
-            dSa_vec[1] = dSadap;
-            dsurarea_vec[2] = dsurareadvc;
-            dSa_vec[2] = dSadvc;
+                const double dsurareadf = -opt::surface_area_dz(map_z, df);
+                const double dSadf = opt::dSa(df, map_z, dmax_zdf, dmin_zdf);
+                const double dsurareadvc = -opt::surface_area_dz(map_z, dvc);
+                const double dSadvc = opt::dSa(dvc, map_z, dmax_zdvc, dmin_zdvc);
+
+                std::cout << std::endl;
+                std::cout << "dAdf:   " << dsurareadf << std::endl;
+                std::cout << "dSadf:  " << dSadf << std::endl;
+                std::cout << std::endl;
+                std::cout << "dAdvc:  " << dsurareadvc << std::endl;
+                std::cout << "dSadvc: " << dSadvc << std::endl;
+            }
 
             std::cout << std::endl;
             std::cout << "Surface area: " << -surarea << std::endl;
@@ -193,118 +213,217 @@ int main(int argc, char* argv[]){
             img.copyToImage().saveToFile("result.png");
 
         } else if(analysis_type == AnalysisType::OPT){
+            if(param::opt_ap){
+                double ch = 1;
+                size_t it = 1;
+                double old_surarea = 1;
 
-            double ch = 1;
-            size_t it = 1;
-            double old_surarea = 1;
-
-            const size_t N = 3;
-            std::vector<double> x{f, ap, vc};
-            std::vector<double> xmin{f_min, ap_min, vc_min};
-            std::vector<double> xmax{f_max, ap_max, vc_max};
-            // Workaround. When the angles are different, you can't assume that both
-            // edges have the same height when at least one side is within the tool
-            // radius zone. Not sure if it's worth it to adapt to this case, as it
-            // may involve a larger refactor, but this will do for now.
-            if(alpha1 != alpha2){
-                xmin[0] = 2*r;
-            }
-            std::vector<double> dSa_vec{0, 0, 0};
-            std::vector<double> dsurarea_vec{0, 0, 0};
-
-            // Only works if starting from an exterior point, for some reason
-            SLP slp(N, 1, xmin);
-            MMASolver mma(N, 1, 0, 1e5, 1);
-            mma.SetAsymptotes(0.1, 0.7, 1.2);
-
-            while(window.isOpen()){
-                sf::Event event;
-                while (window.pollEvent(event)){
-                    if (event.type == sf::Event::Closed){
-                        window.close();
-                    }
-                    if(event.type == sf::Event::Resized){
-                        sf::FloatRect view(0, 0, event.size.width, event.size.height);
-                        window.setView(sf::View(view));
-                    }
+                const size_t N = 3;
+                std::vector<double> x{f, ap, vc};
+                std::vector<double> xmin{f_min, ap_min, vc_min};
+                std::vector<double> xmax{f_max, ap_max, vc_max};
+                // Workaround. When the angles are different, you can't assume that both
+                // edges have the same height when at least one side is within the tool
+                // radius zone. Not sure if it's worth it to adapt to this case, as it
+                // may involve a larger refactor, but this will do for now.
+                if(alpha1 != alpha2){
+                    xmin[0] = std::max(2*r, xmin[0]);
                 }
-                window.clear(sf::Color::Black);
+                std::vector<double> dSa_vec{0, 0, 0};
+                std::vector<double> dsurarea_vec{0, 0, 0};
 
-                if(ch > 1e-8){
-                    const double f = x[0];
-                    const double ap = x[1];
-                    const double vc = x[2];
-                    texture::map(map_z, orig_z, f, ap, vc);
-                    render::draw_texture(px, map_z, render::Colorscheme::HSV);
-                    const double surarea = -opt::surface_area(map_z);
-                    const double roughness = opt::Sa(map_z) - max_roughness;
+                // Only works if starting from an exterior point, for some reason
+                SLP slp(N, 1, xmin);
+                MMASolver mma(N, 1, 0, 1e5, 1);
+                mma.SetAsymptotes(0.1, 0.7, 1.2);
 
-                    texture::dzdf(orig_z, f, ap, vc, df);
-                    texture::dzdap(orig_z, f, ap, vc, dap);
-                    texture::dzdvc(orig_z, f, ap, vc, dvc);
+                while(window.isOpen()){
+                    sf::Event event;
+                    while (window.pollEvent(event)){
+                        if (event.type == sf::Event::Closed){
+                            window.close();
+                        }
+                        if(event.type == sf::Event::Resized){
+                            sf::FloatRect view(0, 0, event.size.width, event.size.height);
+                            window.setView(sf::View(view));
+                        }
+                    }
+                    window.clear(sf::Color::Black);
 
-                    const double dsurareadf = -opt::surface_area_dz(map_z, df);
-                    const double dSadf = opt::dSa(df, map_z, dmax_zdf, 0);
-                    const double dsurareadap = -opt::surface_area_dz(map_z, dap);
-                    const double dSadap = opt::dSa(dap, map_z, dmax_zdap, -1);
-                    const double dsurareadvc = -opt::surface_area_dz(map_z, dvc);
-                    const double dSadvc = opt::dSa(dvc, map_z, dmax_zdvc, 0);
+                    if(ch > 1e-8){
+                        const double f = x[0];
+                        const double ap = x[1];
+                        const double vc = x[2];
+                        texture::map(map_z, orig_z, f, ap, vc);
+                        render::draw_texture(px, map_z, render::Colorscheme::HSV);
+                        const double surarea = -opt::surface_area(map_z);
+                        const double roughness = opt::Sa(map_z) - max_roughness;
 
-                    std::cout << std::endl;
-                    std::cout << "===========================" << std::endl;
-                    std::cout << "Iteration: " << it << std::endl;
-                    std::cout << "===========================" << std::endl;
+                        texture::dzdf(orig_z, f, ap, vc, df);
+                        texture::dzdap(orig_z, f, ap, vc, dap);
+                        texture::dzdvc(orig_z, f, ap, vc, dvc);
 
-                    std::cout << std::endl;
-                    std::cout << "dAdf:   " << dsurareadf << std::endl;
-                    std::cout << "dSadf:  " << dSadf << std::endl;
-                    std::cout << std::endl;
-                    std::cout << "dAdap:  " << dsurareadap << std::endl;
-                    std::cout << "dSadap: " << dSadap << std::endl;
-                    std::cout << std::endl;
-                    std::cout << "dAdvc:  " << dsurareadvc << std::endl;
-                    std::cout << "dSadvc: " << dSadvc << std::endl;
+                        const double dsurareadf = -opt::surface_area_dz(map_z, df);
+                        const double dSadf = opt::dSa(df, map_z, dmax_zdf, 0);
+                        const double dsurareadap = -opt::surface_area_dz(map_z, dap);
+                        const double dSadap = opt::dSa(dap, map_z, dmax_zdap, -1);
+                        const double dsurareadvc = -opt::surface_area_dz(map_z, dvc);
+                        const double dSadvc = opt::dSa(dvc, map_z, dmax_zdvc, 0);
 
-                    dsurarea_vec[0] = dsurareadf;
-                    dSa_vec[0] = dSadf;
-                    dsurarea_vec[1] = dsurareadap;
-                    dSa_vec[1] = dSadap;
-                    dsurarea_vec[2] = dsurareadvc;
-                    dSa_vec[2] = dSadvc;
+                        std::cout << std::endl;
+                        std::cout << "===========================" << std::endl;
+                        std::cout << "Iteration: " << it << std::endl;
+                        std::cout << "===========================" << std::endl;
 
-                    if(opt_method == OptMethod::SLP){
-                        slp.update(x, dsurarea_vec, {roughness}, dSa_vec);
-                    } else if(opt_method == OptMethod::MMA){
-                        mma.Update(x.data(), dsurarea_vec.data(), &roughness, dSa_vec.data(), xmin.data(), xmax.data());
+                        std::cout << std::endl;
+                        std::cout << "dAdf:   " << dsurareadf << std::endl;
+                        std::cout << "dSadf:  " << dSadf << std::endl;
+                        std::cout << std::endl;
+                        std::cout << "dAdap:  " << dsurareadap << std::endl;
+                        std::cout << "dSadap: " << dSadap << std::endl;
+                        std::cout << std::endl;
+                        std::cout << "dAdvc:  " << dsurareadvc << std::endl;
+                        std::cout << "dSadvc: " << dSadvc << std::endl;
+
+                        dsurarea_vec[0] = dsurareadf;
+                        dSa_vec[0] = dSadf;
+                        dsurarea_vec[1] = dsurareadap;
+                        dSa_vec[1] = dSadap;
+                        dsurarea_vec[2] = dsurareadvc;
+                        dSa_vec[2] = dSadvc;
+
+                        if(opt_method == OptMethod::SLP){
+                            slp.update(x, dsurarea_vec, {roughness}, dSa_vec);
+                        } else if(opt_method == OptMethod::MMA){
+                            mma.Update(x.data(), dsurarea_vec.data(), &roughness, dSa_vec.data(), xmin.data(), xmax.data());
+                        }
+
+                        ch = std::abs(1 - surarea/old_surarea);
+                        old_surarea = surarea;
+
+                        std::cout << std::endl;
+                        std::cout << "Surface area: " << -surarea << std::endl;
+                        std::cout << "Roughness: " << roughness + max_roughness << std::endl;
+                        std::cout << std::endl;
+                        std::cout << "f: " << f << std::endl;
+                        std::cout << "ap: " << ap << std::endl;
+                        std::cout << "vc: " << vc << std::endl;
+                        std::cout << std::endl;
+                        std::cout << "max z: " << param::max_z << " (red)" << std::endl;
+                        std::cout << "mid z: " << (param::max_z+param::min_z)/2.0 << " (green)" << std::endl;
+                        std::cout << "min z: " << param::min_z << " (blue)" << std::endl;
+                        std::cout << std::endl;
+                        std::cout << "Change: " << ch << std::endl;
+                        ++it;
                     }
 
-                    ch = std::abs(1 - surarea/old_surarea);
-                    old_surarea = surarea;
+                    img.update(px.data());
+                    auto wsize = window.getSize();
+                    window_width = wsize.x;
+                    window_height = wsize.y;
+                    sprite.setPosition(sf::Vector2f(window_width/2-tex_width/2, window_height/2-tex_height/2));
 
-                    std::cout << std::endl;
-                    std::cout << "Surface area: " << -surarea << std::endl;
-                    std::cout << "Roughness: " << roughness + max_roughness << std::endl;
-                    std::cout << std::endl;
-                    std::cout << "f: " << f << std::endl;
-                    std::cout << "ap: " << ap << std::endl;
-                    std::cout << "vc: " << vc << std::endl;
-                    std::cout << std::endl;
-                    std::cout << "max z: " << param::max_z << " (red)" << std::endl;
-                    std::cout << "mid z: " << (param::max_z+param::min_z)/2.0 << " (green)" << std::endl;
-                    std::cout << "min z: " << param::min_z << " (blue)" << std::endl;
-                    std::cout << std::endl;
-                    std::cout << "Change: " << ch << std::endl;
-                    ++it;
+                    window.draw(sprite);
+                    window.display();
                 }
+            } else {
+                double ch = 1;
+                size_t it = 1;
+                double old_surarea = 1;
 
-                img.update(px.data());
-                auto wsize = window.getSize();
-                window_width = wsize.x;
-                window_height = wsize.y;
-                sprite.setPosition(sf::Vector2f(window_width/2-tex_width/2, window_height/2-tex_height/2));
+                const size_t N = 2;
+                std::vector<double> x{f, vc};
+                std::vector<double> xmin{f_min, vc_min};
+                std::vector<double> xmax{f_max, vc_max};
 
-                window.draw(sprite);
-                window.display();
+                std::vector<double> dSa_vec{0, 0};
+                std::vector<double> dsurarea_vec{0, 0};
+
+                // Only works if starting from an exterior point, for some reason
+                SLP slp(N, 1, xmin);
+                MMASolver mma(N, 1, 0, 1e5, 1);
+                mma.SetAsymptotes(0.1, 0.7, 1.2);
+
+                while(window.isOpen()){
+                    sf::Event event;
+                    while (window.pollEvent(event)){
+                        if (event.type == sf::Event::Closed){
+                            window.close();
+                        }
+                        if(event.type == sf::Event::Resized){
+                            sf::FloatRect view(0, 0, event.size.width, event.size.height);
+                            window.setView(sf::View(view));
+                        }
+                    }
+                    window.clear(sf::Color::Black);
+
+                    if(ch > 1e-8){
+                        const double f = x[0];
+                        const double vc = x[1];
+                        texture_shallow::map(map_z, f, vc);
+                        render::draw_texture(px, map_z, render::Colorscheme::HSV);
+                        const double surarea = -opt::surface_area(map_z);
+                        const double roughness = opt::Sa(map_z) - max_roughness;
+
+                        texture_shallow::dzdf(f, vc, df);
+                        texture_shallow::dzdvc(f, vc, dvc);
+
+                        const double dsurareadf = -opt::surface_area_dz(map_z, df);
+                        const double dSadf = opt::dSa(df, map_z, dmax_zdf, dmin_zdf);
+                        const double dsurareadvc = -opt::surface_area_dz(map_z, dvc);
+                        const double dSadvc = opt::dSa(dvc, map_z, dmax_zdvc, dmin_zdvc);
+
+                        std::cout << std::endl;
+                        std::cout << "===========================" << std::endl;
+                        std::cout << "Iteration: " << it << std::endl;
+                        std::cout << "===========================" << std::endl;
+
+                        std::cout << std::endl;
+                        std::cout << "dAdf:   " << dsurareadf << std::endl;
+                        std::cout << "dSadf:  " << dSadf << std::endl;
+                        std::cout << std::endl;
+                        std::cout << "dAdvc:  " << dsurareadvc << std::endl;
+                        std::cout << "dSadvc: " << dSadvc << std::endl;
+
+                        dsurarea_vec[0] = dsurareadf;
+                        dSa_vec[0] = dSadf;
+                        dsurarea_vec[1] = dsurareadvc;
+                        dSa_vec[1] = dSadvc;
+
+                        if(opt_method == OptMethod::SLP){
+                            slp.update(x, dsurarea_vec, {roughness}, dSa_vec);
+                        } else if(opt_method == OptMethod::MMA){
+                            mma.Update(x.data(), dsurarea_vec.data(), &roughness, dSa_vec.data(), xmin.data(), xmax.data());
+                        }
+
+                        ch = std::abs(1 - surarea/old_surarea);
+                        old_surarea = surarea;
+
+                        std::cout << std::endl;
+                        std::cout << "Surface area: " << -surarea << std::endl;
+                        std::cout << "Roughness: " << roughness + max_roughness << std::endl;
+                        std::cout << std::endl;
+                        std::cout << "f: " << f << std::endl;
+                        std::cout << "ap: " << ap << std::endl;
+                        std::cout << "vc: " << vc << std::endl;
+                        std::cout << std::endl;
+                        std::cout << "max z: " << param::max_z << " (red)" << std::endl;
+                        std::cout << "mid z: " << (param::max_z+param::min_z)/2.0 << " (green)" << std::endl;
+                        std::cout << "min z: " << param::min_z << " (blue)" << std::endl;
+                        std::cout << std::endl;
+                        std::cout << "Change: " << ch << std::endl;
+                        ++it;
+                    }
+
+                    img.update(px.data());
+                    auto wsize = window.getSize();
+                    window_width = wsize.x;
+                    window_height = wsize.y;
+                    sprite.setPosition(sf::Vector2f(window_width/2-tex_width/2, window_height/2-tex_height/2));
+
+                    window.draw(sprite);
+                    window.display();
+                }
             }
 
             img.copyToImage().saveToFile("result.png");
