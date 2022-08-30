@@ -158,7 +158,7 @@ int main(int argc, char* argv[]){
 
             std::cout << std::endl;
             std::cout << "===========================" << std::endl;
-            std::cout << "========   ERROR    =======" << std::endl;
+            std::cout << "=====  DIFFERENCE   =======" << std::endl;
             std::cout << "===========================" << std::endl;
 
             std::cout << std::endl;
