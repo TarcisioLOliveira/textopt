@@ -18,8 +18,8 @@
  *
  */
 
-#ifndef TEXTURE_HPP
-#define TEXTURE_HPP
+#ifndef TEXTURE_SHALLOW_HPP
+#define TEXTURE_SHALLOW_HPP
 
 #include <vector>
 
