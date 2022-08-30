@@ -54,7 +54,7 @@ void map_exact(std::vector<double>& map_z, double f, double vc){
     // Calculate ap taking circle center at y = 0
     const double h0 = tan1*yc;
     const double hoff = -tan1*ycoff+b1off;
-    ap = h0 - hoff;
+    ap = h0 + hoff;
 
     // Value of z for y = 0 (global)
     const double line_root1 = -std::sqrt(r*r - y1*y1) + r - ap + tan1*(yc-ycoff+y1);
@@ -159,7 +159,7 @@ void map(std::vector<double>& map_z, double f, double vc){
     // Calculate ap taking circle center at y = 0
     const double h0 = tan1*yc;
     const double hoff = -tan1*ycoff+b1off;
-    ap = h0 - hoff;
+    ap = h0 + hoff;
 
     // Value of z for y = 0 (global)
     const double line_root1 = -std::sqrt(r*r - y1*y1) + r - ap + tan1*(yc-ycoff+y1);
