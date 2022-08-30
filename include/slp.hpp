@@ -34,7 +34,7 @@ class SLP{
      * Generate instance for N variables and M constraints.
      * Currently only works for M == 1.
      */
-    SLP(const size_t N, const size_t M);
+    SLP(const size_t N, const size_t M, const std::vector<double>& xmin);
 
     /**
      * Update `x` based on derivatives and constraints.
@@ -43,6 +43,7 @@ class SLP{
 
     private:
     const size_t N, M;
+    std::vector<double> xmin;
     const double EPS = 1e-7;
 
     /**

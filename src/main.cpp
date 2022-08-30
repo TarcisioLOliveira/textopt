@@ -205,7 +205,7 @@ int main(int argc, char* argv[]){
             std::vector<double> dsurarea_vec{0, 0, 0};
 
             // Only works if starting from an exterior point, for some reason
-            SLP slp(N, 1);
+            SLP slp(N, 1, xmin);
             MMASolver mma(N, 1, 0, 1e5, 1);
             mma.SetAsymptotes(0.1, 0.7, 1.2);
 

@@ -24,8 +24,8 @@
 #include <limits>
 #include <vector>
 
-SLP::SLP(const size_t N, const size_t M):
-    N(N), M(M){}
+SLP::SLP(const size_t N, const size_t M, const std::vector<double>& xmin):
+    N(N), M(M), xmin(xmin){}
 
 void SLP::update(std::vector<double>& x, const std::vector<double>& dfdx, const std::vector<double>& g, const std::vector<double>& dgdx) const{
     this->direct(x, dfdx, g, dgdx);
@@ -55,8 +55,8 @@ void SLP::direct(std::vector<double>& x, const std::vector<double>& dfdx, const 
 
     // Make sure l_i does not make x too low.
     for(size_t i = 0; i < N; ++i){
-        if(x[i] + l_i*norm_dfdx[i] < 1.0){
-            l_i = (1.0-x[i])/norm_dfdx[i];
+        if(x[i] + l_i*norm_dfdx[i] < this->xmin[i]){
+            l_i = (xmin[i]-x[i])/norm_dfdx[i];
         }
     }
 
