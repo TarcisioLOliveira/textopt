@@ -3,6 +3,7 @@ analysis:
   type: opt        # Optimize cutting parameters
   method: slp      # Use SLP ("mma" for MMA)
   max_roughness: 2 # [um]
+  opt_ap: False    # Whether to optimize ap or make it proportional to f
 
 # Window dimensions
 window:

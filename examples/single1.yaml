@@ -2,6 +2,7 @@
 analysis:
   type: single  # Optimize cutting parameters
   method: exact # Use exact result ("smooth" for smooth approximation)
+  opt_ap: False    # Whether to optimize ap or make it proportional to f
 
 # Window dimensions
 window:

@@ -40,6 +40,7 @@ void load(const std::string& path){
     required(config, "analysis", YAML::NodeType::Map);
     auto at = get_scalar<std::string>(config["analysis"], "type");
     auto am = get_scalar<std::string>(config["analysis"], "method");
+    param::opt_ap = get_scalar<bool>(config["analysis"], "opt_ap");
     if(at == "opt"){
         param::analysis_type = param::AnalysisType::OPT;
         if(am == "slp"){

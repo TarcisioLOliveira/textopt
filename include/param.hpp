@@ -45,13 +45,15 @@ inline enum class OptMethod{
 
 inline enum class PlotMethod{
     FXAP,
-    VC
+    VC,
 } plot_method;
 
 inline enum class SingleMethod{
     SMOOTH,
     EXACT
 } single_method;
+
+inline bool opt_ap = false;
 
 // Window dimensions
 inline size_t window_width = 600;
@@ -115,6 +117,11 @@ inline double min_z = 0; // Used for Sa and texture display
 inline double dmax_zdf = 0; 
 inline double dmax_zdap = 0; 
 inline double dmax_zdvc = 0; 
+
+// Derivatives of min_z (texture_shallow)
+inline double dmin_zdf = 0; 
+inline double dmin_zdvc = 0; 
+
 
 // "Random" oscillation
 // Models height variation along the tool path

@@ -3,6 +3,7 @@ analysis:
   type: plot   # Plot optimization functions
   method: fxap # f x ap (3D plot) (use "vc" for vc analysis)
   step: 0.1      # Step for calculating points
+  opt_ap: False    # Whether to optimize ap or make it proportional to f
 
 # Window dimensions
 window:
