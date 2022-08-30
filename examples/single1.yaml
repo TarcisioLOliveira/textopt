@@ -28,7 +28,7 @@ texture:
 # Starting values are unused for plotting
 # Ranges are unused for single
 cutting:
-  f: 20             # Starting feed rate
+  f: 10             # Starting feed rate
   f_range:  [1, 300] # Feed rate range
   ap: 50            # Starting cutting depth
   ap_range: [1, 300] # Cutting depth range

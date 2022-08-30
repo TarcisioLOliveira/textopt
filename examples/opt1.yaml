@@ -45,9 +45,9 @@ approx_constants:
 
 # Tool parameters
 tool:
-  alpha1: 60 # [degrees] Back angle (descending)
-  alpha2: 60 # [degrees] Front angle (ascending)
-  r: 20      # [um] Tool radius
+  alpha1: 30 # [degrees] Back angle (descending)
+  alpha2: 30 # [degrees] Front angle (ascending)
+  r: 10      # [um] Tool radius
 
 # "Random" oscillation
 # Models height variation along the tool path
