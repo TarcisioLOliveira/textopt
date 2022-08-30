@@ -52,9 +52,15 @@ void map_exact(std::vector<double>& map_z, double f, double vc){
     const double ycoff = (b1off - b2off)/(tan1 + tan2);
 
     // Calculate ap taking circle center at y = 0
-    const double h0 = tan1*yc;
-    const double hoff = -tan1*ycoff+b1off;
-    ap = h0 + hoff;
+    const double s1 = -(yc - ycoff);
+    const double s2 = f-(yc - ycoff);
+    if(s1 > y1){
+        ap = -std::sqrt(r*r - s1*s1) + r;
+    } else if(s2 < y2){
+        ap = -std::sqrt(r*r - s2*s2) + r;
+    } else {
+        ap = tan1*yc + b1off;
+    }
 
     // Value of z for y = 0 (global)
     const double line_root1 = -std::sqrt(r*r - y1*y1) + r - ap + tan1*(yc-ycoff+y1);
@@ -157,9 +163,15 @@ void map(std::vector<double>& map_z, double f, double vc){
     const double ycoff = (b1off - b2off)/(tan1 + tan2);
     
     // Calculate ap taking circle center at y = 0
-    const double h0 = tan1*yc;
-    const double hoff = -tan1*ycoff+b1off;
-    ap = h0 + hoff;
+    const double s1 = -(yc - ycoff);
+    const double s2 = f-(yc - ycoff);
+    if(s1 > y1){
+        ap = -std::sqrt(r*r - s1*s1) + r;
+    } else if(s2 < y2){
+        ap = -std::sqrt(r*r - s2*s2) + r;
+    } else {
+        ap = tan1*yc + b1off;
+    }
 
     // Value of z for y = 0 (global)
     const double line_root1 = -std::sqrt(r*r - y1*y1) + r - ap + tan1*(yc-ycoff+y1);
@@ -319,8 +331,18 @@ void dzdf(double f, double vc, std::vector<double>& dzdf){
 
     const double ycoff = (b1off - b2off)/(tan1 + tan2);
 
-    const double dh0 = tan1*dyc;
-    const double dap = dh0;
+    const double s1 = -(yc - ycoff);
+    const double ds1 = -dyc;
+    const double s2 = f-(yc - ycoff);
+    const double ds2 = 1-dyc;
+    double dap;
+    if(s1 > y1){
+        dap = s1*ds1/std::sqrt(r*r - s1*s1);
+    } else if(s2 < y2){
+        dap = s2*ds2/std::sqrt(r*r - s2*s2);
+    } else {
+        dap = tan1*dyc;
+    }
 
     const double dlrdf1 = -dap + tan1*dyc ;
     const double dlrdf2 = -dap - tan2*dyc ;
