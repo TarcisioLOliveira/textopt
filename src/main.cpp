@@ -82,7 +82,11 @@ int main(int argc, char* argv[]){
             std::cout << "===========================" << std::endl;
 
             texture::map_exact(map_z, orig_z, f, ap, vc);
-            render::draw_texture(px, map_z, render::Colorscheme::HSV);
+            if(param::single_method == param::SingleMethod::EXACT){
+                std::cout << "== (CURRENTLY RENDERED)  ==" << std::endl;
+                std::cout << "===========================" << std::endl;
+                render::draw_texture(px, map_z, render::Colorscheme::HSV);
+            }
             const double surarea_ex = -opt::surface_area(map_z);
             const double roughness_ex = opt::Sa(map_z) - max_roughness;
 
@@ -104,7 +108,11 @@ int main(int argc, char* argv[]){
             std::cout << "===========================" << std::endl;
 
             texture::map(map_z, orig_z, f, ap, vc);
-            render::draw_texture(px, map_z, render::Colorscheme::HSV);
+            if(param::single_method == param::SingleMethod::SMOOTH){
+                std::cout << "== (CURRENTLY RENDERED)  ==" << std::endl;
+                std::cout << "===========================" << std::endl;
+                render::draw_texture(px, map_z, render::Colorscheme::HSV);
+            }
             const double surarea = -opt::surface_area(map_z);
             const double roughness = opt::Sa(map_z) - max_roughness;
 
