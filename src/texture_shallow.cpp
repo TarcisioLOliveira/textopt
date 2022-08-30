@@ -44,8 +44,8 @@ void map_exact(std::vector<double>& map_z, double f, double vc){
     const double yc = tan2*f/(tan1+tan2);
 
     // Value of z for y = 0 (with circle center at y = 0).
-    const double b1off = -std::sqrt(r*r - y1*y1) + r - ap + tan1*y1;
-    const double b2off = -std::sqrt(r*r - y2*y2) + r - ap - tan2*y2;
+    const double b1off = -std::sqrt(r*r - y1*y1) + r + tan1*y1;
+    const double b2off = -std::sqrt(r*r - y2*y2) + r - tan2*y2;
 
     // Position of the intersection of the two lines relative to the circle's
     // center
@@ -149,8 +149,8 @@ void map(std::vector<double>& map_z, double f, double vc){
     const double yc = tan2*f/(tan1+tan2);
 
     // Value of z for y = 0 (with circle center at y = 0).
-    const double b1off = -std::sqrt(r*r - y1*y1) + r - ap + tan1*y1;
-    const double b2off = -std::sqrt(r*r - y2*y2) + r - ap - tan2*y2;
+    const double b1off = -std::sqrt(r*r - y1*y1) + r + tan1*y1;
+    const double b2off = -std::sqrt(r*r - y2*y2) + r - tan2*y2;
 
     // Position of the intersection of the two lines relative to the circle's
     // center
@@ -314,8 +314,8 @@ void dzdf(double f, double vc, std::vector<double>& dzdf){
     const double yc = tan2*f/(tan1+tan2);
     const double dyc = tan2/(tan1+tan2);
 
-    const double b1off = -std::sqrt(r*r - y1*y1) + r - ap + tan1*y1;
-    const double b2off = -std::sqrt(r*r - y2*y2) + r - ap - tan2*y2;
+    const double b1off = -std::sqrt(r*r - y1*y1) + r + tan1*y1;
+    const double b2off = -std::sqrt(r*r - y2*y2) + r - tan2*y2;
 
     const double ycoff = (b1off - b2off)/(tan1 + tan2);
 
