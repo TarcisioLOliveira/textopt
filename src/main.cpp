@@ -52,9 +52,17 @@ int main(int argc, char* argv[]){
 
     if(analysis_type == AnalysisType::PLOT){
         if(plot_method == PlotMethod::FXAP){
-            analysis::plot_fxap({f_min, f_max}, {ap_min, ap_max}, vc, step, map_z, orig_z);
+            if(opt_ap){
+                analysis::plot_fxap({f_min, f_max}, {ap_min, ap_max}, vc, step, map_z, orig_z);
+            } else {
+                analysis::plot_f_shallow({f_min, f_max}, vc, step, map_z);
+            }
         } else if(plot_method == PlotMethod::VC){
-            analysis::plot_vc(f, ap, {vc_min, vc_max}, step, map_z, orig_z);
+            if(opt_ap){
+                analysis::plot_vc(f, ap, {vc_min, vc_max}, step, map_z, orig_z);
+            } else {
+                analysis::plot_vc_shallow(f, {vc_min, vc_max}, step, map_z);
+            }
         }
     } else {
         std::vector<double> df (tex_width*tex_height);
