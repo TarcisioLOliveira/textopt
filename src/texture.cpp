@@ -41,19 +41,15 @@ void map_exact(std::vector<double>& map_z, const std::vector<double>& orig_z, do
 
     // Where the slope lines intersect, so that the height at the edges is the
     // same for both
-    const double yc = tan2*f/(tan1+tan2);
+    double yc = tan2*f/(tan1+tan2);
 
     // Value of z for y = 0 (with circle center at y = 0).
-    const double b1off = -std::sqrt(r*r - y1*y1) + r - ap + tan1*y1;
-    const double b2off = -std::sqrt(r*r - y2*y2) + r - ap - tan2*y2;
+    const double b1off = -std::sqrt(r*r - y1*y1) + r + tan1*y1;
+    const double b2off = -std::sqrt(r*r - y2*y2) + r - tan2*y2;
 
     // Position of the intersection of the two lines relative to the circle's
     // center
-    const double ycoff = (b1off - b2off)/(tan1 + tan2);
-
-    // Value of z for y = 0 (global)
-    const double line_root1 = -std::sqrt(r*r - y1*y1) + r - ap + tan1*(yc-ycoff+y1);
-    const double line_root2 = -std::sqrt(r*r - y2*y2) + r - ap - tan2*(yc-ycoff+y2);
+    double ycoff = (b1off - b2off)/(tan1 + tan2);
 
     // Calculate whether the angles of the cutting tool intercept the surface
     // first or are stopped by the feed rate.
@@ -62,21 +58,46 @@ void map_exact(std::vector<double>& map_z, const std::vector<double>& orig_z, do
     // zero, the cut line is narrower than the feed line, so max height is
     // zero. Otherwise, it's the height at the intersection
     //
-    // Both intersections always have the same height, so we only need to check
-    // one of them
-    double intersec = 0;
-    if(yc - ycoff + y1 > 0){
-        // If the intersection between line 1 and the circle is at y > 0, then
-        // the intersection is equal to the line's constant.
-        intersec = line_root1;
+    // Implementation of this section is based on `texture_shallow`
+    double h = 0;
+    const double s1 = -(yc - ycoff);
+    const double s2 = f-(yc - ycoff);
+    if(s1 > y1 && s2 < y2){
+        // Width falls entirely within tool radius.
+        yc = f/2;
+        ycoff = 0;
+        h = -std::sqrt(r*r - yc*yc) + r;
+    } else if(s1 > y1){
+        // Slope 1 must be disregarded.
+        // Height of slope 2 must be equal to height of tool radius at the
+        // other edge.
+        const double a = tan2*tan2 + 1;
+        const double b = -(2*tan2*(b2off-r)+2*tan2*tan2*f);
+        const double c = tan2*tan2*f*f + 2*tan2*f*(b2off-r)+b2off*(b2off-2*r);
+        yc = (-b + std::sqrt(b*b - 4*a*c))/(2*a);
+        ycoff = 0;
+        h = -std::sqrt(r*r - yc*yc) + r;
+    } else if(s2 < y2){
+        // Slope 2 must be disregarded.
+        // Height of slope 1 must be equal to height of tool radius at the
+        // other edge.
+        const double a = tan1*tan1 + 1;
+        const double b = 2*tan1*(b1off-r)-2*f;
+        const double c = b1off*(b1off-2*r)+f*f;
+        yc = (-b - std::sqrt(b*b - 4*a*c))/(2*a);
+        ycoff = 0;
+        h = -std::sqrt(r*r - (f-yc)*(f-yc)) + r;
     } else {
-        // Otherwise, check where it intersects the circle
-        const double yi = 0.0 - (yc - ycoff);
-        intersec = -std::sqrt(r*r - yi*yi) + r - ap;
+        // Width does not intersect the radius at all.
+        h = tan1*(yc-ycoff) + b1off;
     }
-    // If it's greater than zero, max_z must be zero
-    max_z = std::min(0.0, intersec) + Az;// + Az_uet;
     min_z = -(ap + Az);
+    // If it's greater than zero, max_z must be zero
+    max_z = std::min(0.0, h+min_z) + Az;// + Az_uet;
+
+    // Value of z for y = 0 (global)
+    const double line_root1 = -std::sqrt(r*r - y1*y1) + r - ap + tan1*(yc-ycoff+y1);
+    const double line_root2 = -std::sqrt(r*r - y2*y2) + r - ap - tan2*(yc-ycoff+y2);
 
     const double delta_uet = vc/f_uet;
     
@@ -162,42 +183,67 @@ void map(std::vector<double>& map_z, const std::vector<double>& orig_z, double f
 
     // Where the slope lines intersect, so that the height at the edges is the
     // same for both
-    const double yc = tan2*f/(tan1+tan2);
+    double yc = tan2*f/(tan1+tan2);
 
     // Value of z for y = 0 (with circle center at y = 0).
-    const double b1off = -std::sqrt(r*r - y1*y1) + r - ap + tan1*y1;
-    const double b2off = -std::sqrt(r*r - y2*y2) + r - ap - tan2*y2;
+    const double b1off = -std::sqrt(r*r - y1*y1) + r + tan1*y1;
+    const double b2off = -std::sqrt(r*r - y2*y2) + r - tan2*y2;
 
     // Position of the intersection of the two lines relative to the circle's
     // center
-    const double ycoff = (b1off - b2off)/(tan1 + tan2);
-
-    // Value of z for y = 0 (global)
-    const double line_root1 = -std::sqrt(r*r - y1*y1) + r - ap + tan1*(yc-ycoff+y1);
-    const double line_root2 = -std::sqrt(r*r - y2*y2) + r - ap - tan2*(yc-ycoff+y2);
+    double ycoff = (b1off - b2off)/(tan1 + tan2);
 
     // Calculate whether the angles of the cutting tool intercept the surface
     // first or are stopped by the feed rate.
     //
     // Check the intersection with the feed rate edges. If they're greater than
     // zero, the cut line is narrower than the feed line, so max height is
-    // zero. Otherwise, it's the height at the intersection
+    // zero. Otherwise, it's the height at the intersection.
     //
-    // Both intersections always have the same height, so we only need to check
-    // one of them
-    double intersec = 0;
-    if(yc - ycoff + y1 > 0){
-        // If the intersection between line 1 and the circle is at y > 0, then
-        // the intersection is equal to the line's constant.
-        intersec = line_root1;
+    // The edges can also intersect the radius, which is a bit problematic for
+    // asymmetric tools. When one edge intersects the radius and the other,
+    // a slope, then `yc` needs to be recalculated.
+    //
+    // Implementation of this section is based on `texture_shallow`
+    double h = 0;
+    const double s1 = -(yc - ycoff);
+    const double s2 = f-(yc - ycoff);
+    if(s1 > y1 && s2 < y2){
+        // Width falls entirely within tool radius.
+        yc = f/2;
+        ycoff = 0;
+        h = -std::sqrt(r*r - yc*yc) + r;
+    } else if(s1 > y1){
+        // Slope 1 must be disregarded.
+        // Height of slope 2 must be equal to height of tool radius at the
+        // other edge.
+        const double a = tan2*tan2 + 1;
+        const double b = -(2*tan2*(b2off-r)+2*tan2*tan2*f);
+        const double c = tan2*tan2*f*f + 2*tan2*f*(b2off-r)+b2off*(b2off-2*r);
+        yc = (-b + std::sqrt(b*b - 4*a*c))/(2*a);
+        ycoff = 0;
+        h = -std::sqrt(r*r - yc*yc) + r;
+    } else if(s2 < y2){
+        // Slope 2 must be disregarded.
+        // Height of slope 1 must be equal to height of tool radius at the
+        // other edge.
+        const double a = tan1*tan1 + 1;
+        const double b = 2*tan1*(b1off-r)-2*f;
+        const double c = b1off*(b1off-2*r)+f*f;
+        yc = (-b - std::sqrt(b*b - 4*a*c))/(2*a);
+        ycoff = 0;
+        h = -std::sqrt(r*r - (f-yc)*(f-yc)) + r;
     } else {
-        // Otherwise, check where it intersects the circle
-        const double yi = 0 - (yc - ycoff);
-        intersec = -std::sqrt(r*r - yi*yi) + r - ap;
+        // Width does not intersect the radius at all.
+        h = tan1*(yc-ycoff) + b1off;
     }
-    // If it's greater than zero, max_z must be zero
-    max_z = smooth::min({0, intersec}) + Az;// + Az_uet;
     min_z = -(ap + Az);
+    // If it's greater than zero, max_z must be zero
+    max_z = smooth::min({0, h+min_z}) + Az;// + Az_uet;
+    
+    // Value of z for y = 0 (global)
+    const double line_root1 = -std::sqrt(r*r - y1*y1) + r - ap + tan1*(yc-ycoff+y1);
+    const double line_root2 = -std::sqrt(r*r - y2*y2) + r - ap - tan2*(yc-ycoff+y2);
 
     const double delta_uet = vc/f_uet;
     
@@ -282,12 +328,33 @@ void dzdvc(const std::vector<double>& orig_z, double f, double ap, double vc, st
     const double y1 = -std::sqrt((tan1*r*tan1*r)/(tan1*tan1+1));
     const double y2 =  std::sqrt((tan2*r*tan2*r)/(tan2*tan2+1));
 
-    const double yc = tan2*f/(tan1+tan2);
+    double yc = tan2*f/(tan1+tan2);
 
-    const double b1off = -std::sqrt(r*r - y1*y1) + r - ap + tan1*y1;
-    const double b2off = -std::sqrt(r*r - y2*y2) + r - ap - tan2*y2;
+    const double b1off = -std::sqrt(r*r - y1*y1) + r + tan1*y1;
+    const double b2off = -std::sqrt(r*r - y2*y2) + r - tan2*y2;
 
-    const double ycoff = (b1off - b2off)/(tan1 + tan2);
+    double ycoff = (b1off - b2off)/(tan1 + tan2);
+
+    const double s1 = -(yc - ycoff);
+    const double s2 = f-(yc - ycoff);
+    if(s1 > y1 && s2 < y2){
+        yc = f/2;
+        ycoff = 0;
+    } else if(s1 > y1){
+        const double a = tan2*tan2 + 1;
+        const double b = -(2*tan2*(b2off-r)+2*tan2*tan2*f);
+        const double c = tan2*tan2*f*f + 2*tan2*f*(b2off-r)+b2off*(b2off-2*r);
+        yc = (-b + std::sqrt(b*b - 4*a*c))/(2*a);
+        ycoff = 0;
+    } else if(s2 < y2){
+        const double a = tan1*tan1 + 1;
+        const double b = 2*tan1*(b1off-r)-2*f;
+        const double c = b1off*(b1off-2*r)+f*f;
+        yc = (-b - std::sqrt(b*b - 4*a*c))/(2*a);
+        ycoff = 0;
+    } else {
+        // Width does not intersect the radius at all.
+    }
 
     const double line_root1 = -std::sqrt(r*r - y1*y1) + r - ap + tan1*(yc-ycoff+y1);
     const double line_root2 = -std::sqrt(r*r - y2*y2) + r - ap - tan2*(yc-ycoff+y2);
@@ -372,39 +439,55 @@ void dzdap(const std::vector<double>& orig_z, double f, double ap, double vc, st
     const double y1 = -std::sqrt((tan1*r*tan1*r)/(tan1*tan1+1));
     const double y2 =  std::sqrt((tan2*r*tan2*r)/(tan2*tan2+1));
 
-    const double yc = tan2*f/(tan1+tan2);
+    double yc = tan2*f/(tan1+tan2);
 
-    const double b1off = -std::sqrt(r*r - y1*y1) + r - ap + tan1*y1;
-    const double b2off = -std::sqrt(r*r - y2*y2) + r - ap - tan2*y2;
+    const double b1off = -std::sqrt(r*r - y1*y1) + r + tan1*y1;
+    const double b2off = -std::sqrt(r*r - y2*y2) + r - tan2*y2;
 
-    const double db1off = -1;
-    const double db2off = -1;
+    double ycoff = (b1off - b2off)/(tan1 + tan2);
 
-    const double ycoff = (b1off - b2off)/(tan1 + tan2);
-    const double dycoff = (db1off - db2off)/(tan1 + tan2);
+    double h = 0;
+    const double s1 = -(yc - ycoff);
+    const double s2 = f-(yc - ycoff);
+    if(s1 > y1 && s2 < y2){
+        // Width falls entirely within tool radius.
+        yc = f/2;
+        ycoff = 0;
+        h = -std::sqrt(r*r - yc*yc) + r;
+    } else if(s1 > y1){
+        // Slope 1 must be disregarded.
+        // Height of slope 2 must be equal to height of tool radius at the
+        // other edge.
+        const double a = tan2*tan2 + 1;
+        const double b = -(2*tan2*(b2off-r)+2*tan2*tan2*f);
+        const double c = tan2*tan2*f*f + 2*tan2*f*(b2off-r)+b2off*(b2off-2*r);
+        yc = (-b + std::sqrt(b*b - 4*a*c))/(2*a);
+        ycoff = 0;
+        h = -std::sqrt(r*r - yc*yc) + r;
+    } else if(s2 < y2){
+        // Slope 2 must be disregarded.
+        // Height of slope 1 must be equal to height of tool radius at the
+        // other edge.
+        const double a = tan1*tan1 + 1;
+        const double b = 2*tan1*(b1off-r)-2*f;
+        const double c = b1off*(b1off-2*r)+f*f;
+        yc = (-b - std::sqrt(b*b - 4*a*c))/(2*a);
+        ycoff = 0;
+        h = -std::sqrt(r*r - (f-yc)*(f-yc)) + r;
+    } else {
+        // Width does not intersect the radius at all.
+        h = tan1*(yc-ycoff) + b1off;
+    }
+    min_z = -(ap + Az);
+    // If it's greater than zero, max_z must be zero
+    max_z = smooth::min({0, h+min_z}) + Az;// + Az_uet;
+    dmax_zdap = smooth::min_deriv({0, h+min_z}, 1)*(-1);
 
     const double line_root1 = -std::sqrt(r*r - y1*y1) + r - ap + tan1*(yc-ycoff+y1);
     const double line_root2 = -std::sqrt(r*r - y2*y2) + r - ap - tan2*(yc-ycoff+y2);
 
-    const double dlrdap1 = -1 + tan1*(-dycoff);
-    const double dlrdap2 = -1 - tan2*(-dycoff);
-
-    double intersec = 0;
-    double di = 0;
-    if(yc - ycoff + y1 > 0){
-        intersec = line_root1;
-        di = dlrdap1;
-    } else {
-        const double yi = 0 - (yc - ycoff);
-        const double dyi = dycoff;
-
-        const double circ = std::sqrt(r*r - yi*yi);
-        const double dcirc = -yi*dyi/circ;
-
-        intersec = -circ + r - ap;
-        di = -dcirc - 1;
-    }
-    dmax_zdap = smooth::min_deriv({0, intersec}, 1)*di;
+    const double dlrdap1 = -1;
+    const double dlrdap2 = -1;
 
     const double delta_uet = vc/f_uet;
 
@@ -445,13 +528,11 @@ void dzdap(const std::vector<double>& orig_z, double f, double ap, double vc, st
                 dznewdap = dlrdap1;
             } else if(y <= y2 + mult*f + (yc - ycoff)){
                 const double yy = y - mult*f - (yc - ycoff);
-                const double dyy = dycoff;
 
                 const double circ = std::sqrt(r*r - yy*yy);
-                const double dcirc = -yy*dyy/circ;
 
                 shape_z = -circ + r - ap;
-                dznewdap = -dcirc - 1;
+                dznewdap = -1;
             } else {
                 shape_z = tan2*(y - mult*f) + line_root2;
                 dznewdap = dlrdap2;
@@ -480,36 +561,60 @@ void dzdf(const std::vector<double>& orig_z, double f, double ap, double vc, std
     const double y1 = -std::sqrt((tan1*r*tan1*r)/(tan1*tan1+1));
     const double y2 =  std::sqrt((tan2*r*tan2*r)/(tan2*tan2+1));
 
-    const double yc = tan2*f/(tan1+tan2);
-    const double dyc = tan2/(tan1+tan2);
+    double yc = tan2*f/(tan1+tan2);
+    double dyc = tan2/(tan1+tan2);
 
-    const double b1off = -std::sqrt(r*r - y1*y1) + r - ap + tan1*y1;
-    const double b2off = -std::sqrt(r*r - y2*y2) + r - ap - tan2*y2;
+    const double b1off = -std::sqrt(r*r - y1*y1) + r + tan1*y1;
+    const double b2off = -std::sqrt(r*r - y2*y2) + r - tan2*y2;
 
-    const double ycoff = (b1off - b2off)/(tan1 + tan2);
+    double ycoff = (b1off - b2off)/(tan1 + tan2);
+
+    double h = 0;
+    double dh = 0;
+    const double s1 = -(yc - ycoff);
+    const double s2 = f-(yc - ycoff);
+    if(s1 > y1 && s2 < y2){
+        // Width falls entirely within tool radius.
+        yc = f/2;
+        dyc = 0.5;
+        ycoff = 0;
+        h = -std::sqrt(r*r - yc*yc) + r;
+        dh = yc*dyc/std::sqrt(r*r - yc*yc);
+    } else if(s1 > y1){
+        const double a = tan2*tan2 + 1;
+        const double b = -(2*tan2*(b2off-r)+2*tan2*tan2*f);
+        const double db = -2*tan2*tan2;
+        const double c = tan2*tan2*f*f + 2*tan2*f*(b2off-r) + b2off*(b2off-2*r);
+        const double dc = 2*tan2*tan2*f + 2*tan2*(b2off-r);
+        yc = (-b + std::sqrt(b*b - 4*a*c))/(2*a);
+        dyc = (-db + 0.5*(2*b*db - 4*a*dc)/std::sqrt(b*b - 4*a*c))/(2*a);
+        ycoff = 0;
+        h = -std::sqrt(r*r - yc*yc) + r;
+        dh = yc*dyc/std::sqrt(r*r - yc*yc);
+    } else if(s2 < y2){
+        const double a = tan1*tan1 + 1;
+        const double b = 2*tan1*(b1off-r)-2*f;
+        const double db = -2;
+        const double c = b1off*(b1off-2*r)+f*f;
+        const double dc = 2*f;
+        yc = (-b - std::sqrt(b*b - 4*a*c))/(2*a);
+        dyc = (-db - 0.5*(2*b*db - 4*a*dc)/std::sqrt(b*b - 4*a*c))/(2*a);
+        ycoff = 0;
+        h = -std::sqrt(r*r - (f-yc)*(f-yc)) + r;
+        dh = (f-yc)*(1-dyc)/std::sqrt(r*r - (f-yc)*(f-yc));
+    } else {
+        h = tan1*(yc-ycoff) + b1off;
+        dh = tan1*dyc;
+    }
+    min_z = -(ap + Az);
+    max_z = smooth::min({0.0, h+min_z}) + Az;// + Az_uet;
+    dmax_zdf = smooth::min_deriv({0.0, h+min_z}, 1)*dh;
 
     const double line_root1 = -std::sqrt(r*r - y1*y1) + r - ap + tan1*(yc-ycoff+y1);
     const double line_root2 = -std::sqrt(r*r - y2*y2) + r - ap - tan2*(yc-ycoff+y2);
 
     const double dlrdf1 =  tan1*dyc;
     const double dlrdf2 = -tan2*dyc;
-
-    double intersec = 0;
-    double di = 0;
-    if(yc - ycoff + y1 > 0){
-        intersec = line_root1;
-        di = dlrdf1;
-    } else {
-        const double yi = 0 - (yc - ycoff);
-        const double dyi = -dyc;
-
-        const double circ = std::sqrt(r*r - yi*yi);
-        const double dcirc = -yi*dyi/circ;
-
-        intersec = -circ + r - ap;
-        di = -dcirc;
-    }
-    dmax_zdf = smooth::min_deriv({0, intersec}, 1)*di;
 
     const double delta_uet = vc/f_uet;
     //const double dduet = 0;
