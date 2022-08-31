@@ -55,6 +55,31 @@ void plot_fxap(const std::tuple<double, double>& f, const std::tuple<double, dou
  */
 void plot_vc(const double f, const double ap, const std::tuple<double, double>& vc, const double step, std::vector<double>& map_z, const std::vector<double>& orig_z);
 
+/**
+ * Generates points from surface area and roughness within the specified range
+ * for f and ap, with constant vc. Used for figuring out the resulting shape
+ * and specifying the correct optimization method.
+ *
+ * @param f Range for feed rate
+ * @param vc Constant cutting velocity
+ * @param step Step for getting points within ranges
+ * @param map_z Memory space used for texture calculations
+ */
+void plot_f_shallow(const std::tuple<double, double>& f, const double vc, const double step, std::vector<double>& map_z);
+
+/**
+ * Generates points from surface area and roughness within the specified range
+ * for vc, with constant f and ap. Used for figuring out the resulting shape
+ * and specifying the correct optimization method. However, vc doesn't seem
+ * to affect roughness and surface area too much, except with vc -> 0.
+ *
+ * @param f Constant feed rate
+ * @param vc Range for cutting velocity
+ * @param step Step for getting points within ranges
+ * @param map_z Memory space used for texture calculations
+ */
+void plot_vc_shallow(const double f, const std::tuple<double, double>& vc, const double step, std::vector<double>& map_z);
+
 }
 
 #endif

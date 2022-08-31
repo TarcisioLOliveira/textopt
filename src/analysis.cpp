@@ -24,6 +24,7 @@
 #include "analysis.hpp"
 #include "texture.hpp"
 #include "opt_func.hpp"
+#include "texture_shallow.hpp"
 
 namespace analysis{
 
@@ -104,6 +105,84 @@ void plot_vc(const double f, const double ap, const std::tuple<double, double>& 
     std::cout << "\r100%      " << std::endl;
     std::ofstream file;
     file.open("plot_vc.txt");
+    // Write ranges
+    file << std::get<0>(vc) << " " << std::get<1>(vc) << " " << step << std::endl;
+
+    // Write values for surface area and roughness
+    file << result.str();
+    file.close();
+
+}
+
+void plot_f_shallow(const std::tuple<double, double>& f, const double vc, const double step, std::vector<double>& map_z){
+    const double diff_f = std::get<1>(f) - std::get<0>(f);
+    const size_t size = (diff_f/step + 1);
+    std::vector<double> results(size*2);
+    auto r = results.begin();
+
+    std::cout << "Calculating plot points..." << std::endl;
+    for(double fi = std::get<0>(f); fi <= std::get<1>(f)+1e-7; fi += step){
+        std::cout << "\r" << (fi - std::get<0>(f))*100/diff_f << "%      " << std::flush;
+        texture_shallow::map_exact(map_z, fi, vc);
+        const double surarea = opt::surface_area(map_z);
+        const double roughness = opt::Sa(map_z);
+        *r = surarea;
+        ++r;
+        *r = roughness;
+        ++r;
+    }
+    std::cout << "\r100%      " << std::endl;
+    std::string resstr;
+    resstr.reserve(results.size()*25);
+    std::stringstream result(resstr);
+    r = results.begin();
+    while(r < results.end()){
+        result << *r << " " << *(r+1) << std::endl;
+        r += 2;
+    }
+
+    std::ofstream file;
+    file.open("plot_f_shallow.txt");
+    // Write ranges
+    file << std::get<0>(f) << " " << std::get<1>(f) << " " << step << std::endl;
+
+    // Write values for surface area and roughness
+    file << result.str();
+    file.close();
+}
+
+void plot_vc_shallow(const double f, const std::tuple<double, double>& vc, const double step, std::vector<double>& map_z){
+    // Cache resulting string into memory, as it's faster than continually
+    // writing to disk
+    const double diff = std::get<1>(vc) - std::get<0>(vc);
+    const size_t size = (diff/step + 1);
+    std::vector<double> results(size*2);
+    auto r = results.begin();
+
+    std::cout << "Calculating plot points..." << std::endl;
+    for(double vci = std::get<0>(vc); vci <= std::get<1>(vc)+1e-7; vci += step){
+        std::cout << "\r" << (vci - std::get<0>(vc))*100/diff << "%      " << std::flush;
+        //texture::map(map_z, orig_z, fi, api, vc);
+        texture_shallow::map_exact(map_z, f, vci);
+        const double surarea = opt::surface_area(map_z);
+        const double roughness = opt::Sa(map_z);
+        *r = surarea;
+        ++r;
+        *r = roughness;
+        ++r;
+    }
+    std::string resstr;
+    resstr.reserve(results.size()*25);
+    std::stringstream result(resstr);
+    r = results.begin();
+    while(r < results.end()){
+        result << *r << " " << *(r+1) << std::endl;
+        r += 2;
+    }
+
+    std::cout << "\r100%      " << std::endl;
+    std::ofstream file;
+    file.open("plot_vc_shallow.txt");
     // Write ranges
     file << std::get<0>(vc) << " " << std::get<1>(vc) << " " << step << std::endl;
 
