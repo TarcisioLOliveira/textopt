@@ -121,7 +121,7 @@ void map_exact(std::vector<double>& map_z, const std::vector<double>& orig_z, do
                 prev_mult = mult;
 
                 // Phase differences
-                const double perimeter = 2*M_PI*cylinder_radius;
+                const double perimeter = 2*M_PI*(cylinder_radius - max_z + Az);
 
                 const double phase_diff_z = 2*M_PI*fz*mult*perimeter*dimx/vc + phiz;
                 const double phiz_cur = phase_diff_z - std::floor((phase_diff_z)/(2*M_PI))*2*M_PI;
@@ -260,7 +260,7 @@ void map(std::vector<double>& map_z, const std::vector<double>& orig_z, double f
             const double mult = smooth::abs(smooth::floor((y + YOFF) / f));
 
             // Phase differences
-            const double perimeter = 2*M_PI*cylinder_radius;
+            const double perimeter = 2*M_PI*(cylinder_radius - max_z + Az);
 
             const double phase_diff_z = 2*M_PI*fz*mult*perimeter*dimx/vc + phiz;
             const double phiz_cur = phase_diff_z - smooth::floor((phase_diff_z)/(2*M_PI))*2*M_PI;
@@ -375,7 +375,7 @@ void dzdvc(const std::vector<double>& orig_z, double f, double ap, double vc, st
             const double mult = smooth::abs(smooth::floor( (y + YOFF) / f));
             // const double dmult = 0;
 
-            const double perimeter = 2*M_PI*cylinder_radius;
+            const double perimeter = 2*M_PI*(cylinder_radius - max_z + Az);
 
             const double phase_diff_z = 2*M_PI*fz*mult*perimeter*dimx/vc + phiz;
             const double dpdz = -2*M_PI*fz*mult*perimeter*dimx/(vc*vc);
@@ -494,48 +494,62 @@ void dzdap(const std::vector<double>& orig_z, double f, double ap, double vc, st
     #pragma omp parallel
     {
         std::vector<double> newz(tex_width);
+        std::vector<double> dznewdap(tex_width);
         #pragma omp for
         for(size_t Y = 0; Y < tex_height; ++Y){
             const double y = static_cast<double>(Y);
 
             const double mult = smooth::abs(smooth::floor( (y + YOFF) / f));
 
-            const double perimeter = 2*M_PI*cylinder_radius;
+            const double perimeter = 2*M_PI*(cylinder_radius - max_z + Az);
+            const double dperimeter = -2*M_PI*dmax_zdap;
 
             const double phase_diff_z = 2*M_PI*fz*mult*perimeter*dimx/vc + phiz;
+            const double dpdz = 2*M_PI*fz*mult*dperimeter*dimx/vc;
             const double phiz_cur = phase_diff_z - smooth::floor((phase_diff_z)/(2*M_PI))*2*M_PI;
+            const double dphiz_cur = dpdz - smooth::floor_deriv((phase_diff_z)/(2*M_PI))*dpdz;
 
             const double xoffset_uet = mult*perimeter;
+            const double dxoff_uet = mult*dperimeter;
 
             for(size_t X = 0; X < tex_width; ++X){
                 const double x = static_cast<double>(X);
 
                 const double oscillation = Az*std::sin(2*M_PI*fz*x*dimx/vc + phiz_cur);
+                const double doscilldap = Az*std::cos(2*M_PI*fz*x*dimx/vc + phiz_cur)*dphiz_cur;
 
                 const double xcirc = x + xoffset_uet;
+                const double dxcirc = dxoff_uet;
+
                 const double mult_uet = smooth::abs(smooth::floor(xcirc / delta_uet));
+                const double dmult_uet = smooth::abs_deriv(smooth::floor(xcirc / delta_uet))*smooth::floor_deriv(xcirc / delta_uet)*dxcirc/delta_uet;
+
                 // const double x_uet = (xcirc - mult_uet*delta_uet)/delta_uet - 0.5;
                 const double x_uet = xcirc/delta_uet - mult_uet - 0.5;
+                const double dx_uet = dxcirc/delta_uet - dmult_uet;
+
                 const double uet_effect = Az_uet*(1.0 - std::sqrt(1.0 - (x_uet*x_uet)/(Ax_uet*Ax_uet)));
+                const double duet = -0.5*(Az_uet/std::sqrt(1.0 - (x_uet*x_uet)/(Ax_uet*Ax_uet)))*(-2)*(x_uet/Ax_uet)*(dx_uet/Ax_uet);
 
                 newz[X] = oscillation + uet_effect;
+                dznewdap[X] = doscilldap + duet;
             }
 
             double shape_z;
-            double dznewdap;
+            double dshape_z;
             if(y <= y1 + mult*f + (yc - ycoff)){
                 shape_z = -tan1*(y - mult*f) + line_root1;
-                dznewdap = dlrdap1;
+                dshape_z = dlrdap1;
             } else if(y <= y2 + mult*f + (yc - ycoff)){
                 const double yy = y - mult*f - (yc - ycoff);
 
                 const double circ = std::sqrt(r*r - yy*yy);
 
                 shape_z = -circ + r - ap;
-                dznewdap = -1;
+                dshape_z = -1;
             } else {
                 shape_z = tan2*(y - mult*f) + line_root2;
-                dznewdap = dlrdap2;
+                dshape_z = dlrdap2;
             }
 
             for(size_t X = 0; X < tex_width; ++X){
@@ -543,8 +557,9 @@ void dzdap(const std::vector<double>& orig_z, double f, double ap, double vc, st
                 double& dz = dzdap[X + Y*tex_width];
 
                 const double end_z = newz[X] + shape_z;
+                const double dend_z = dznewdap[X] + dshape_z;
 
-                dz = smooth::min_deriv({oz, end_z}, 1)*dznewdap;
+                dz = smooth::min_deriv({oz, end_z}, 1)*dend_z;
             }
         }
     }
@@ -629,15 +644,16 @@ void dzdf(const std::vector<double>& orig_z, double f, double ap, double vc, std
             const double mult = smooth::abs(smooth::floor( (y + YOFF) / f));
             const double dmult = smooth::abs_deriv(smooth::floor( (y + YOFF) / f))*smooth::floor_deriv((y + YOFF) / f)*(-(y / (f*f)));
 
-            const double perimeter = 2*M_PI*cylinder_radius;
+            const double perimeter = 2*M_PI*(cylinder_radius - max_z + Az);
+            const double dperimeter = -2*M_PI*dmax_zdf;
 
             const double phase_diff_z = 2*M_PI*fz*mult*perimeter*dimx/vc + phiz;
-            const double dpdz = 2*M_PI*fz*dmult*perimeter*dimx/vc;
+            const double dpdz = 2*M_PI*fz*(dmult*perimeter + mult*dperimeter)*dimx/vc;
             const double phiz_cur = phase_diff_z - smooth::floor((phase_diff_z)/(2*M_PI))*2*M_PI;
             const double dphiz_cur = dpdz - smooth::floor_deriv((phase_diff_z)/(2*M_PI))*dpdz;
 
             const double xoffset_uet = mult*perimeter;
-            const double dxoff_uet = dmult*perimeter;
+            const double dxoff_uet = dmult*perimeter + mult*dperimeter;
 
             for(size_t X = 0; X < tex_width; ++X){
                 const double x = static_cast<double>(X);
