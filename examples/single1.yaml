@@ -28,11 +28,11 @@ texture:
 # Starting values are unused for plotting
 # Ranges are unused for single
 cutting:
-  f: 10             # Starting feed rate
+  f: 39             # Starting feed rate
   f_range:  [1, 300] # Feed rate range
   ap: 50            # Starting cutting depth
   ap_range: [1, 300] # Cutting depth range
-  vc: 50            # Starting cutting velocity
+  vc: 171            # Starting cutting velocity
   vc_range: [1, 300] # Cutting velocity range
 
 # Constants used for the smooth approximations
@@ -45,9 +45,9 @@ approx_constants:
 
 # Tool parameters
 tool:
-  alpha1: 60 # [degrees] Back angle (descending)
-  alpha2: 60 # [degrees] Front angle (ascending)
-  r: 20      # [um] Tool radius
+  alpha1: 75 # [degrees] Back angle (descending)
+  alpha2: 75 # [degrees] Front angle (ascending)
+  r: 10      # [um] Tool radius
 
 # "Random" oscillation
 # Models height variation along the tool path

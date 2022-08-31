@@ -3,7 +3,7 @@ analysis:
   type: opt        # Optimize cutting parameters
   method: slp      # Use SLP ("mma" for MMA)
   max_roughness: 2 # [um]
-  opt_ap: False    # Whether to optimize ap or make it proportional to f
+  opt_ap: True    # Whether to optimize ap or make it proportional to f
 
 # Window dimensions
 window:
@@ -28,7 +28,7 @@ texture:
 # For plotting, depends on plotting method
 # Starting values are unused for plotting
 cutting:
-  f: 200             # Starting feed rate
+  f: 50             # Starting feed rate
   f_range: [1, 300]  # Feed rate range
   ap: 200            # Starting cutting depth
   ap_range: [1, 300] # Cutting depth range
@@ -45,8 +45,8 @@ approx_constants:
 
 # Tool parameters
 tool:
-  alpha1: 30 # [degrees] Back angle (descending)
-  alpha2: 30 # [degrees] Front angle (ascending)
+  alpha1: 75 # [degrees] Back angle (descending)
+  alpha2: 75 # [degrees] Front angle (ascending)
   r: 10      # [um] Tool radius
 
 # "Random" oscillation
