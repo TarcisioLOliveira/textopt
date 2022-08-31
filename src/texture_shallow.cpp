@@ -30,7 +30,7 @@ namespace texture_shallow{
 void map_exact(std::vector<double>& map_z, double f, double vc){
     using namespace param;
 
-    vc *= 1e6/60;
+    vc *= 1e6/60.0;
 
     const double tan1 = std::tan(alpha1);
     const double tan2 = std::tan(alpha2);
@@ -141,7 +141,7 @@ void map_exact(std::vector<double>& map_z, double f, double vc){
 void map(std::vector<double>& map_z, double f, double vc){
     using namespace param;
 
-    vc *= 1e6/60;
+    vc *= 1e6/60.0;
 
     const double tan1 = std::tan(alpha1);
     const double tan2 = std::tan(alpha2);
@@ -255,7 +255,7 @@ void map(std::vector<double>& map_z, double f, double vc){
 void dzdvc(double f, double vc, std::vector<double>& dzdvc){
     using namespace param;
 
-    vc *= 1e6/60;
+    vc *= 1e6/60.0;
 
     dmax_zdvc = 0;
     dmin_zdvc = 0;
@@ -315,7 +315,7 @@ void dzdvc(double f, double vc, std::vector<double>& dzdvc){
 void dzdf(double f, double vc, std::vector<double>& dzdf){
     using namespace param;
 
-    vc *= 1e6/60;
+    vc *= 1e6/60.0;
 
     const double tan1 = std::tan(alpha1);
     const double tan2 = std::tan(alpha2);

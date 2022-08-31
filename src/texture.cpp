@@ -30,7 +30,7 @@ namespace texture{
 void map_exact(std::vector<double>& map_z, const std::vector<double>& orig_z, double f, double ap, double vc){
     using namespace param;
 
-    vc *= 1e6/60;
+    vc *= 1e6/60.0;
 
     const double tan1 = std::tan(alpha1);
     const double tan2 = std::tan(alpha2);
@@ -151,7 +151,7 @@ void map_exact(std::vector<double>& map_z, const std::vector<double>& orig_z, do
 void map(std::vector<double>& map_z, const std::vector<double>& orig_z, double f, double ap, double vc){
     using namespace param;
 
-    vc *= 1e6/60;
+    vc *= 1e6/60.0;
 
     const double tan1 = std::tan(alpha1);
     const double tan2 = std::tan(alpha2);
@@ -274,7 +274,7 @@ void map(std::vector<double>& map_z, const std::vector<double>& orig_z, double f
 void dzdvc(const std::vector<double>& orig_z, double f, double ap, double vc, std::vector<double>& dzdvc){
     using namespace param;
 
-    vc *= 1e6/60;
+    vc *= 1e6/60.0;
 
     const double tan1 = std::tan(alpha1);
     const double tan2 = std::tan(alpha2);
@@ -364,7 +364,7 @@ void dzdvc(const std::vector<double>& orig_z, double f, double ap, double vc, st
 void dzdap(const std::vector<double>& orig_z, double f, double ap, double vc, std::vector<double>& dzdap){
     using namespace param;
 
-    vc *= 1e6/60;
+    vc *= 1e6/60.0;
 
     const double tan1 = std::tan(alpha1);
     const double tan2 = std::tan(alpha2);
