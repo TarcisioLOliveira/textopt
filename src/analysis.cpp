@@ -65,7 +65,10 @@ void plot_fxap(const std::tuple<double, double>& f, const std::tuple<double, dou
     std::ofstream file;
     file.open("plot_fxap.txt");
     // Write ranges
+    file << 2 << std::endl;
+    file << "f [um/rev]" << std::endl;
     file << std::get<0>(f) << " " << std::get<1>(f) << " " << step << std::endl;
+    file << "ap [um]" << std::endl;
     file << std::get<0>(ap) << " " << std::get<1>(ap) << " " << step << std::endl;
 
     // Write values for surface area and roughness
@@ -106,6 +109,8 @@ void plot_vc(const double f, const double ap, const std::tuple<double, double>& 
     std::ofstream file;
     file.open("plot_vc.txt");
     // Write ranges
+    file << 1 << std::endl;
+    file << "vc [m/min]" << std::endl;
     file << std::get<0>(vc) << " " << std::get<1>(vc) << " " << step << std::endl;
 
     // Write values for surface area and roughness
@@ -144,6 +149,8 @@ void plot_f_shallow(const std::tuple<double, double>& f, const double vc, const 
     std::ofstream file;
     file.open("plot_f_shallow.txt");
     // Write ranges
+    file << 1 << std::endl;
+    file << "f [um/rev]" << std::endl;
     file << std::get<0>(f) << " " << std::get<1>(f) << " " << step << std::endl;
 
     // Write values for surface area and roughness
@@ -184,6 +191,8 @@ void plot_vc_shallow(const double f, const std::tuple<double, double>& vc, const
     std::ofstream file;
     file.open("plot_vc_shallow.txt");
     // Write ranges
+    file << 1 << std::endl;
+    file << "vc [m/min]" << std::endl;
     file << std::get<0>(vc) << " " << std::get<1>(vc) << " " << step << std::endl;
 
     // Write values for surface area and roughness
