@@ -577,7 +577,7 @@ void dzdf(const std::vector<double>& orig_z, double f, double ap, double vc, std
     if(alpha1 < alpha2 && s2 < y2){
         const double a = tan1*tan1 + 1;
         const double b = -2*(tan1*(r-b1off)+f);
-        const double db = -2*f;
+        const double db = -2;
         const double c = b1off*(b1off-2*r)+f*f;
         const double dc = 2*f;
         yc = (-b - std::sqrt(b*b - 4*a*c))/(2*a);
