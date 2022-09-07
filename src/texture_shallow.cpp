@@ -39,56 +39,61 @@ void map_exact(std::vector<double>& map_z, double f, double vc){
     const double y1 = -std::sqrt((tan1*r*tan1*r)/(tan1*tan1+1));
     const double y2 =  std::sqrt((tan2*r*tan2*r)/(tan2*tan2+1));
 
-    // Calculate intersection of slopes. Initial assumption is that cutting
-    // line width is greater than the area emcompassed by tool radius.
-    // Assumption will be tested afterwards, and yc is recalculated if
-    // necessary.
-    double yc = tan2*f/(tan1+tan2);
-
     // Value of z for y = 0 (with circle center at y = 0).
     const double b1off = -std::sqrt(r*r - y1*y1) + r + tan1*y1;
     const double b2off = -std::sqrt(r*r - y2*y2) + r - tan2*y2;
 
-    // Position of the intersection of the two lines relative to the circle's
-    // center
-    double ycoff = (b1off - b2off)/(tan1 + tan2);
+    // Where the slope lines intersect, so that the height at the edges is the
+    // same for both
+    double yc = (tan2*f+b2off-b1off)/(tan1+tan2);
 
-    // Calculate ap taking circle center at y = 0
-    const double s1 = -(yc - ycoff);
-    const double s2 = f-(yc - ycoff);
-    if(s1 > y1 && s2 < y2){
-        // Width falls entirely within tool radius.
-        yc = f/2;
-        ycoff = 0;
-        ap = -std::sqrt(r*r - yc*yc) + r;
-    } else if(s1 > y1){
+    // Recalculate yc if it gets into the radius, as that skews the centering
+    double s1 = -yc;
+    double s2 = f-yc;
+    if(alpha1 < alpha2 && s2 < y2){
+        // Slope 2 must be disregarded.
+        // Height of slope 1 must be equal to height of tool radius at the
+        // other edge.
+        const double a = tan1*tan1 + 1;
+        const double b = -2*(tan1*(r-b1off)+f);
+        const double c = b1off*(b1off-2*r)+f*f;
+        yc = (-b - std::sqrt(b*b - 4*a*c))/(2*a);
+    } else if(alpha2 < alpha1 && s1 > y1){
         // Slope 1 must be disregarded.
         // Height of slope 2 must be equal to height of tool radius at the
         // other edge.
         const double a = tan2*tan2 + 1;
         const double b = -(2*tan2*(b2off-r)+2*tan2*tan2*f);
-        const double c = tan2*tan2*f*f + 2*tan2*f*(b2off-r)+b2off*(b2off-2*r);
+        const double c = tan2*tan2*f*f + 2*tan2*f*(b2off-r) + b2off*(b2off-2*r);
         yc = (-b + std::sqrt(b*b - 4*a*c))/(2*a);
-        ycoff = 0;
+    }
+
+    // Calculate ap taking circle center at y = 0
+    //
+    // Calculate whether the angles of the cutting tool intercept the surface
+    // first or are stopped by the feed rate.
+    //
+    // Check the intersection with the feed rate edges. If they're greater than
+    // zero, the cut line is narrower than the feed line, so max height is
+    // zero. Otherwise, it's the height at the intersection
+    s1 = -yc;
+    s2 = f-yc;
+    if(s1 > y1 && s2 < y2){
+        // Width falls entirely within tool radius.
+        yc = f/2;
         ap = -std::sqrt(r*r - yc*yc) + r;
+    } else if(s1 > y1){
+        ap = tan2*(f-yc) + b2off;
     } else if(s2 < y2){
-        // Slope 2 must be disregarded.
-        // Height of slope 1 must be equal to height of tool radius at the
-        // other edge.
-        const double a = tan1*tan1 + 1;
-        const double b = 2*tan1*(b1off-r)-2*f;
-        const double c = b1off*(b1off-2*r)+f*f;
-        yc = (-b - std::sqrt(b*b - 4*a*c))/(2*a);
-        ycoff = 0;
-        ap = -std::sqrt(r*r - (f-yc)*(f-yc)) + r;
+        ap = tan1*yc + b1off;
     } else {
         // Width does not intersect the radius at all.
-        ap = tan1*(yc-ycoff) + b1off;
+        ap = tan1*yc + b1off;
     }
 
     // Value of z for y = 0 (global)
-    const double line_root1 = -std::sqrt(r*r - y1*y1) + r - ap + tan1*(yc-ycoff+y1);
-    const double line_root2 = -std::sqrt(r*r - y2*y2) + r - ap - tan2*(yc-ycoff+y2);
+    const double line_root1 = -std::sqrt(r*r - y1*y1) + r - ap + tan1*(yc+y1);
+    const double line_root2 = -std::sqrt(r*r - y2*y2) + r - ap - tan2*(yc+y2);
 
     max_z = Az;// + Az_uet;
     min_z = -(ap + Az);
@@ -140,10 +145,10 @@ void map_exact(std::vector<double>& map_z, double f, double vc){
 
             // Tool shape
             double shape_z;
-            if(y <= y1 + mult*f + (yc - ycoff)){
+            if(y <= y1 + mult*f + yc){
                 shape_z = -tan1*(y - mult*f) + line_root1;
-            } else if(y <= y2 + mult*f + (yc - ycoff)){
-                const double yy = y - mult*f - (yc - ycoff);
+            } else if(y <= y2 + mult*f + yc){
+                const double yy = y - mult*f - yc;
                 shape_z = -std::sqrt(r*r - yy*yy) + r - ap;
             } else {
                 shape_z = tan2*(y - mult*f) + line_root2;
@@ -174,56 +179,61 @@ void map(std::vector<double>& map_z, double f, double vc){
     const double y1 = -std::sqrt((tan1*r*tan1*r)/(tan1*tan1+1));
     const double y2 =  std::sqrt((tan2*r*tan2*r)/(tan2*tan2+1));
 
-    // Calculate intersection of slopes. Initial assumption is that cutting
-    // line width is greater than the area emcompassed by tool radius.
-    // Assumption will be tested afterwards, and yc is recalculated if
-    // necessary.
-    double yc = tan2*f/(tan1+tan2);
-
     // Value of z for y = 0 (with circle center at y = 0).
     const double b1off = -std::sqrt(r*r - y1*y1) + r + tan1*y1;
     const double b2off = -std::sqrt(r*r - y2*y2) + r - tan2*y2;
 
-    // Position of the intersection of the two lines relative to the circle's
-    // center
-    double ycoff = (b1off - b2off)/(tan1 + tan2);
-    
-    // Calculate ap taking circle center at y = 0
-    const double s1 = -(yc - ycoff);
-    const double s2 = f-(yc - ycoff);
-    if(s1 > y1 && s2 < y2){
-        // Width falls entirely within tool radius.
-        yc = f/2;
-        ycoff = 0;
-        ap = -std::sqrt(r*r - yc*yc) + r;
-    } else if(s1 > y1){
+    // Where the slope lines intersect, so that the height at the edges is the
+    // same for both
+    double yc = (tan2*f+b2off-b1off)/(tan1+tan2);
+
+    // Recalculate yc if it gets into the radius, as that skews the centering
+    double s1 = -yc;
+    double s2 = f-yc;
+    if(alpha1 < alpha2 && s2 < y2){
+        // Slope 2 must be disregarded.
+        // Height of slope 1 must be equal to height of tool radius at the
+        // other edge.
+        const double a = tan1*tan1 + 1;
+        const double b = -2*(tan1*(r-b1off)+f);
+        const double c = b1off*(b1off-2*r)+f*f;
+        yc = (-b - std::sqrt(b*b - 4*a*c))/(2*a);
+    } else if(alpha2 < alpha1 && s1 > y1){
         // Slope 1 must be disregarded.
         // Height of slope 2 must be equal to height of tool radius at the
         // other edge.
         const double a = tan2*tan2 + 1;
         const double b = -(2*tan2*(b2off-r)+2*tan2*tan2*f);
-        const double c = tan2*tan2*f*f + 2*tan2*f*(b2off-r)+b2off*(b2off-2*r);
+        const double c = tan2*tan2*f*f + 2*tan2*f*(b2off-r) + b2off*(b2off-2*r);
         yc = (-b + std::sqrt(b*b - 4*a*c))/(2*a);
-        ycoff = 0;
+    }
+
+    // Calculate ap taking circle center at y = 0
+    //
+    // Calculate whether the angles of the cutting tool intercept the surface
+    // first or are stopped by the feed rate.
+    //
+    // Check the intersection with the feed rate edges. If they're greater than
+    // zero, the cut line is narrower than the feed line, so max height is
+    // zero. Otherwise, it's the height at the intersection
+    s1 = -yc;
+    s2 = f-yc;
+    if(s1 > y1 && s2 < y2){
+        // Width falls entirely within tool radius.
+        yc = f/2;
         ap = -std::sqrt(r*r - yc*yc) + r;
+    } else if(s1 > y1){
+        ap = tan2*(f-yc) + b2off;
     } else if(s2 < y2){
-        // Slope 2 must be disregarded.
-        // Height of slope 1 must be equal to height of tool radius at the
-        // other edge.
-        const double a = tan1*tan1 + 1;
-        const double b = 2*tan1*(b1off-r)-2*f;
-        const double c = b1off*(b1off-2*r)+f*f;
-        yc = (-b - std::sqrt(b*b - 4*a*c))/(2*a);
-        ycoff = 0;
-        ap = -std::sqrt(r*r - (f-yc)*(f-yc)) + r;
+        ap = tan1*yc + b1off;
     } else {
         // Width does not intersect the radius at all.
-        ap = tan1*(yc-ycoff) + b1off;
+        ap = tan1*yc + b1off;
     }
 
     // Value of z for y = 0 (global)
-    const double line_root1 = -std::sqrt(r*r - y1*y1) + r - ap + tan1*(yc-ycoff+y1);
-    const double line_root2 = -std::sqrt(r*r - y2*y2) + r - ap - tan2*(yc-ycoff+y2);
+    const double line_root1 = -std::sqrt(r*r - y1*y1) + r - ap + tan1*(yc+y1);
+    const double line_root2 = -std::sqrt(r*r - y2*y2) + r - ap - tan2*(yc+y2);
 
     // If it's greater than zero, max_z must be zero
     max_z = Az;// + Az_uet;
@@ -277,10 +287,10 @@ void map(std::vector<double>& map_z, double f, double vc){
 
             // Tool shape
             double shape_z;
-            if(y <= y1 + mult*f + (yc - ycoff)){
+            if(y <= y1 + mult*f + yc){
                 shape_z = -tan1*(y - mult*f) + line_root1;
-            } else if(y <= y2 + mult*f + (yc - ycoff)){
-                const double yy = y - mult*f - (yc - ycoff);
+            } else if(y <= y2 + mult*f + yc){
+                const double yy = y - mult*f - yc;
                 shape_z = -std::sqrt(r*r - yy*yy) + r - ap;
             } else {
                 shape_z = tan2*(y - mult*f) + line_root2;
@@ -371,27 +381,23 @@ void dzdf(double f, double vc, std::vector<double>& dzdf){
     const double y1 = -std::sqrt((tan1*r*tan1*r)/(tan1*tan1+1));
     const double y2 =  std::sqrt((tan2*r*tan2*r)/(tan2*tan2+1));
 
-    double yc = tan2*f/(tan1+tan2);
-    double dyc = tan2/(tan1+tan2);
-
     const double b1off = -std::sqrt(r*r - y1*y1) + r + tan1*y1;
     const double b2off = -std::sqrt(r*r - y2*y2) + r - tan2*y2;
 
-    double ycoff = (b1off - b2off)/(tan1 + tan2);
+    double yc = (tan2*f+b2off-b1off)/(tan1+tan2);
+    double dyc = tan2/(tan1+tan2);
 
-    const double s1 = -(yc - ycoff);
-    const double s2 = f-(yc - ycoff);
-    double dap;
-    if(s1 > y1 && s2 < y2){
-        // Width falls entirely within tool radius.
-        yc = f/2;
-        dyc = 0.5;
-        ycoff = 0;
-        dap = yc*dyc/std::sqrt(r*r - yc*yc);
-    } else if(s1 > y1){
-        // Slope 1 must be disregarded.
-        // Height of slope 2 must be equal to height of tool radius at the
-        // other edge.
+    double s1 = -yc;
+    double s2 = f-yc;
+    if(alpha1 < alpha2 && s2 < y2){
+        const double a = tan1*tan1 + 1;
+        const double b = -2*(tan1*(r-b1off)+f);
+        const double db = -2*f;
+        const double c = b1off*(b1off-2*r)+f*f;
+        const double dc = 2*f;
+        yc = (-b - std::sqrt(b*b - 4*a*c))/(2*a);
+        dyc = (-db + 0.5*(2*b*db - 4*a*dc)/std::sqrt(b*b - 4*a*c))/(2*a);
+    } else if(alpha2 < alpha1 && s1 > y1){
         const double a = tan2*tan2 + 1;
         const double b = -(2*tan2*(b2off-r)+2*tan2*tan2*f);
         const double db = -2*tan2*tan2;
@@ -399,24 +405,21 @@ void dzdf(double f, double vc, std::vector<double>& dzdf){
         const double dc = 2*tan2*tan2*f + 2*tan2*(b2off-r);
         yc = (-b + std::sqrt(b*b - 4*a*c))/(2*a);
         dyc = (-db + 0.5*(2*b*db - 4*a*dc)/std::sqrt(b*b - 4*a*c))/(2*a);
-        ycoff = 0;
+    }
+
+    double dap = 0;
+    s1 = -yc;
+    s2 = f-yc;
+    if(s1 > y1 && s2 < y2){
+        yc = f/2;
+        dyc = 0.5;
         dap = yc*dyc/std::sqrt(r*r - yc*yc);
+    } else if(s1 > y1){
+        dap = tan2;
     } else if(s2 < y2){
-        // Slope 2 must be disregarded.
-        // Height of slope 1 must be equal to height of tool radius at the
-        // other edge.
-        const double a = tan1*tan1 + 1;
-        const double b = 2*tan1*(b1off-r)-2*f;
-        const double db = -2;
-        const double c = b1off*(b1off-2*r)+f*f;
-        const double dc = 2*f;
-        yc = (-b - std::sqrt(b*b - 4*a*c))/(2*a);
-        dyc = (-db - 0.5*(2*b*db - 4*a*dc)/std::sqrt(b*b - 4*a*c))/(2*a);
-        ycoff = 0;
-        dap = (f-yc)*(1-dyc)/std::sqrt(r*r - (f-yc)*(f-yc));
+        dap = tan1;
     } else {
-        // Width does not intersect the radius at all.
-        dap = tan1*dyc;
+        dap = tan1;
     }
 
     const double dlrdf1 = -dap + tan1*dyc ;
@@ -472,10 +475,10 @@ void dzdf(double f, double vc, std::vector<double>& dzdf){
             }
 
             double dshape_z;
-            if(y <= y1 + mult*f + (yc - ycoff)){
+            if(y <= y1 + mult*f + yc){
                 dshape_z =  tan1*(mult + dmult*f) + dlrdf1;
-            } else if(y <= y2 + mult*f + (yc - ycoff)){
-                const double yy = y - mult*f - (yc - ycoff);
+            } else if(y <= y2 + mult*f + yc){
+                const double yy = y - mult*f - yc;
                 const double dyy = -mult - dmult*f - dyc;
 
                 const double circ = std::sqrt(r*r - yy*yy);
