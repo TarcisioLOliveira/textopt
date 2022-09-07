@@ -29,19 +29,9 @@ namespace texture{
 
 void map_exact(std::vector<double>& map_z, const std::vector<double>& orig_z, double f, double ap, double vc){
     using namespace param;
+    using param::y1;
 
     vc *= 1e6/60.0;
-
-    const double tan1 = std::tan(alpha1);
-    const double tan2 = std::tan(alpha2);
-
-    // Line parameters for tool slopes.
-    const double y1 = -std::sqrt((tan1*r*tan1*r)/(tan1*tan1+1));
-    const double y2 =  std::sqrt((tan2*r*tan2*r)/(tan2*tan2+1));
-
-    // Value of z for y = 0 (with circle center at y = 0).
-    const double b1off = -std::sqrt(r*r - y1*y1) + r + tan1*y1;
-    const double b2off = -std::sqrt(r*r - y2*y2) + r - tan2*y2;
 
     // Where the slope lines intersect, so that the height at the edges is the
     // same for both
@@ -172,19 +162,9 @@ void map_exact(std::vector<double>& map_z, const std::vector<double>& orig_z, do
 }
 void map(std::vector<double>& map_z, const std::vector<double>& orig_z, double f, double ap, double vc){
     using namespace param;
+    using param::y1;
 
     vc *= 1e6/60.0;
-
-    const double tan1 = std::tan(alpha1);
-    const double tan2 = std::tan(alpha2);
-
-    // Line parameters for tool slopes.
-    const double y1 = -std::sqrt((tan1*r*tan1*r)/(tan1*tan1+1));
-    const double y2 =  std::sqrt((tan2*r*tan2*r)/(tan2*tan2+1));
-
-    // Value of z for y = 0 (with circle center at y = 0).
-    const double b1off = -std::sqrt(r*r - y1*y1) + r + tan1*y1;
-    const double b2off = -std::sqrt(r*r - y2*y2) + r - tan2*y2;
 
     // Where the slope lines intersect, so that the height at the edges is the
     // same for both
@@ -317,17 +297,9 @@ void map(std::vector<double>& map_z, const std::vector<double>& orig_z, double f
 
 void dzdvc(const std::vector<double>& orig_z, double f, double ap, double vc, std::vector<double>& dzdvc){
     using namespace param;
+    using param::y1;
 
     vc *= 1e6/60.0;
-
-    const double tan1 = std::tan(alpha1);
-    const double tan2 = std::tan(alpha2);
-
-    const double y1 = -std::sqrt((tan1*r*tan1*r)/(tan1*tan1+1));
-    const double y2 =  std::sqrt((tan2*r*tan2*r)/(tan2*tan2+1));
-
-    const double b1off = -std::sqrt(r*r - y1*y1) + r + tan1*y1;
-    const double b2off = -std::sqrt(r*r - y2*y2) + r - tan2*y2;
 
     double yc = (tan2*f+b2off-b1off)/(tan1+tan2);
 
@@ -427,17 +399,9 @@ void dzdvc(const std::vector<double>& orig_z, double f, double ap, double vc, st
 
 void dzdap(const std::vector<double>& orig_z, double f, double ap, double vc, std::vector<double>& dzdap){
     using namespace param;
+    using param::y1;
 
     vc *= 1e6/60.0;
-
-    const double tan1 = std::tan(alpha1);
-    const double tan2 = std::tan(alpha2);
-
-    const double y1 = -std::sqrt((tan1*r*tan1*r)/(tan1*tan1+1));
-    const double y2 =  std::sqrt((tan2*r*tan2*r)/(tan2*tan2+1));
-
-    const double b1off = -std::sqrt(r*r - y1*y1) + r + tan1*y1;
-    const double b2off = -std::sqrt(r*r - y2*y2) + r - tan2*y2;
 
     double yc = (tan2*f+b2off-b1off)/(tan1+tan2);
 
@@ -557,17 +521,9 @@ void dzdap(const std::vector<double>& orig_z, double f, double ap, double vc, st
 
 void dzdf(const std::vector<double>& orig_z, double f, double ap, double vc, std::vector<double>& dzdf){
     using namespace param;
+    using param::y1;
 
     vc *= 1e6/60;
-
-    const double tan1 = std::tan(alpha1);
-    const double tan2 = std::tan(alpha2);
-
-    const double y1 = -std::sqrt((tan1*r*tan1*r)/(tan1*tan1+1));
-    const double y2 =  std::sqrt((tan2*r*tan2*r)/(tan2*tan2+1));
-
-    const double b1off = -std::sqrt(r*r - y1*y1) + r + tan1*y1;
-    const double b2off = -std::sqrt(r*r - y2*y2) + r - tan2*y2;
 
     double yc = (tan2*f+b2off-b1off)/(tan1+tan2);
     double dyc = tan2/(tan1+tan2);

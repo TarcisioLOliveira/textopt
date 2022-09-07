@@ -135,11 +135,24 @@ void load(const std::string& path){
     param::ABS_EPS = get_scalar<double>(config["approx_constants"], "ABS_EPS");
     param::YOFF = get_scalar<double>(config["approx_constants"], "YOFF");
 
-
     required(config, "tool", YAML::NodeType::Map);
     param::r = get_scalar<double>(config["tool"], "r") / param::dim;
     param::alpha1 = get_scalar<double>(config["tool"], "alpha1") * M_PI / 180.0;
     param::alpha2 = get_scalar<double>(config["tool"], "alpha2") * M_PI / 180.0;
+
+    {
+        using namespace param;
+        using param::y1;
+
+        tan1 = std::tan(param::alpha1);
+        tan2 = std::tan(param::alpha2);
+
+        y1 = -tan1*r/std::sqrt(tan1*tan1+1);
+        y2 =  tan2*r/std::sqrt(tan2*tan2+1);
+
+        b1off = -std::sqrt(r*r - y1*y1) + r + tan1*y1;
+        b2off = -std::sqrt(r*r - y2*y2) + r - tan2*y2;
+    }
 
     required(config, "oscillation", YAML::NodeType::Map);
     param::Az = get_scalar<double>(config["oscillation"], "Az");

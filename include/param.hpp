@@ -139,6 +139,17 @@ inline double cylinder_radius = 6*dim_scale; // [um]
 inline double f_uet = 20000; // [Hz]
 inline double Ax_uet = 1; // [um]
 inline double Az_uet = 2; // [um]
+                          
+inline double tan1 = std::tan(alpha1);
+inline double tan2 = std::tan(alpha2);
+
+// Line parameters for tool slopes.
+inline double y1 = -tan1*r/std::sqrt(tan1*tan1+1);
+inline double y2 =  tan2*r/std::sqrt(tan2*tan2+1);
+
+// Value of z for y = 0 (with circle center at y = 0).
+inline double b1off = -std::sqrt(r*r - y1*y1) + r + tan1*y1;
+inline double b2off = -std::sqrt(r*r - y2*y2) + r - tan2*y2;
 
 }
 
