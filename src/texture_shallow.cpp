@@ -89,6 +89,7 @@ void map_exact(std::vector<double>& map_z, double f, double vc){
     min_z = -(ap + Az);
 
     const double delta_uet = vc/f_uet;
+    const double Ax_uet_vc = Ax_uet + vc/(4*f_uet);
     
     #pragma omp parallel
     {
@@ -125,9 +126,8 @@ void map_exact(std::vector<double>& map_z, double f, double vc){
                     // Ultrasonic turning effects
                     const double xcirc = x + xoffset_uet;
                     const double mult_uet = std::floor(xcirc / delta_uet);
-                    // const double x_uet = (xcirc - mult_uet*delta_uet)/delta_uet - 0.5;
-                    const double x_uet = xcirc/delta_uet - mult_uet - 0.5;
-                    const double uet_effect = Az_uet*(1.0 - std::sqrt(1.0 - (x_uet*x_uet)/(Ax_uet*Ax_uet)));
+                    const double x_uet = xcirc - (mult_uet + 0.5)*delta_uet;
+                    const double uet_effect = Az_uet*(1.0 - std::sqrt(1.0 - (x_uet*x_uet)/(Ax_uet_vc*Ax_uet_vc)));
 
                     newz[X] = oscillation + uet_effect;
                 }
@@ -220,6 +220,7 @@ void map(std::vector<double>& map_z, double f, double vc){
     min_z = -(ap + Az);
 
     const double delta_uet = vc/f_uet;
+    const double Ax_uet_vc = Ax_uet + vc/(4*f_uet);
     
     #pragma omp parallel
     {
@@ -258,9 +259,8 @@ void map(std::vector<double>& map_z, double f, double vc){
                 // Ultrasonic turning effects
                 const double xcirc = x + xoffset_uet;
                 const double mult_uet = smooth::abs(smooth::floor(xcirc / delta_uet));
-                // const double x_uet = (xcirc - mult_uet*delta_uet)/delta_uet - 0.5;
-                const double x_uet = xcirc/delta_uet - mult_uet - 0.5;
-                const double uet_effect = Az_uet*(1.0 - std::sqrt(1.0 - (x_uet*x_uet)/(Ax_uet*Ax_uet)));
+                const double x_uet = xcirc - (mult_uet + 0.5)*delta_uet;
+                const double uet_effect = Az_uet*(1.0 - std::sqrt(1.0 - (x_uet*x_uet)/(Ax_uet_vc*Ax_uet_vc)));
 
                 newz[X] = oscillation + uet_effect;
             }
@@ -302,6 +302,9 @@ void dzdvc(double f, double vc, std::vector<double>& dzdvc){
     const double delta_uet = vc/f_uet;
     const double dduetdvc = 1.0/f_uet;
 
+    const double Ax_uet_vc = Ax_uet + vc/(4*f_uet);
+    const double dAx_uet_vc = 1.0/(4*f_uet);
+
     #pragma omp parallel
     {
         std::vector<double> newz(tex_width);
@@ -333,12 +336,11 @@ void dzdvc(double f, double vc, std::vector<double>& dzdvc){
                 const double mult_uet = smooth::abs(smooth::floor(xcirc / delta_uet));
                 const double dmult_uet = smooth::abs_deriv(smooth::floor(xcirc / delta_uet))*smooth::floor_deriv(xcirc / delta_uet)*((-xcirc)/(delta_uet*delta_uet))*dduetdvc;
 
-                // const double x_uet = (xcirc - mult_uet*delta_uet)/delta_uet - 0.5;
-                const double x_uet = xcirc/delta_uet - mult_uet - 0.5;
-                const double dx_uet = -(xcirc/(delta_uet*delta_uet))*dduetdvc - dmult_uet;
+                const double x_uet = xcirc - (mult_uet + 0.5)*delta_uet;
+                const double dx_uet = -(mult_uet*dduetdvc + dmult_uet*delta_uet) - 0.5*dduetdvc;
 
-                const double uet_effect = Az_uet*(1.0 - std::sqrt(1.0 - (x_uet*x_uet)/(Ax_uet*Ax_uet)));
-                const double duet = -0.5*(Az_uet/std::sqrt(1.0 - (x_uet*x_uet)/(Ax_uet*Ax_uet)))*(-2)*(x_uet/Ax_uet)*(dx_uet/Ax_uet);
+                const double uet_effect = Az_uet*(1.0 - std::sqrt(1.0 - (x_uet*x_uet)/(Ax_uet_vc*Ax_uet_vc)));
+                const double duet = -0.5*(Az_uet/std::sqrt(1.0 - (x_uet*x_uet)/(Ax_uet_vc*Ax_uet_vc)))*(-2)*(x_uet/Ax_uet_vc)*(dx_uet*Ax_uet_vc - x_uet*dAx_uet_vc)/(Ax_uet_vc*Ax_uet_vc);
 
                 newz[X] = oscillation + uet_effect;
                 dznewdvc[X] = doscilldvc + duet;
@@ -402,6 +404,7 @@ void dzdf(double f, double vc, std::vector<double>& dzdf){
     dmin_zdf = -dap;
 
     const double delta_uet = vc/f_uet;
+    const double Ax_uet_vc = Ax_uet + vc/(4*f_uet);
     //const double dduet = 0;
     #pragma omp parallel
     {
@@ -437,11 +440,17 @@ void dzdf(double f, double vc, std::vector<double>& dzdf){
                 const double dmult_uet = smooth::abs_deriv(smooth::floor(xcirc / delta_uet))*smooth::floor_deriv(xcirc / delta_uet)*dxcirc/delta_uet;
 
                 // const double x_uet = (xcirc - mult_uet*delta_uet)/delta_uet - 0.5;
-                const double x_uet = xcirc/delta_uet - mult_uet - 0.5;
-                const double dx_uet = dxcirc/delta_uet - dmult_uet;
+                // const double x_uet = xcirc/delta_uet - mult_uet - 0.5;
+                // const double dx_uet = dxcirc/delta_uet - dmult_uet;
 
-                const double uet_effect = Az_uet*(1.0 - std::sqrt(1.0 - (x_uet*x_uet)/(Ax_uet*Ax_uet)));
-                const double duet = -0.5*(Az_uet/std::sqrt(1.0 - (x_uet*x_uet)/(Ax_uet*Ax_uet)))*(-2)*(x_uet/Ax_uet)*(dx_uet/Ax_uet);
+                // const double uet_effect = Az_uet*(1.0 - std::sqrt(1.0 - (x_uet*x_uet)/(Ax_uet*Ax_uet)));
+                // const double duet = -0.5*(Az_uet/std::sqrt(1.0 - (x_uet*x_uet)/(Ax_uet*Ax_uet)))*(-2)*(x_uet/Ax_uet)*(dx_uet/Ax_uet);
+
+                const double x_uet = xcirc - (mult_uet + 0.5)*delta_uet;
+                const double dx_uet = dxcirc - dmult_uet*delta_uet;
+
+                const double uet_effect = Az_uet*(1.0 - std::sqrt(1.0 - (x_uet*x_uet)/(Ax_uet_vc*Ax_uet_vc)));
+                const double duet = -0.5*(Az_uet/std::sqrt(1.0 - (x_uet*x_uet)/(Ax_uet_vc*Ax_uet_vc)))*(-2)*(x_uet/Ax_uet_vc)*(dx_uet/Ax_uet_vc);
 
                 newz[X] = oscillation + uet_effect;
                 dznewdf[X] = doscilldf + duet;
