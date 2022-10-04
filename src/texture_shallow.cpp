@@ -85,11 +85,13 @@ void map_exact(std::vector<double>& map_z, double f, double vc){
     const double line_root1 = -std::sqrt(r*r - y1*y1) + r - ap + tan1*(yc+y1);
     const double line_root2 = -std::sqrt(r*r - y2*y2) + r - ap - tan2*(yc+y2);
 
-    max_z = Az;// + Az_uet;
+    //max_z = Az;// + Az_uet;
     min_z = -(ap + Az);
 
     const double delta_uet = vc/f_uet;
     const double Ax_uet_vc = Ax_uet + vc/(4*f_uet);
+
+    max_z = Az + Az_uet*(1.0 - std::sqrt(1.0 - (delta_uet*delta_uet)/(4*Ax_uet_vc*Ax_uet_vc)));
     
     #pragma omp parallel
     {
@@ -216,11 +218,13 @@ void map(std::vector<double>& map_z, double f, double vc){
     const double line_root2 = -std::sqrt(r*r - y2*y2) + r - ap - tan2*(yc+y2);
 
     // If it's greater than zero, max_z must be zero
-    max_z = Az;// + Az_uet;
+    // max_z = Az;// + Az_uet;
     min_z = -(ap + Az);
 
     const double delta_uet = vc/f_uet;
     const double Ax_uet_vc = Ax_uet + vc/(4*f_uet);
+
+    max_z = Az + Az_uet*(1.0 - std::sqrt(1.0 - (delta_uet*delta_uet)/(4*Ax_uet_vc*Ax_uet_vc)));
     
     #pragma omp parallel
     {
@@ -296,7 +300,6 @@ void dzdvc(double f, double vc, std::vector<double>& dzdvc){
 
     vc *= 1e6/60.0;
 
-    dmax_zdvc = 0;
     dmin_zdvc = 0;
 
     const double delta_uet = vc/f_uet;
@@ -304,6 +307,9 @@ void dzdvc(double f, double vc, std::vector<double>& dzdvc){
 
     const double Ax_uet_vc = Ax_uet + vc/(4*f_uet);
     const double dAx_uet_vc = 1.0/(4*f_uet);
+
+    dmax_zdvc = -0.5*(Az_uet/std::sqrt(1.0 - (delta_uet*delta_uet)/(4*Ax_uet_vc*Ax_uet_vc)))
+                    *(-2)*(delta_uet/(2*Ax_uet_vc))*(dduetdvc*Ax_uet_vc - delta_uet*dAx_uet_vc)/(2*Ax_uet_vc*Ax_uet_vc);
 
     #pragma omp parallel
     {
@@ -405,6 +411,7 @@ void dzdf(double f, double vc, std::vector<double>& dzdf){
 
     const double delta_uet = vc/f_uet;
     const double Ax_uet_vc = Ax_uet + vc/(4*f_uet);
+
     //const double dduet = 0;
     #pragma omp parallel
     {
