@@ -81,17 +81,19 @@ void map_exact(std::vector<double>& map_z, double f, double vc){
         ap = tan1*yc + b1off;
     }
 
-    // Value of z for y = 0 (global)
-    const double line_root1 = -std::sqrt(r*r - y1*y1) + r - ap + tan1*(yc+y1);
-    const double line_root2 = -std::sqrt(r*r - y2*y2) + r - ap - tan2*(yc+y2);
 
     //max_z = Az;// + Az_uet;
+    max_z = 0;
     min_z = -(ap + Az);
 
     const double delta_uet = vc/f_uet;
     const double Ax_uet_vc = Ax_uet + vc/(4*f_uet);
 
-    max_z = Az + Az_uet*(1.0 - std::sqrt(1.0 - (delta_uet*delta_uet)/(4*Ax_uet_vc*Ax_uet_vc)));
+    const double over_z = Az + Az_uet*(1.0 - std::sqrt(1.0 - (delta_uet*delta_uet)/(4*Ax_uet_vc*Ax_uet_vc)));
+
+    // Value of z for y = 0 (global)
+    const double line_root1 = -std::sqrt(r*r - y1*y1) + r - ap - over_z + tan1*(yc+y1);
+    const double line_root2 = -std::sqrt(r*r - y2*y2) + r - ap - over_z - tan2*(yc+y2);
     
     #pragma omp parallel
     {
@@ -159,6 +161,7 @@ void map_exact(std::vector<double>& map_z, double f, double vc){
         }
     }
 }
+
 void map(std::vector<double>& map_z, double f, double vc){
     using namespace param;
     using param::y1;
@@ -213,18 +216,20 @@ void map(std::vector<double>& map_z, double f, double vc){
         ap = tan1*yc + b1off;
     }
 
-    // Value of z for y = 0 (global)
-    const double line_root1 = -std::sqrt(r*r - y1*y1) + r - ap + tan1*(yc+y1);
-    const double line_root2 = -std::sqrt(r*r - y2*y2) + r - ap - tan2*(yc+y2);
 
     // If it's greater than zero, max_z must be zero
     // max_z = Az;// + Az_uet;
+    max_z = 0;
     min_z = -(ap + Az);
 
     const double delta_uet = vc/f_uet;
     const double Ax_uet_vc = Ax_uet + vc/(4*f_uet);
 
-    max_z = Az + Az_uet*(1.0 - std::sqrt(1.0 - (delta_uet*delta_uet)/(4*Ax_uet_vc*Ax_uet_vc)));
+    const double over_z = Az + Az_uet*(1.0 - std::sqrt(1.0 - (delta_uet*delta_uet)/(4*Ax_uet_vc*Ax_uet_vc)));
+
+    // Value of z for y = 0 (global)
+    const double line_root1 = -std::sqrt(r*r - y1*y1) + r - ap - over_z + tan1*(yc+y1);
+    const double line_root2 = -std::sqrt(r*r - y2*y2) + r - ap - over_z - tan2*(yc+y2);
     
     #pragma omp parallel
     {
@@ -300,6 +305,39 @@ void dzdvc(double f, double vc, std::vector<double>& dzdvc){
 
     vc *= 1e6/60.0;
 
+
+    double yc = (tan2*f+b2off-b1off)/(tan1+tan2);
+
+    double s1 = -yc;
+    double s2 = f-yc;
+    if(alpha1 < alpha2 && s2 < y2){
+        const double a = tan1*tan1 + 1;
+        const double b = -2*(tan1*(r-b1off)+f);
+        const double c = b1off*(b1off-2*r)+f*f;
+        yc = (-b - std::sqrt(b*b - 4*a*c))/(2*a);
+    } else if(alpha2 < alpha1 && s1 > y1){
+        const double a = tan2*tan2 + 1;
+        const double b = -(2*tan2*(b2off-r)+2*tan2*tan2*f);
+        const double c = tan2*tan2*f*f + 2*tan2*f*(b2off-r) + b2off*(b2off-2*r);
+        yc = (-b + std::sqrt(b*b - 4*a*c))/(2*a);
+    }
+
+    s1 = -yc;
+    s2 = f-yc;
+    if(s1 > y1 && s2 < y2){
+        // Width falls entirely within tool radius.
+        yc = f/2;
+        ap = -std::sqrt(r*r - yc*yc) + r;
+    } else if(s1 > y1){
+        ap = tan2*(f-yc) + b2off;
+    } else if(s2 < y2){
+        ap = tan1*yc + b1off;
+    } else {
+        // Width does not intersect the radius at all.
+        ap = tan1*yc + b1off;
+    }
+
+    dmax_zdvc = 0;
     dmin_zdvc = 0;
 
     const double delta_uet = vc/f_uet;
@@ -308,9 +346,16 @@ void dzdvc(double f, double vc, std::vector<double>& dzdvc){
     const double Ax_uet_vc = Ax_uet + vc/(4*f_uet);
     const double dAx_uet_vc = 1.0/(4*f_uet);
 
-    dmax_zdvc = -0.5*(Az_uet/std::sqrt(1.0 - (delta_uet*delta_uet)/(4*Ax_uet_vc*Ax_uet_vc)))
+
+    // const double over_z = Az + Az_uet*(1.0 - std::sqrt(1.0 - (delta_uet*delta_uet)/(4*Ax_uet_vc*Ax_uet_vc)));
+    const double dover_z = -0.5*(Az_uet/std::sqrt(1.0 - (delta_uet*delta_uet)/(4*Ax_uet_vc*Ax_uet_vc)))
                     *(-2)*(delta_uet/(2*Ax_uet_vc))*(dduetdvc*Ax_uet_vc - delta_uet*dAx_uet_vc)/(2*Ax_uet_vc*Ax_uet_vc);
 
+    // const double line_root1 = -std::sqrt(r*r - y1*y1) + r - ap - over_z + tan1*(yc+y1);
+    // const double line_root2 = -std::sqrt(r*r - y2*y2) + r - ap - over_z - tan2*(yc+y2);
+
+    const double dlrdf1 = -dover_z;
+    const double dlrdf2 = -dover_z;
     #pragma omp parallel
     {
         std::vector<double> newz(tex_width);
@@ -351,9 +396,26 @@ void dzdvc(double f, double vc, std::vector<double>& dzdvc){
                 newz[X] = oscillation + uet_effect;
                 dznewdvc[X] = doscilldvc + duet;
 
+                // double& dz = dzdvc[X + Y*tex_width];
+
+                // dz = dznewdvc[X];
+            }
+
+            double dshape_z;
+            if(y <= y1 + mult*f + yc){
+                dshape_z = dlrdf1;
+            } else if(y <= y2 + mult*f + yc){
+                dshape_z = 0;
+            } else {
+                dshape_z = dlrdf2;
+            }
+
+            for(size_t X = 0; X < tex_width; ++X){
                 double& dz = dzdvc[X + Y*tex_width];
 
-                dz = dznewdvc[X];
+                const double dend_z = dznewdvc[X] + dshape_z;
+
+                dz = dend_z;
             }
         }
     }
@@ -403,8 +465,8 @@ void dzdf(double f, double vc, std::vector<double>& dzdf){
         dap = tan1;
     }
 
-    const double dlrdf1 = -dap + tan1*dyc ;
-    const double dlrdf2 = -dap - tan2*dyc ;
+    const double dlrdf1 = -dap + tan1*dyc;
+    const double dlrdf2 = -dap - tan2*dyc;
 
     dmax_zdf = 0;
     dmin_zdf = -dap;
