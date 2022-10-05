@@ -81,18 +81,19 @@ void map_exact(std::vector<double>& map_z, double f, double vc){
         ap = tan1*yc + b1off;
     }
 
-
-    //max_z = Az;// + Az_uet;
-    max_z = 0;
-    min_z = -(ap + Az);
-
     const double delta_uet = vc/f_uet;
 
     const double over_z = Az + Az_uet*(1.0 - std::sqrt(1.0 - (delta_uet*delta_uet)/(4*Ax_uet*Ax_uet)));
 
+    ap += over_z;
+
     // Value of z for y = 0 (global)
-    const double line_root1 = -std::sqrt(r*r - y1*y1) + r - ap - over_z + tan1*(yc+y1);
-    const double line_root2 = -std::sqrt(r*r - y2*y2) + r - ap - over_z - tan2*(yc+y2);
+    const double line_root1 = -std::sqrt(r*r - y1*y1) + r - ap + tan1*(yc+y1);
+    const double line_root2 = -std::sqrt(r*r - y2*y2) + r - ap - tan2*(yc+y2);
+
+    //max_z = Az;// + Az_uet;
+    max_z = 0;
+    min_z = -(ap + Az);
     
     #pragma omp parallel
     {
@@ -215,19 +216,20 @@ void map(std::vector<double>& map_z, double f, double vc){
         ap = tan1*yc + b1off;
     }
 
+    const double delta_uet = vc/f_uet;
+
+    const double over_z = Az + Az_uet*(1.0 - std::sqrt(1.0 - (delta_uet*delta_uet)/(4*Ax_uet*Ax_uet)));
+
+    ap += over_z;
+
+    // Value of z for y = 0 (global)
+    const double line_root1 = -std::sqrt(r*r - y1*y1) + r - ap + tan1*(yc+y1);
+    const double line_root2 = -std::sqrt(r*r - y2*y2) + r - ap - tan2*(yc+y2);
 
     // If it's greater than zero, max_z must be zero
     // max_z = Az;// + Az_uet;
     max_z = 0;
     min_z = -(ap + Az);
-
-    const double delta_uet = vc/f_uet;
-
-    const double over_z = Az + Az_uet*(1.0 - std::sqrt(1.0 - (delta_uet*delta_uet)/(4*Ax_uet*Ax_uet)));
-
-    // Value of z for y = 0 (global)
-    const double line_root1 = -std::sqrt(r*r - y1*y1) + r - ap - over_z + tan1*(yc+y1);
-    const double line_root2 = -std::sqrt(r*r - y2*y2) + r - ap - over_z - tan2*(yc+y2);
     
     #pragma omp parallel
     {
@@ -325,18 +327,9 @@ void dzdvc(double f, double vc, std::vector<double>& dzdvc){
     if(s1 > y1 && s2 < y2){
         // Width falls entirely within tool radius.
         yc = f/2;
-        ap = -std::sqrt(r*r - yc*yc) + r;
-    } else if(s1 > y1){
-        ap = tan2*(f-yc) + b2off;
-    } else if(s2 < y2){
-        ap = tan1*yc + b1off;
-    } else {
-        // Width does not intersect the radius at all.
-        ap = tan1*yc + b1off;
     }
 
     dmax_zdvc = 0;
-    dmin_zdvc = 0;
 
     const double delta_uet = vc/f_uet;
     const double dduetdvc = 1.0/f_uet;
@@ -347,6 +340,8 @@ void dzdvc(double f, double vc, std::vector<double>& dzdvc){
 
     // const double line_root1 = -std::sqrt(r*r - y1*y1) + r - ap - over_z + tan1*(yc+y1);
     // const double line_root2 = -std::sqrt(r*r - y2*y2) + r - ap - over_z - tan2*(yc+y2);
+
+    dmin_zdvc = -dover_z;
 
     const double dlrdf1 = -dover_z;
     const double dlrdf2 = -dover_z;
