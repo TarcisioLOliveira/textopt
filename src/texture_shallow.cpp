@@ -87,9 +87,8 @@ void map_exact(std::vector<double>& map_z, double f, double vc){
     min_z = -(ap + Az);
 
     const double delta_uet = vc/f_uet;
-    const double Ax_uet_vc = Ax_uet + vc/(4*f_uet);
 
-    const double over_z = Az + Az_uet*(1.0 - std::sqrt(1.0 - (delta_uet*delta_uet)/(4*Ax_uet_vc*Ax_uet_vc)));
+    const double over_z = Az + Az_uet*(1.0 - std::sqrt(1.0 - (delta_uet*delta_uet)/(4*Ax_uet*Ax_uet)));
 
     // Value of z for y = 0 (global)
     const double line_root1 = -std::sqrt(r*r - y1*y1) + r - ap - over_z + tan1*(yc+y1);
@@ -131,7 +130,7 @@ void map_exact(std::vector<double>& map_z, double f, double vc){
                     const double xcirc = x + xoffset_uet;
                     const double mult_uet = std::floor(xcirc / delta_uet);
                     const double x_uet = xcirc - (mult_uet + 0.5)*delta_uet;
-                    const double uet_effect = Az_uet*(1.0 - std::sqrt(1.0 - (x_uet*x_uet)/(Ax_uet_vc*Ax_uet_vc)));
+                    const double uet_effect = Az_uet*(1.0 - std::sqrt(1.0 - (x_uet*x_uet)/(Ax_uet*Ax_uet)));
 
                     newz[X] = oscillation + uet_effect;
                 }
@@ -223,9 +222,8 @@ void map(std::vector<double>& map_z, double f, double vc){
     min_z = -(ap + Az);
 
     const double delta_uet = vc/f_uet;
-    const double Ax_uet_vc = Ax_uet + vc/(4*f_uet);
 
-    const double over_z = Az + Az_uet*(1.0 - std::sqrt(1.0 - (delta_uet*delta_uet)/(4*Ax_uet_vc*Ax_uet_vc)));
+    const double over_z = Az + Az_uet*(1.0 - std::sqrt(1.0 - (delta_uet*delta_uet)/(4*Ax_uet*Ax_uet)));
 
     // Value of z for y = 0 (global)
     const double line_root1 = -std::sqrt(r*r - y1*y1) + r - ap - over_z + tan1*(yc+y1);
@@ -269,7 +267,7 @@ void map(std::vector<double>& map_z, double f, double vc){
                 const double xcirc = x + xoffset_uet;
                 const double mult_uet = smooth::abs(smooth::floor(xcirc / delta_uet));
                 const double x_uet = xcirc - (mult_uet + 0.5)*delta_uet;
-                const double uet_effect = Az_uet*(1.0 - std::sqrt(1.0 - (x_uet*x_uet)/(Ax_uet_vc*Ax_uet_vc)));
+                const double uet_effect = Az_uet*(1.0 - std::sqrt(1.0 - (x_uet*x_uet)/(Ax_uet*Ax_uet)));
 
                 newz[X] = oscillation + uet_effect;
             }
@@ -343,13 +341,9 @@ void dzdvc(double f, double vc, std::vector<double>& dzdvc){
     const double delta_uet = vc/f_uet;
     const double dduetdvc = 1.0/f_uet;
 
-    const double Ax_uet_vc = Ax_uet + vc/(4*f_uet);
-    const double dAx_uet_vc = 1.0/(4*f_uet);
-
-
     // const double over_z = Az + Az_uet*(1.0 - std::sqrt(1.0 - (delta_uet*delta_uet)/(4*Ax_uet_vc*Ax_uet_vc)));
-    const double dover_z = -0.5*(Az_uet/std::sqrt(1.0 - (delta_uet*delta_uet)/(4*Ax_uet_vc*Ax_uet_vc)))
-                    *(-2)*(delta_uet/(2*Ax_uet_vc))*(dduetdvc*Ax_uet_vc - delta_uet*dAx_uet_vc)/(2*Ax_uet_vc*Ax_uet_vc);
+    const double dover_z = -0.5*(Az_uet/std::sqrt(1.0 - (delta_uet*delta_uet)/(4*Ax_uet*Ax_uet)))
+                    *(-2)*(delta_uet/(2*Ax_uet))*(dduetdvc/(2*Ax_uet));
 
     // const double line_root1 = -std::sqrt(r*r - y1*y1) + r - ap - over_z + tan1*(yc+y1);
     // const double line_root2 = -std::sqrt(r*r - y2*y2) + r - ap - over_z - tan2*(yc+y2);
@@ -390,8 +384,8 @@ void dzdvc(double f, double vc, std::vector<double>& dzdvc){
                 const double x_uet = xcirc - (mult_uet + 0.5)*delta_uet;
                 const double dx_uet = -(mult_uet*dduetdvc + dmult_uet*delta_uet) - 0.5*dduetdvc;
 
-                const double uet_effect = Az_uet*(1.0 - std::sqrt(1.0 - (x_uet*x_uet)/(Ax_uet_vc*Ax_uet_vc)));
-                const double duet = -0.5*(Az_uet/std::sqrt(1.0 - (x_uet*x_uet)/(Ax_uet_vc*Ax_uet_vc)))*(-2)*(x_uet/Ax_uet_vc)*(dx_uet*Ax_uet_vc - x_uet*dAx_uet_vc)/(Ax_uet_vc*Ax_uet_vc);
+                const double uet_effect = Az_uet*(1.0 - std::sqrt(1.0 - (x_uet*x_uet)/(Ax_uet*Ax_uet)));
+                const double duet = -0.5*(Az_uet/std::sqrt(1.0 - (x_uet*x_uet)/(Ax_uet*Ax_uet)))*(-2)*(x_uet/Ax_uet)*(dx_uet/Ax_uet);
 
                 newz[X] = oscillation + uet_effect;
                 dznewdvc[X] = doscilldvc + duet;
@@ -472,7 +466,6 @@ void dzdf(double f, double vc, std::vector<double>& dzdf){
     dmin_zdf = -dap;
 
     const double delta_uet = vc/f_uet;
-    const double Ax_uet_vc = Ax_uet + vc/(4*f_uet);
 
     //const double dduet = 0;
     #pragma omp parallel
@@ -518,8 +511,8 @@ void dzdf(double f, double vc, std::vector<double>& dzdf){
                 const double x_uet = xcirc - (mult_uet + 0.5)*delta_uet;
                 const double dx_uet = dxcirc - dmult_uet*delta_uet;
 
-                const double uet_effect = Az_uet*(1.0 - std::sqrt(1.0 - (x_uet*x_uet)/(Ax_uet_vc*Ax_uet_vc)));
-                const double duet = -0.5*(Az_uet/std::sqrt(1.0 - (x_uet*x_uet)/(Ax_uet_vc*Ax_uet_vc)))*(-2)*(x_uet/Ax_uet_vc)*(dx_uet/Ax_uet_vc);
+                const double uet_effect = Az_uet*(1.0 - std::sqrt(1.0 - (x_uet*x_uet)/(Ax_uet*Ax_uet)));
+                const double duet = -0.5*(Az_uet/std::sqrt(1.0 - (x_uet*x_uet)/(Ax_uet*Ax_uet)))*(-2)*(x_uet/Ax_uet)*(dx_uet/Ax_uet);
 
                 newz[X] = oscillation + uet_effect;
                 dznewdf[X] = doscilldf + duet;
