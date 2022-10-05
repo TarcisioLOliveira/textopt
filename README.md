@@ -1,6 +1,4 @@
-# textopt - Texture optimization
-
-Optimizes machining parameters to maximize surface area while minimizing surface roughness.
+# textopt - Optimization of surface texture based on fast topography simulation
 
 Dependencies:
 - [SFML](https://www.sfml-dev.org/)
