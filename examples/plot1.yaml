@@ -66,5 +66,5 @@ ellipse:
   # Frequency
   f_uet: 20000 # [Hz]
   # Amplitudes
-  Ax_uet: 1    # [um]
-  Az_uet: 2    # [um]
+  Ax_uet: 200    # [um]
+  Az_uet: 100    # [um]

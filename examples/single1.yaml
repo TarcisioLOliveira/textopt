@@ -28,11 +28,11 @@ texture:
 # Starting values are unused for plotting
 # Ranges are unused for single
 cutting:
-  f: 39             # Starting feed rate
+  f: 20             # Starting feed rate
   f_range:  [1, 300] # Feed rate range
   ap: 50            # Starting cutting depth
   ap_range: [1, 300] # Cutting depth range
-  vc: 171            # Starting cutting velocity
+  vc: 60            # Starting cutting velocity
   vc_range: [1, 300] # Cutting velocity range
 
 # Constants used for the smooth approximations
@@ -66,5 +66,5 @@ ellipse:
   # Frequency
   f_uet: 20000 # [Hz]
   # Amplitudes
-  Ax_uet: 1    # [um]
-  Az_uet: 2    # [um]
+  Ax_uet: 200    # [um]
+  Az_uet: 100    # [um]
