@@ -16,10 +16,9 @@ def update_plot(vc, f_uet, Ax_uet, Az_uet):
 
     xoffset_uet = 0
     delta_uet = vc/f_uet
-    Ax_uet_vc = Ax_uet + vc/(4*f_uet)
 
-    X = np.linspace(0, 2*Ax_uet_vc, 1000)
-    Z = np.linspace(0, 2*Ax_uet_vc, 1000)
+    X = np.linspace(0, 2*Ax_uet, 1000)
+    Z = np.linspace(0, 2*Ax_uet, 1000)
 
     x1 = []
     x2 = []
@@ -29,21 +28,16 @@ def update_plot(vc, f_uet, Ax_uet, Az_uet):
     z3 = []
 
     for i in range(len(X)):
-        # xcirc = X[i] + xoffset_uet
-        # mult_uet = math.floor(xcirc / delta_uet)
-        # x_uet = xcirc - (mult_uet + 0.5)*delta_uet
-        # mult_uet = math.floor(xcirc / (2*Ax_uet_vc))
-        # x_uet = xcirc - (mult_uet + 0.5)*2*Ax_uet_vc
-        x_uet = X[i] - Ax_uet_vc
+        x_uet = X[i] - Ax_uet
         if x_uet < -delta_uet/2:
             x1.append(X[i])
-            z1.append(Az_uet*(1.0 - math.sqrt(1.0 - (x_uet*x_uet)/(Ax_uet_vc*Ax_uet_vc))))
+            z1.append(Az_uet*(1.0 - math.sqrt(1.0 - (x_uet*x_uet)/(Ax_uet*Ax_uet))))
         elif x_uet < delta_uet/2:
             x2.append(X[i])
-            z2.append(Az_uet*(1.0 - math.sqrt(1.0 - (x_uet*x_uet)/(Ax_uet_vc*Ax_uet_vc))))
+            z2.append(Az_uet*(1.0 - math.sqrt(1.0 - (x_uet*x_uet)/(Ax_uet*Ax_uet))))
         else:
             x3.append(X[i])
-            z3.append(Az_uet*(1.0 - math.sqrt(1.0 - (x_uet*x_uet)/(Ax_uet_vc*Ax_uet_vc))))
+            z3.append(Az_uet*(1.0 - math.sqrt(1.0 - (x_uet*x_uet)/(Ax_uet*Ax_uet))))
 
     return x1, x2, x3, z1, z2, z3
 

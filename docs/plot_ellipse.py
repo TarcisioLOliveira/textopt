@@ -16,7 +16,6 @@ def update_plot(vc, f_uet, Ax_uet, Az_uet):
 
     xoffset_uet = 0
     delta_uet = vc/f_uet
-    Ax_uet_vc = Ax_uet + vc/(4*f_uet)
 
     X = np.linspace(0, delta_uet, 1000)
     Z = np.linspace(0, delta_uet, 1000)
@@ -24,7 +23,7 @@ def update_plot(vc, f_uet, Ax_uet, Az_uet):
         xcirc = X[i] + xoffset_uet
         mult_uet = math.floor(xcirc / delta_uet)
         x_uet = xcirc - (mult_uet + 0.5)*delta_uet
-        Z[i] = Az_uet*(1.0 - math.sqrt(1.0 - (x_uet*x_uet)/(Ax_uet_vc*Ax_uet_vc)))
+        Z[i] = Az_uet*(1.0 - math.sqrt(1.0 - (x_uet*x_uet)/(Ax_uet*Ax_uet)))
 
     return X, Z
 
