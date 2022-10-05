@@ -49,7 +49,7 @@ if dim == 2:
     ax1 = fig1.add_subplot(111, projection='3d')
     ax1.set_xlabel(label_x)
     ax1.set_ylabel(label_y)
-    ax1.set_zlabel("A [um^2]")
+    ax1.set_zlabel("A [um^2/um^2]")
     ax1.plot_surface(f, ap, A, cmap=cm.coolwarm,
                            linewidth=0, antialiased=False)
 
@@ -85,7 +85,7 @@ elif dim == 1:
     fig1 = plt.figure()
     ax1 = fig1.add_subplot(111)
     ax1.set_xlabel(label_x)
-    ax1.set_ylabel("A [um^2]")
+    ax1.set_ylabel("A [um^2/um^2]")
     ax1.plot(vc, A)
 
     fig2 = plt.figure()
