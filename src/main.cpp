@@ -52,7 +52,12 @@ int main(int argc, char* argv[]){
 
     // Define hard limits for parameters due to geometric constraints
     if(opt_ap){
+        vc_max = std::min(vc_max, 2*Ax_uet*f_uet*60/1e6);
+        ap_max = std::min(ap_max, Az_uet);
 
+        vc = std::min(vc, vc_max);
+        ap = std::min(ap, ap_max);
+        f = std::min(f, f_max);
     } else {
         vc_max = std::min(vc_max, 2*Ax_uet*f_uet*60/1e6);
         const double ap1 = -std::sqrt(r*r - param::y1*param::y1) + r;
