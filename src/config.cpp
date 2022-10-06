@@ -114,8 +114,8 @@ void load(const std::string& path){
         }
 
         auto fit = config["cutting"]["f_range"].begin();
-        auto apit = config["cutting"]["f_range"].begin();
-        auto vcit = config["cutting"]["f_range"].begin();
+        auto apit = config["cutting"]["ap_range"].begin();
+        auto vcit = config["cutting"]["vc_range"].begin();
         param::f_min  = fit->as<double>();
         param::ap_min = apit->as<double>();
         param::vc_min = vcit->as<double>();
