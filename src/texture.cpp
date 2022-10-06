@@ -82,16 +82,18 @@ void map_exact(std::vector<double>& map_z, const std::vector<double>& orig_z, do
         h = tan1*yc + b1off;
     }
 
+    const double delta_uet = vc/f_uet;
+
+    const double over_z = Az + Az_uet*(1.0 - std::sqrt(1.0 - (delta_uet*delta_uet)/(4*Ax_uet*Ax_uet)));
+
     min_z = -(ap + Az);
     // If it's greater than zero, max_z must be zero
-    max_z = std::min(0.0, h+min_z) + Az;// + Az_uet;
+    max_z = std::min(0.0, h+min_z+over_z+Az);
 
     // Value of z for y = 0 (global)
     const double line_root1 = -std::sqrt(r*r - y1*y1) + r - ap + tan1*(yc+y1);
     const double line_root2 = -std::sqrt(r*r - y2*y2) + r - ap - tan2*(yc+y2);
 
-    const double delta_uet = vc/f_uet;
-    
     #pragma omp parallel
     {
         std::vector<double> newz(tex_width);
@@ -112,7 +114,7 @@ void map_exact(std::vector<double>& map_z, const std::vector<double>& orig_z, do
                 prev_mult = mult;
 
                 // Phase differences
-                const double perimeter = 2*M_PI*(cylinder_radius - max_z + Az);
+                const double perimeter = 2*M_PI*(cylinder_radius - max_z);
                 const double xoffset_uet = mult*perimeter;
 
                 for(size_t X = 0; X < tex_width; ++X){
@@ -124,8 +126,7 @@ void map_exact(std::vector<double>& map_z, const std::vector<double>& orig_z, do
 
                     // Ultrasonic turning effects
                     const double mult_uet = std::floor(xcirc / delta_uet);
-                    // const double x_uet = (xcirc - mult_uet*delta_uet)/delta_uet - 0.5;
-                    const double x_uet = xcirc/delta_uet - mult_uet - 0.5;
+                    const double x_uet = xcirc - (mult_uet + 0.5)*delta_uet;
                     const double uet_effect = Az_uet*(1.0 - std::sqrt(1.0 - (x_uet*x_uet)/(Ax_uet*Ax_uet)));
 
                     newz[X] = oscillation + uet_effect;
@@ -212,16 +213,18 @@ void map(std::vector<double>& map_z, const std::vector<double>& orig_z, double f
         h = tan1*yc + b1off;
     }
 
+    const double delta_uet = vc/f_uet;
+
+    const double over_z = Az + Az_uet*(1.0 - std::sqrt(1.0 - (delta_uet*delta_uet)/(4*Ax_uet*Ax_uet)));
+
     min_z = -(ap + Az);
     // If it's greater than zero, max_z must be zero
-    max_z = smooth::min({0, h+min_z}) + Az;// + Az_uet;
+    max_z = smooth::min({0, h+min_z+over_z+Az});
     
     // Value of z for y = 0 (global)
     const double line_root1 = -std::sqrt(r*r - y1*y1) + r - ap + tan1*(yc+y1);
     const double line_root2 = -std::sqrt(r*r - y2*y2) + r - ap - tan2*(yc+y2);
 
-    const double delta_uet = vc/f_uet;
-    
     #pragma omp parallel
     {
         std::vector<double> newz(tex_width);
@@ -235,7 +238,7 @@ void map(std::vector<double>& map_z, const std::vector<double>& orig_z, double f
             const double mult = smooth::abs(smooth::floor((y + YOFF) / f));
 
             // Phase differences
-            const double perimeter = 2*M_PI*(cylinder_radius - max_z + Az);
+            const double perimeter = 2*M_PI*(cylinder_radius - max_z);
             const double xoffset_uet = mult*perimeter;
 
             // It would be nice if it were possible to just cache these results
@@ -256,8 +259,7 @@ void map(std::vector<double>& map_z, const std::vector<double>& orig_z, double f
 
                 // Ultrasonic turning effects
                 const double mult_uet = smooth::abs(smooth::floor(xcirc / delta_uet));
-                // const double x_uet = (xcirc - mult_uet*delta_uet)/delta_uet - 0.5;
-                const double x_uet = xcirc/delta_uet - mult_uet - 0.5;
+                const double x_uet = xcirc - (mult_uet + 0.5)*delta_uet;
                 const double uet_effect = Az_uet*(1.0 - std::sqrt(1.0 - (x_uet*x_uet)/(Ax_uet*Ax_uet)));
 
                 newz[X] = oscillation + uet_effect;
@@ -311,21 +313,36 @@ void dzdvc(const std::vector<double>& orig_z, double f, double ap, double vc, st
         yc = (-b + std::sqrt(b*b - 4*a*c))/(2*a);
     }
 
-    // h is not used here
+    double h = 0;
     s1 = -yc;
     s2 = f-yc;
     if(s1 > y1 && s2 < y2){
         // Width falls entirely within tool radius.
         yc = f/2;
+        h = -std::sqrt(r*r - yc*yc) + r;
+    } else if(s1 > y1){
+        h = tan2*(f-yc) + b2off;
+    } else if(s2 < y2){
+        h = tan1*yc + b1off;
+    } else {
+        // Width does not intersect the radius at all.
+        h = tan1*yc + b1off;
     }
+
+    const double delta_uet = vc/f_uet;
+    const double dduetdvc = 1.0/f_uet;
+
+    const double over_z = Az + Az_uet*(1.0 - std::sqrt(1.0 - (delta_uet*delta_uet)/(4*Ax_uet*Ax_uet)));
+    const double dover_z = -0.5*(Az_uet/std::sqrt(1.0 - (delta_uet*delta_uet)/(4*Ax_uet*Ax_uet)))
+                    *(-2)*(delta_uet/(2*Ax_uet))*(dduetdvc/(2*Ax_uet));
+
+    //min_z = -(ap + Az);
+    //max_z = smooth::min({0, h+min_z+over_z+Az});
 
     const double line_root1 = -std::sqrt(r*r - y1*y1) + r - ap + tan1*(yc+y1);
     const double line_root2 = -std::sqrt(r*r - y2*y2) + r - ap - tan2*(yc+y2);
     
-    dmax_zdvc = 0;
-
-    const double delta_uet = vc/f_uet;
-    const double dduetdvc = 1.0/f_uet;
+    dmax_zdvc = smooth::min_deriv({0, h+min_z+over_z+Az}, 1)*dover_z;
 
     #pragma omp parallel
     {
@@ -338,22 +355,26 @@ void dzdvc(const std::vector<double>& orig_z, double f, double ap, double vc, st
             const double mult = smooth::abs(smooth::floor( (y + YOFF) / f));
             // const double dmult = 0;
 
-            const double perimeter = 2*M_PI*(cylinder_radius - max_z + Az);
+            const double perimeter = 2*M_PI*(cylinder_radius - max_z);
+            const double dperimeter = 2*M_PI*(-dmax_zdvc);
+
             const double xoffset_uet = mult*perimeter;
+            const double dxoff_uet = mult*dperimeter;
 
             for(size_t X = 0; X < tex_width; ++X){
                 const double x = static_cast<double>(X);
                 const double xcirc = x + xoffset_uet;
+                const double dxcirc = dxoff_uet;
 
                 const double oscillation = Az*std::sin(2*M_PI*fz*xcirc*dimx/vc + phiz);
-                const double doscilldvc = Az*std::cos(2*M_PI*fz*xcirc*dimx/vc + phiz)*(-2)*M_PI*fz*xcirc*dimx/(vc*vc);
+                const double doscilldvc = Az*std::cos(2*M_PI*fz*xcirc*dimx/vc + phiz)*2*M_PI*fz*dimx*(dxcirc*vc - xcirc)/(vc*vc);
 
                 const double mult_uet = smooth::abs(smooth::floor(xcirc / delta_uet));
-                const double dmult_uet = smooth::abs_deriv(smooth::floor(xcirc / delta_uet))*smooth::floor_deriv(xcirc / delta_uet)*((-xcirc)/(delta_uet*delta_uet))*dduetdvc;
+                const double dmult_uet = smooth::abs_deriv(smooth::floor(xcirc / delta_uet))*smooth::floor_deriv(xcirc / delta_uet)
+                                                    *((dxcirc*delta_uet - xcirc*dduetdvc)/(delta_uet*delta_uet));
 
-                // const double x_uet = (xcirc - mult_uet*delta_uet)/delta_uet - 0.5;
-                const double x_uet = xcirc/delta_uet - mult_uet - 0.5;
-                const double dx_uet = -(xcirc/(delta_uet*delta_uet))*dduetdvc - dmult_uet;
+                const double x_uet = xcirc - (mult_uet + 0.5)*delta_uet;
+                const double dx_uet = dxcirc - (dmult_uet*delta_uet + mult_uet*dduetdvc) - 0.5*dduetdvc;
 
                 const double uet_effect = Az_uet*(1.0 - std::sqrt(1.0 - (x_uet*x_uet)/(Ax_uet*Ax_uet)));
                 const double duet = -0.5*(Az_uet/std::sqrt(1.0 - (x_uet*x_uet)/(Ax_uet*Ax_uet)))*(-2)*(x_uet/Ax_uet)*(dx_uet/Ax_uet);
@@ -419,18 +440,19 @@ void dzdap(const std::vector<double>& orig_z, double f, double ap, double vc, st
     } else {
         h = tan1*yc + b1off;
     }
-    min_z = -(ap + Az);
-    // If it's greater than zero, max_z must be zero
-    max_z = smooth::min({0, h+min_z}) + Az;// + Az_uet;
-    dmax_zdap = smooth::min_deriv({0, h+min_z}, 1)*(-1);
+
+    const double delta_uet = vc/f_uet;
+
+    const double over_z = Az + Az_uet*(1.0 - std::sqrt(1.0 - (delta_uet*delta_uet)/(4*Ax_uet*Ax_uet)));
+
+    // min_z = -(ap + Az);
+    dmax_zdap = smooth::min_deriv({0, h+min_z+over_z+Az}, 1)*(-1);
 
     const double line_root1 = -std::sqrt(r*r - y1*y1) + r - ap + tan1*(yc+y1);
     const double line_root2 = -std::sqrt(r*r - y2*y2) + r - ap - tan2*(yc+y2);
 
     const double dlrdap1 = -1;
     const double dlrdap2 = -1;
-
-    const double delta_uet = vc/f_uet;
 
     #pragma omp parallel
     {
@@ -442,7 +464,7 @@ void dzdap(const std::vector<double>& orig_z, double f, double ap, double vc, st
 
             const double mult = smooth::abs(smooth::floor( (y + YOFF) / f));
 
-            const double perimeter = 2*M_PI*(cylinder_radius - max_z + Az);
+            const double perimeter = 2*M_PI*(cylinder_radius - max_z);
             const double dperimeter = -2*M_PI*dmax_zdap;
 
             const double xoffset_uet = mult*perimeter;
@@ -460,9 +482,8 @@ void dzdap(const std::vector<double>& orig_z, double f, double ap, double vc, st
                 const double mult_uet = smooth::abs(smooth::floor(xcirc / delta_uet));
                 const double dmult_uet = smooth::abs_deriv(smooth::floor(xcirc / delta_uet))*smooth::floor_deriv(xcirc / delta_uet)*dxcirc/delta_uet;
 
-                // const double x_uet = (xcirc - mult_uet*delta_uet)/delta_uet - 0.5;
-                const double x_uet = xcirc/delta_uet - mult_uet - 0.5;
-                const double dx_uet = dxcirc/delta_uet - dmult_uet;
+                const double x_uet = xcirc - (mult_uet + 0.5)*delta_uet;
+                const double dx_uet = dxcirc - dmult_uet*delta_uet;
 
                 const double uet_effect = Az_uet*(1.0 - std::sqrt(1.0 - (x_uet*x_uet)/(Ax_uet*Ax_uet)));
                 const double duet = -0.5*(Az_uet/std::sqrt(1.0 - (x_uet*x_uet)/(Ax_uet*Ax_uet)))*(-2)*(x_uet/Ax_uet)*(dx_uet/Ax_uet);
@@ -550,9 +571,11 @@ void dzdf(const std::vector<double>& orig_z, double f, double ap, double vc, std
         dh = tan1;
     }
 
-    min_z = -(ap + Az);
-    max_z = smooth::min({0.0, h+min_z}) + Az;// + Az_uet;
-    dmax_zdf = smooth::min_deriv({0.0, h+min_z}, 1)*dh;
+    const double delta_uet = vc/f_uet;
+
+    const double over_z = Az + Az_uet*(1.0 - std::sqrt(1.0 - (delta_uet*delta_uet)/(4*Ax_uet*Ax_uet)));
+
+    dmax_zdf = smooth::min_deriv({0.0, h+min_z+over_z+Az}, 1)*dh;
 
     const double line_root1 = -std::sqrt(r*r - y1*y1) + r - ap + tan1*(yc+y1);
     const double line_root2 = -std::sqrt(r*r - y2*y2) + r - ap - tan2*(yc+y2);
@@ -560,8 +583,6 @@ void dzdf(const std::vector<double>& orig_z, double f, double ap, double vc, std
     const double dlrdf1 =  tan1*dyc;
     const double dlrdf2 = -tan2*dyc;
 
-    const double delta_uet = vc/f_uet;
-    //const double dduet = 0;
     #pragma omp parallel
     {
         std::vector<double> newz(tex_width);
@@ -573,7 +594,7 @@ void dzdf(const std::vector<double>& orig_z, double f, double ap, double vc, std
             const double mult = smooth::abs(smooth::floor( (y + YOFF) / f));
             const double dmult = smooth::abs_deriv(smooth::floor( (y + YOFF) / f))*smooth::floor_deriv((y + YOFF) / f)*(-(y / (f*f)));
 
-            const double perimeter = 2*M_PI*(cylinder_radius - max_z + Az);
+            const double perimeter = 2*M_PI*(cylinder_radius - max_z);
             const double dperimeter = -2*M_PI*dmax_zdf;
 
             const double xoffset_uet = mult*perimeter;
@@ -586,14 +607,14 @@ void dzdf(const std::vector<double>& orig_z, double f, double ap, double vc, std
                 const double dxcirc = dxoff_uet;
 
                 const double oscillation = Az*std::sin(2*M_PI*fz*xcirc*dimx/vc + phiz);
-                const double doscilldf = Az*std::cos(2*M_PI*fz*xcirc*dimx/vc + phiz)*dxcirc;
+                const double doscilldf = Az*std::cos(2*M_PI*fz*xcirc*dimx/vc + phiz)*2*M_PI*fz*dxcirc*dimx/vc;
 
                 const double mult_uet = smooth::abs(smooth::floor(xcirc / delta_uet));
                 const double dmult_uet = smooth::abs_deriv(smooth::floor(xcirc / delta_uet))*smooth::floor_deriv(xcirc / delta_uet)*dxcirc/delta_uet;
 
                 // const double x_uet = (xcirc - mult_uet*delta_uet)/delta_uet - 0.5;
-                const double x_uet = xcirc/delta_uet - mult_uet - 0.5;
-                const double dx_uet = dxcirc/delta_uet - dmult_uet;
+                const double x_uet = xcirc - (mult_uet + 0.5)*delta_uet;
+                const double dx_uet = dxcirc - dmult_uet*delta_uet;
 
                 const double uet_effect = Az_uet*(1.0 - std::sqrt(1.0 - (x_uet*x_uet)/(Ax_uet*Ax_uet)));
                 const double duet = -0.5*(Az_uet/std::sqrt(1.0 - (x_uet*x_uet)/(Ax_uet*Ax_uet)))*(-2)*(x_uet/Ax_uet)*(dx_uet/Ax_uet);
