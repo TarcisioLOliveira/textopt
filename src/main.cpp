@@ -50,28 +50,34 @@ int main(int argc, char* argv[]){
     std::vector<double> map_z  (tex_width*tex_height);
     std::vector<double> orig_z (tex_width*tex_height);
 
-    if(analysis_type == AnalysisType::PLOT){
-        if(opt_ap){
+    // Define hard limits for parameters due to geometric constraints
+    if(opt_ap){
 
-        } else {
-            vc_max = std::min(vc_max, 2*Ax_uet*f_uet*60/1e6);
-            const double ap1 = -std::sqrt(r*r - param::y1*param::y1) + r;
-            const double ap2 = -std::sqrt(r*r - param::y2*param::y2) + r;
-            const double ap12min = std::min(ap1, ap2);
-            const double ap12max = std::max(ap1, ap2);
-            if(ap12min > Az_uet){
-                f_max = 2*std::min(std::abs(param::y1), std::abs(param::y2));
-            } else if(ap12max > Az_uet){
-                f_max = std::max(std::abs(param::y1), std::abs(param::y2));
-                if(alpha1 <= alpha2){
-                    f_max += (ap12max - b1off)/tan1;
-                } else {
-                    f_max += (ap12max - b2off)/tan2;
-                }
+    } else {
+        vc_max = std::min(vc_max, 2*Ax_uet*f_uet*60/1e6);
+        const double ap1 = -std::sqrt(r*r - param::y1*param::y1) + r;
+        const double ap2 = -std::sqrt(r*r - param::y2*param::y2) + r;
+        const double ap12min = std::min(ap1, ap2);
+        const double ap12max = std::max(ap1, ap2);
+        if(ap12min > Az_uet){
+            f_max = 2*std::min(std::abs(param::y1), std::abs(param::y2));
+        } else if(ap12max > Az_uet){
+            f_max = std::max(std::abs(param::y1), std::abs(param::y2));
+            if(alpha1 <= alpha2){
+                f_max += (ap12max - b1off)/tan1;
             } else {
-                f_max = (Az_uet - b1off)/tan1 + (Az_uet - b2off)/tan2;
+                f_max += (ap12max - b2off)/tan2;
             }
+        } else {
+            f_max = (Az_uet - b1off)/tan1 + (Az_uet - b2off)/tan2;
         }
+
+        vc = std::min(vc, vc_max);
+        f = std::min(f, f_max);
+    }
+
+
+    if(analysis_type == AnalysisType::PLOT){
         if(plot_method == PlotMethod::FXAP){
             if(opt_ap){
                 analysis::plot_fxap({f_min, f_max}, {ap_min, ap_max}, vc, step, map_z, orig_z);
@@ -359,27 +365,6 @@ int main(int argc, char* argv[]){
                 double ch = 1;
                 size_t it = 1;
                 double old_surarea = 1;
-
-                vc_max = std::min(vc_max, 2*Ax_uet*f_uet*60/1e6);
-                vc = std::min(vc, vc_max);
-
-                const double ap1 = -std::sqrt(r*r - param::y1*param::y1) + r;
-                const double ap2 = -std::sqrt(r*r - param::y2*param::y2) + r;
-                const double ap12min = std::min(ap1, ap2);
-                const double ap12max = std::max(ap1, ap2);
-                if(ap12min > Az_uet){
-                    f_max = 2*std::min(std::abs(param::y1), std::abs(param::y2));
-                } else if(ap12max > Az_uet){
-                    f_max = std::max(std::abs(param::y1), std::abs(param::y2));
-                    if(alpha1 <= alpha2){
-                        f_max += (ap12max - b1off)/tan1;
-                    } else {
-                        f_max += (ap12max - b2off)/tan2;
-                    }
-                } else {
-                    f_max = (Az_uet - b1off)/tan1 + (Az_uet - b2off)/tan2;
-                }
-                f = std::min(f, f_max);
 
                 const size_t N = 2;
                 std::vector<double> x{f, vc};
