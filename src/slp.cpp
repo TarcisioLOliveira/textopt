@@ -33,25 +33,19 @@ void SLP::update(std::vector<double>& x, const std::vector<double>& dfdx, const 
 
 void SLP::direct(std::vector<double>& x, const std::vector<double>& dfdx, const std::vector<double>& g, const std::vector<double>& dgdx) const{
     // x_{i+1} = x_i + l_i*dfdx_i
-    // dgdx_i*x_{i+1} - b_i <= 0
+    // dgdx_i*(x_{i+1}-x_i) <= g_i
     //
-    // dgdx_i*(x_i + l_i*dfdx_i) - b_i <= 0
-    // l_i*(dgdx_i*dfdx_i) <= b_i - dgdx_i*x_i
+    // dgdx_i*(l_i*dfdx_i) <= g_i
+    // l_i <= g_i/(dgdx_i*dfdx_i)
     
     // Normalize vectors (currently assuming single constraint)
     const auto norm_dfdx = this->normalized(dfdx);
     const auto norm_dgdx = this->normalized(dgdx);
 
-    // b_i = dgdx_i*x_i - g_i
-    std::vector<double> b = this->mat_dot_vec(norm_dgdx, x);
-    for(size_t i = 0; i < b.size(); ++i){
-        b[i] -= g[i];
-    }
 
     // Calculate l_i
     const double dg_df = this->dot(norm_dgdx, norm_dfdx);
-    const double dgdx_x = this->dot(norm_dgdx, x);
-    double l_i = (b[0] - dgdx_x)/dg_df;
+    double l_i = -g[0]/dg_df;
 
     // Make sure l_i does not make x too low.
     for(size_t i = 0; i < N; ++i){
