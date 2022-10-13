@@ -107,7 +107,7 @@ void load(const std::string& path){
             required_size(config["cutting"], "f_range", 1);
             required_size(config["cutting"], "ap_range", 1);
             required_size(config["cutting"], "vc_range", 1);
-            full_range = false;
+            full_range = true;
         } else {
             required_size(config["cutting"], "f_range", 2);
             required_size(config["cutting"], "ap_range", 2);
