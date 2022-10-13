@@ -292,7 +292,7 @@ int main(int argc, char* argv[]){
                     }
                     window.clear(sf::Color::Black);
 
-                    if(ch > 1e-8){
+                    if(ch > stop){
                         const double f = x[0];
                         const double ap = x[1];
                         const double vc = x[2];
@@ -399,7 +399,7 @@ int main(int argc, char* argv[]){
                     }
                     window.clear(sf::Color::Black);
 
-                    if(ch > 1e-8){
+                    if(ch > stop){
                         const double f = x[0];
                         const double vc = x[1];
                         texture_shallow::map(map_z, f, vc);

@@ -52,6 +52,7 @@ void load(const std::string& path){
             throw;
         }
         param::max_roughness = get_scalar<double>(config["analysis"], "max_roughness");
+        param::stop = get_scalar<double>(config["analysis"], "stop");
     } else if(at == "plot"){
         param::analysis_type = param::AnalysisType::PLOT;
         if(am == "fxap"){

@@ -64,6 +64,8 @@ inline size_t tex_width  = 400;
 inline size_t tex_height = 400;
 inline double base_area = (tex_width-1)*(tex_height-1);
 
+inline double stop = 1e-8;
+
 inline double MULT = -1;       // Exponent for smooth::min()
 inline double FLOORD = 1e-10;  // smooth::floor() precision
 inline double ABS_EPS = 1e-15; // smooth::abs() precision
