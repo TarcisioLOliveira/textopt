@@ -50,18 +50,9 @@ void SLP::direct(std::vector<double>& x, const std::vector<double>& dfdx, const 
     // Make sure l_i does not make x too low or too high.
     for(size_t i = 0; i < N; ++i){
         if(x[i] + l_i*norm_dfdx[i] < this->xmin[i]){
-            if(l_i > 0){
-                l_i = std::min(l_i, 0.1*(xmin[i]-x[i])/norm_dfdx[i]);
-            } else {
-                l_i = std::max(l_i, 0.1*(xmin[i]-x[i])/norm_dfdx[i]);
-            }
-        }
-        if(x[i] + l_i*norm_dfdx[i] > this->xmax[i]){
-            if(l_i > 0){
-                l_i = std::min(l_i, -0.1*(xmax[i]-x[i])/norm_dfdx[i]);
-            } else {
-                l_i = std::max(l_i, -0.1*(xmax[i]-x[i])/norm_dfdx[i]);
-            }
+            l_i = 0.5*(xmin[i]-x[i])/norm_dfdx[i];
+        } else if(x[i] + l_i*norm_dfdx[i] > this->xmax[i]){
+            l_i = 0.5*(xmax[i]-x[i])/norm_dfdx[i];
         }
     }
 
