@@ -64,18 +64,20 @@ int main(int argc, char* argv[]){
         const double ap2 = -std::sqrt(r*r - param::y2*param::y2) + r;
         const double ap12min = std::min(ap1, ap2);
         const double ap12max = std::max(ap1, ap2);
+        double f_max_test = 0;
         if(ap12min > Az_uet){
-            f_max = 2*std::min(std::abs(param::y1), std::abs(param::y2));
+            f_max_test = 2*std::min(std::abs(param::y1), std::abs(param::y2));
         } else if(ap12max > Az_uet){
-            f_max = std::max(std::abs(param::y1), std::abs(param::y2));
+            f_max_test = std::max(std::abs(param::y1), std::abs(param::y2));
             if(alpha1 <= alpha2){
-                f_max += (ap12max - b1off)/tan1;
+                f_max_test += (ap12max - b1off)/tan1;
             } else {
-                f_max += (ap12max - b2off)/tan2;
+                f_max_test += (ap12max - b2off)/tan2;
             }
         } else {
-            f_max = (Az_uet - b1off)/tan1 + (Az_uet - b2off)/tan2;
+            f_max_test = (Az_uet - b1off)/tan1 + (Az_uet - b2off)/tan2;
         }
+        f_max = std::min(f_max, f_max_test);
 
         vc = std::min(vc, vc_max);
         f = std::min(f, f_max);
