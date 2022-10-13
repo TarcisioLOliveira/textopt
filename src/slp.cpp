@@ -24,8 +24,8 @@
 #include <limits>
 #include <vector>
 
-SLP::SLP(const size_t N, const size_t M, const std::vector<double>& xmin):
-    N(N), M(M), xmin(xmin){}
+SLP::SLP(const size_t N, const size_t M, const std::vector<double>& xmin, const std::vector<double>& xmax):
+    N(N), M(M), xmin(xmin), xmax(xmax){}
 
 void SLP::update(std::vector<double>& x, const std::vector<double>& dfdx, const std::vector<double>& g, const std::vector<double>& dgdx) const{
     this->direct(x, dfdx, g, dgdx);
@@ -47,13 +47,20 @@ void SLP::direct(std::vector<double>& x, const std::vector<double>& dfdx, const 
     const double dg_df = this->dot(norm_dgdx, norm_dfdx);
     double l_i = -g[0]/dg_df;
 
-    // Make sure l_i does not make x too low.
+    // Make sure l_i does not make x too low or too high.
     for(size_t i = 0; i < N; ++i){
         if(x[i] + l_i*norm_dfdx[i] < this->xmin[i]){
             if(l_i > 0){
                 l_i = std::min(l_i, 0.1*(xmin[i]-x[i])/norm_dfdx[i]);
             } else {
                 l_i = std::max(l_i, 0.1*(xmin[i]-x[i])/norm_dfdx[i]);
+            }
+        }
+        if(x[i] + l_i*norm_dfdx[i] > this->xmax[i]){
+            if(l_i > 0){
+                l_i = std::min(l_i, -0.1*(xmax[i]-x[i])/norm_dfdx[i]);
+            } else {
+                l_i = std::max(l_i, -0.1*(xmax[i]-x[i])/norm_dfdx[i]);
             }
         }
     }
