@@ -386,6 +386,10 @@ int main(int argc, char* argv[]){
                 MMASolver mma(N, 1, 0, 1e5, 1);
                 mma.SetAsymptotes(0.1, 0.7, 1.2);
 
+                bool printed_finished = false;
+
+                double surarea = 0;
+                double roughness = 0;
                 while(window.isOpen()){
                     sf::Event event;
                     while (window.pollEvent(event)){
@@ -400,12 +404,12 @@ int main(int argc, char* argv[]){
                     window.clear(sf::Color::Black);
 
                     if(ch > stop){
-                        const double f = x[0];
-                        const double vc = x[1];
+                        f = x[0];
+                        vc = x[1];
                         texture_shallow::map(map_z, f, vc);
                         render::draw_texture(px, map_z, render::Colorscheme::HSV);
-                        const double surarea = -opt::surface_area(map_z);
-                        const double roughness = opt::Sa(map_z) - max_roughness;
+                        surarea = -opt::surface_area(map_z);
+                        roughness = opt::Sa(map_z) - max_roughness;
 
                         texture_shallow::dzdf(f, vc, df);
                         texture_shallow::dzdvc(f, vc, dvc);
@@ -455,6 +459,47 @@ int main(int argc, char* argv[]){
                         std::cout << std::endl;
                         std::cout << "Change: " << ch << std::endl;
                         ++it;
+                    } else if(!printed_finished){
+                        printed_finished = true;
+                        std::vector<double> dSa_vec{0, 0, 0};
+                        std::vector<double> dsurarea_vec{0, 0, 0};
+
+                        std::cout << std::endl;
+                        std::cout << "===========================" << std::endl;
+                        std::cout << "======   FINISHED   =======" << std::endl;
+                        std::cout << "===========================" << std::endl;
+                        std::cout << "===   EXACT RESULTS:   ====" << std::endl;
+                        std::cout << "===========================" << std::endl;
+
+                        if(param::opt_ap){
+                            texture::map_exact(map_z, orig_z, f, ap, vc);
+                        } else {
+                            texture_shallow::map_exact(map_z, f, vc);
+                        }
+
+                        const double surarea_ex = -opt::surface_area(map_z);
+                        const double roughness_ex = opt::Sa(map_z) - max_roughness;
+
+                        std::cout << std::endl;
+                        std::cout << "Surface area: " << -surarea_ex << std::endl;
+                        std::cout << "Roughness: " << roughness_ex + max_roughness << std::endl;
+                        std::cout << std::endl;
+                        std::cout << "f: " << f << std::endl;
+                        std::cout << "ap: " << ap << std::endl;
+                        std::cout << "vc: " << vc << std::endl;
+                        std::cout << std::endl;
+                        std::cout << "max z: " << param::max_z << " (red)" << std::endl;
+                        std::cout << "mid z: " << (param::max_z+param::min_z)/2.0 << " (green)" << std::endl;
+                        std::cout << "min z: " << param::min_z << " (blue)" << std::endl;
+
+                        std::cout << std::endl;
+                        std::cout << "===========================" << std::endl;
+                        std::cout << "=====  DIFFERENCE   =======" << std::endl;
+                        std::cout << "===========================" << std::endl;
+
+                        std::cout << std::endl;
+                        std::cout << "Surface area: " << -surarea+surarea_ex << std::endl;
+                        std::cout << "Roughness: " << roughness - roughness_ex << std::endl;
                     }
 
                     img.update(px.data());
