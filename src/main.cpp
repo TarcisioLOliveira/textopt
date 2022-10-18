@@ -471,11 +471,7 @@ int main(int argc, char* argv[]){
                         std::cout << "===   EXACT RESULTS:   ====" << std::endl;
                         std::cout << "===========================" << std::endl;
 
-                        if(param::opt_ap){
-                            texture::map_exact(map_z, orig_z, f, ap, vc);
-                        } else {
-                            texture_shallow::map_exact(map_z, f, vc);
-                        }
+                        texture_shallow::map_exact(map_z, f, vc);
 
                         const double surarea_ex = -opt::surface_area(map_z);
                         const double roughness_ex = opt::Sa(map_z) - max_roughness;
@@ -500,6 +496,8 @@ int main(int argc, char* argv[]){
                         std::cout << std::endl;
                         std::cout << "Surface area: " << -surarea+surarea_ex << std::endl;
                         std::cout << "Roughness: " << roughness - roughness_ex << std::endl;
+
+                        std::cout << std::endl;
                     }
 
                     img.update(px.data());
