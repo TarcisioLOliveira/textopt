@@ -4,7 +4,7 @@ set(PROJECT_NAME textopt)
 project(${PROJECT_NAME})
 
 set(VERSION_MAJOR "0")
-set(VERSION_MINOR "0")
+set(VERSION_MINOR "1")
 set(VERSION_PATCH "0")
 set(VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH})
 
@@ -13,12 +13,16 @@ enable_language(Fortran)
 set(CMAKE_CXX_STANDARD 17)
 
 set(NO_OPENMP OFF CACHE BOOL "Compile without OpenMP support")
+set(BUILD_NATIVE ON CACHE BOOL "Compile using the architecture currently in use")
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
     set(CMAKE_CXX_FLAGS "-Wall -Wextra")
-    set(CMAKE_CXX_FLAGS_RELEASE "-O3 -march=native -DNDEBUG")
+    set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
+    if(BUILD_NATIVE)
+        set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -march=native")
+    endif()
     set(CMAKE_CXX_FLAGS_DEBUG "-g -Og")
 endif()
 
