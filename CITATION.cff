@@ -4,5 +4,5 @@ authors:
   - family-names: de Oliveira
     given-names: Tarcísio Ladeia
     orcid: https://orcid.org/0000-0001-5115-7348
-title: textopt
+title: textopt - optimization of cutting parameters based on fast topography simulation
 version: v0.1.0
