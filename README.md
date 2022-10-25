@@ -1,5 +1,4 @@
-# textopt - Optimization of cutting parameters based on fast topography
-simulation
+# textopt - optimization of cutting parameters based on fast topography simulation
 
 Dependencies:
 - [SFML](https://www.sfml-dev.org/)
