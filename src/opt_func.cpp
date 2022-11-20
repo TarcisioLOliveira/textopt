@@ -43,7 +43,7 @@ double z_avg(const std::vector<double>& map_z){
 double Sa(const std::vector<double>& map_z){
     using namespace param;
 
-    const double avg = (max_z + min_z)/2;
+    const double avg = z_avg(map_z);
     const size_t area = tex_width*tex_height;
     double Sa = 0;
     #pragma omp parallel for reduction(+:Sa)
@@ -58,13 +58,13 @@ double Sa(const std::vector<double>& map_z){
 double dSa(const std::vector<double>& dzd, const std::vector<double>& map_z, double dmax, double dmin){
     using namespace param;
 
-    const double avg = (max_z + min_z)/2;
-    const double davg = (dmax + dmin)/2;
+    const double avg = param::z_avg;
     const size_t area = tex_width*tex_height;
+    const double Aproj = param::dimx*param::dimy*param::base_area;
     double dSa = 0;
     #pragma omp parallel for reduction(+:dSa)
     for(size_t i = 0; i < area; ++i){
-        dSa += smooth::abs_deriv(map_z[i] - avg)*(dzd[i] - davg);
+        dSa += smooth::abs_deriv(map_z[i] - avg)*(dzd[i] - param::dV[i]/Aproj);
     }
     dSa /= area;
 
