@@ -34,6 +34,16 @@
 namespace opt{
 
 /**
+ * Calculates the mean height of the surface, such that it has equal volume
+ * above and below it.
+ *
+ * @param map_z The texture.
+ *
+ * @return The mean height.
+ */
+double z_avg(const std::vector<double>& map_z);
+
+/**
  * Mean surface roughness.
  *
  * @param map_z Texture.

@@ -27,6 +27,19 @@
 
 namespace opt{
 
+double z_avg(const std::vector<double>& map_z){
+    const double Aproj = param::dimx*param::dimy*param::base_area;
+    double V = 0;
+    #pragma omp parallel for reduction(+:V)
+    for(size_t i = 0; i < map_z.size(); ++i){
+        V += param::dV[i]*map_z[i];
+    }
+
+    param::z_avg = V/Aproj;
+
+    return param::z_avg;
+}
+
 double Sa(const std::vector<double>& map_z){
     using namespace param;
 
