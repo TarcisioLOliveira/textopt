@@ -62,7 +62,7 @@ double Sa(const std::vector<double>& map_z);
  *
  * @return Derivative of mean surface roughness.
  */
-double dSa(const std::vector<double>& dzd, const std::vector<double>& map_z, double dmax, double dmin);
+double dSa(const std::vector<double>& dzd, const std::vector<double>& map_z);
 
 /**
  * Texture's surface area.

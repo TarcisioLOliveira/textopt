@@ -174,11 +174,11 @@ int main(int argc, char* argv[]){
                 texture::dzdvc(orig_z, f, ap, vc, dvc);
 
                 const double dsurareadf = -opt::surface_area_dz(map_z, df);
-                const double dSadf = opt::dSa(df, map_z, dmax_zdf, 0);
+                const double dSadf = opt::dSa(df, map_z);
                 const double dsurareadap = -opt::surface_area_dz(map_z, dap);
-                const double dSadap = opt::dSa(dap, map_z, dmax_zdap, -1);
+                const double dSadap = opt::dSa(dap, map_z);
                 const double dsurareadvc = -opt::surface_area_dz(map_z, dvc);
-                const double dSadvc = opt::dSa(dvc, map_z, dmax_zdvc, 0);
+                const double dSadvc = opt::dSa(dvc, map_z);
 
                 std::cout << std::endl;
                 std::cout << "dAdf:   " << dsurareadf << std::endl;
@@ -194,9 +194,9 @@ int main(int argc, char* argv[]){
                 texture_shallow::dzdvc(f, vc, dvc);
 
                 const double dsurareadf = -opt::surface_area_dz(map_z, df);
-                const double dSadf = opt::dSa(df, map_z, dmax_zdf, dmin_zdf);
+                const double dSadf = opt::dSa(df, map_z);
                 const double dsurareadvc = -opt::surface_area_dz(map_z, dvc);
-                const double dSadvc = opt::dSa(dvc, map_z, dmax_zdvc, dmin_zdvc);
+                const double dSadvc = opt::dSa(dvc, map_z);
 
                 std::cout << std::endl;
                 std::cout << "dAdf:   " << dsurareadf << std::endl;
@@ -310,11 +310,11 @@ int main(int argc, char* argv[]){
                         texture::dzdvc(orig_z, f, ap, vc, dvc);
 
                         const double dsurareadf = -opt::surface_area_dz(map_z, df);
-                        const double dSadf = opt::dSa(df, map_z, dmax_zdf, 0);
+                        const double dSadf = opt::dSa(df, map_z);
                         const double dsurareadap = -opt::surface_area_dz(map_z, dap);
-                        const double dSadap = opt::dSa(dap, map_z, dmax_zdap, -1);
+                        const double dSadap = opt::dSa(dap, map_z);
                         const double dsurareadvc = -opt::surface_area_dz(map_z, dvc);
-                        const double dSadvc = opt::dSa(dvc, map_z, dmax_zdvc, 0);
+                        const double dSadvc = opt::dSa(dvc, map_z);
 
                         std::cout << std::endl;
                         std::cout << "===========================" << std::endl;
@@ -458,9 +458,9 @@ int main(int argc, char* argv[]){
                         texture_shallow::dzdvc(f, vc, dvc);
 
                         const double dsurareadf = -opt::surface_area_dz(map_z, df);
-                        const double dSadf = opt::dSa(df, map_z, dmax_zdf, dmin_zdf);
+                        const double dSadf = opt::dSa(df, map_z);
                         const double dsurareadvc = -opt::surface_area_dz(map_z, dvc);
-                        const double dSadvc = opt::dSa(dvc, map_z, dmax_zdvc, dmin_zdvc);
+                        const double dSadvc = opt::dSa(dvc, map_z);
 
                         std::cout << std::endl;
                         std::cout << "===========================" << std::endl;

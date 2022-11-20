@@ -55,7 +55,7 @@ double Sa(const std::vector<double>& map_z){
     return Sa;
 }
 
-double dSa(const std::vector<double>& dzd, const std::vector<double>& map_z, double dmax, double dmin){
+double dSa(const std::vector<double>& dzd, const std::vector<double>& map_z){
     using namespace param;
 
     const double avg = param::z_avg;
