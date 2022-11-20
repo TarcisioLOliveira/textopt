@@ -39,6 +39,11 @@ namespace config{
 
 void load(const std::string& path);
 
+/**
+ * Initializes param::dV()
+ */
+void init_dV();
+
 inline bool valid(const YAML::Node& n, YAML::NodeType::value type){
     return n.Type() == type;
 }

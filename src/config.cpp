@@ -165,6 +165,31 @@ void load(const std::string& path){
     param::f_uet = get_scalar<double>(config["ellipse"], "f_uet");
     param::Ax_uet = get_scalar<double>(config["ellipse"], "Ax_uet");
     param::Az_uet = get_scalar<double>(config["ellipse"], "Az_uet");
+
+    init_dV();
+}
+
+void init_dV(){
+    const double dA = param::dimx*param::dimy;
+    param::dV.resize(param::tex_width*param::tex_height);
+    for(size_t x = 0; x < param::tex_width; x+=2){
+        for(size_t y = 0; y < param::tex_height; y+=2){
+            const size_t blockw = std::min(3ul, param::tex_width-x);
+            const size_t blockh = std::min(3ul, param::tex_height-y);
+            if(blockw <= 1 || blockh <= 1){
+                continue;
+            }
+            for(size_t i = 0; i < blockw; ++i){
+                for(size_t j = 0; j < blockh; ++j){
+                    param::dV[param::tex_width*(y+j) + (x+i)] += dA;
+                }
+            }
+        }
+    }
+    #pragma omp parallel for
+    for(size_t i = 0; i < param::dV.size(); ++i){
+        param::dV[i] /= 6;
+    }
 }
 
 }
