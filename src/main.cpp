@@ -149,6 +149,8 @@ int main(int argc, char* argv[]){
             std::cout << "max z: " << param::max_z << " (red)" << std::endl;
             std::cout << "mid z: " << (param::max_z+param::min_z)/2.0 << " (green)" << std::endl;
             std::cout << "min z: " << param::min_z << " (blue)" << std::endl;
+            std::cout << std::endl;
+            std::cout << "avg z: " << param::z_avg << std::endl;
 
             std::cout << std::endl;
             std::cout << "===========================" << std::endl;
@@ -217,6 +219,8 @@ int main(int argc, char* argv[]){
             std::cout << "max z: " << param::max_z << " (red)" << std::endl;
             std::cout << "mid z: " << (param::max_z+param::min_z)/2.0 << " (green)" << std::endl;
             std::cout << "min z: " << param::min_z << " (blue)" << std::endl;
+            std::cout << std::endl;
+            std::cout << "avg z: " << param::z_avg << std::endl;
 
             std::cout << std::endl;
             std::cout << "===========================" << std::endl;
@@ -359,6 +363,8 @@ int main(int argc, char* argv[]){
                         std::cout << "mid z: " << (param::max_z+param::min_z)/2.0 << " (green)" << std::endl;
                         std::cout << "min z: " << param::min_z << " (blue)" << std::endl;
                         std::cout << std::endl;
+                        std::cout << "avg z: " << param::z_avg << std::endl;
+                        std::cout << std::endl;
                         std::cout << "Change: " << ch << std::endl;
                         ++it;
                     } else if(!printed_finished){
@@ -389,6 +395,8 @@ int main(int argc, char* argv[]){
                         std::cout << "max z: " << param::max_z << " (red)" << std::endl;
                         std::cout << "mid z: " << (param::max_z+param::min_z)/2.0 << " (green)" << std::endl;
                         std::cout << "min z: " << param::min_z << " (blue)" << std::endl;
+                        std::cout << std::endl;
+                        std::cout << "avg z: " << param::z_avg << std::endl;
 
                         std::cout << std::endl;
                         std::cout << "===========================" << std::endl;
@@ -500,6 +508,8 @@ int main(int argc, char* argv[]){
                         std::cout << "mid z: " << (param::max_z+param::min_z)/2.0 << " (green)" << std::endl;
                         std::cout << "min z: " << param::min_z << " (blue)" << std::endl;
                         std::cout << std::endl;
+                        std::cout << "avg z: " << param::z_avg << std::endl;
+                        std::cout << std::endl;
                         std::cout << "Change: " << ch << std::endl;
                         ++it;
                     } else if(!printed_finished){
@@ -530,6 +540,8 @@ int main(int argc, char* argv[]){
                         std::cout << "max z: " << param::max_z << " (red)" << std::endl;
                         std::cout << "mid z: " << (param::max_z+param::min_z)/2.0 << " (green)" << std::endl;
                         std::cout << "min z: " << param::min_z << " (blue)" << std::endl;
+                        std::cout << std::endl;
+                        std::cout << "avg z: " << param::z_avg << std::endl;
 
                         std::cout << std::endl;
                         std::cout << "===========================" << std::endl;
