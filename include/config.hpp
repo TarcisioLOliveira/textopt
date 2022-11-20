@@ -37,6 +37,11 @@
 
 namespace config{
 
+/**
+ * Loads optimization parameters from a file.
+ *
+ * @param path Path to YAML configuration file.
+ */
 void load(const std::string& path);
 
 /**
