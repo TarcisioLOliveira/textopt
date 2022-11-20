@@ -29,6 +29,7 @@
 #define PARAM_HPP
 
 #include <cmath>
+#include <vector>
 
 namespace param{
 
@@ -152,6 +153,12 @@ inline double y2 =  tan2*r/std::sqrt(tan2*tan2+1);
 // Value of z for y = 0 (with circle center at y = 0).
 inline double b1off = -std::sqrt(r*r - y1*y1) + r + tan1*y1;
 inline double b2off = -std::sqrt(r*r - y2*y2) + r - tan2*y2;
+
+// Derivative of the volume under the surface
+inline std::vector<double> dV;
+
+// Mean height of the surface
+inline double z_avg;
 
 }
 
