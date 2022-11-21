@@ -20,6 +20,7 @@
 
 #include "config.hpp"
 #include "param.hpp"
+#include "util.hpp"
 #include <yaml-cpp/exceptions.h>
 #include <yaml-cpp/node/impl.h>
 #include <yaml-cpp/node/node.h>
@@ -169,11 +170,18 @@ void load(const std::string& path){
     init_dV();
 }
 
+inline void add_to_dV(std::array<size_t, 3> points){
+    for(const auto& p:points){
+        ++param::dV[p];
+    }
+}
+
 void init_dV(){
     const double dA = param::dimx*param::dimy;
-    param::dV.resize(param::tex_width*param::tex_height);
+    param::dV.resize(param::tex_width*param::tex_height, 0);
     for(size_t x = 0; x < param::tex_width; x+=2){
         for(size_t y = 0; y < param::tex_height; y+=2){
+            size_t p[9];
             const size_t blockw = std::min(3ul, param::tex_width-x);
             const size_t blockh = std::min(3ul, param::tex_height-y);
             if(blockw <= 1 || blockh <= 1){
@@ -181,13 +189,29 @@ void init_dV(){
             }
             for(size_t i = 0; i < blockw; ++i){
                 for(size_t j = 0; j < blockh; ++j){
-                    param::dV[param::tex_width*(y+j) + (x+i)] += dA;
+                    p[j*3+i] = param::tex_width*(y+j) + (x+i);
                 }
+            }
+            add_to_dV({p[0], p[1], p[4]});
+            add_to_dV({p[0], p[3], p[4]});
+
+            if(blockw == 3){
+                add_to_dV({p[1], p[2], p[4]});
+                add_to_dV({p[2], p[4], p[5]});
+            }
+            if(blockh == 3){
+                add_to_dV({p[3], p[4], p[6]});
+                add_to_dV({p[4], p[6], p[7]});
+            }
+            if(blockw == 3 && blockh == 3){
+                add_to_dV({p[4], p[5], p[8]});
+                add_to_dV({p[4], p[7], p[8]});
             }
         }
     }
     #pragma omp parallel for
     for(size_t i = 0; i < param::dV.size(); ++i){
+        param::dV[i] *= dA;
         param::dV[i] /= 6;
     }
 }
