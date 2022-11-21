@@ -21,6 +21,7 @@
 #include <fstream>
 #include <sstream>
 #include <iostream>
+#include <iomanip>
 #include "analysis.hpp"
 #include "texture.hpp"
 #include "opt_func.hpp"
@@ -57,6 +58,7 @@ void plot_fxap(const std::tuple<double, double>& f, const std::tuple<double, dou
     resstr.reserve(results.size()*25);
     std::stringstream result(resstr);
     r = results.begin();
+    result << std::setprecision(15);
     while(r < results.end()){
         result << *r << " " << *(r+1) << std::endl;
         r += 2;
@@ -100,6 +102,7 @@ void plot_vc(const double f, const double ap, const std::tuple<double, double>& 
     resstr.reserve(results.size()*25);
     std::stringstream result(resstr);
     r = results.begin();
+    result << std::setprecision(15);
     while(r < results.end()){
         result << *r << " " << *(r+1) << std::endl;
         r += 2;
@@ -141,6 +144,7 @@ void plot_f_shallow(const std::tuple<double, double>& f, const double vc, const 
     resstr.reserve(results.size()*25);
     std::stringstream result(resstr);
     r = results.begin();
+    result << std::setprecision(15);
     while(r < results.end()){
         result << *r << " " << *(r+1) << std::endl;
         r += 2;
@@ -182,6 +186,7 @@ void plot_vc_shallow(const double f, const std::tuple<double, double>& vc, const
     resstr.reserve(results.size()*25);
     std::stringstream result(resstr);
     r = results.begin();
+    result << std::setprecision(15);
     while(r < results.end()){
         result << *r << " " << *(r+1) << std::endl;
         r += 2;
