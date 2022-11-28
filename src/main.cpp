@@ -280,7 +280,7 @@ int main(int argc, char* argv[]){
 
                 // Only works if starting from an exterior point, for some reason
                 SLP slp(N, 1, xmin, xmax);
-                MMASolver mma(N, 1, 0, 1e5, 1);
+                MMASolver mma(N, 1, 0, 1e7, 1);
                 mma.SetAsymptotes(0.1, 0.7, 1.2);
 
                 bool printed_finished = false;
@@ -434,7 +434,7 @@ int main(int argc, char* argv[]){
 
                 // Only works if starting from an exterior point, for some reason
                 SLP slp(N, 1, xmin, xmax);
-                MMASolver mma(N, 1, 0, 1e5, 1);
+                MMASolver mma(N, 1, 0, 1e7, 1);
                 mma.SetAsymptotes(0.1, 0.7, 1.2);
 
                 bool printed_finished = false;
