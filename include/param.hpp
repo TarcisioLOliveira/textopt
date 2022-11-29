@@ -106,6 +106,7 @@ inline double vc_max = 200;
 // Tool parameters
 inline double alpha1 = 60*M_PI/180; // Back angle (descending)
 inline double alpha2 = 60*M_PI/180; // Front angle (ascending)
+inline double clearance = 10*M_PI/180; // Clearance angle
 inline double r = 20/dim; // [um] Tool radius
                                 
 // Maximum and minimum 
@@ -145,6 +146,7 @@ inline double Az_uet = 2; // [um]
                           
 inline double tan1 = std::tan(alpha1);
 inline double tan2 = std::tan(alpha2);
+inline double tanc = std::tan(clearance);
 
 // Line parameters for tool slopes.
 inline double y1 = -tan1*r/std::sqrt(tan1*tan1+1);

@@ -140,6 +140,7 @@ void load(const std::string& path){
     param::r = get_scalar<double>(config["tool"], "r") / param::dim;
     param::alpha1 = get_scalar<double>(config["tool"], "alpha1") * M_PI / 180.0;
     param::alpha2 = get_scalar<double>(config["tool"], "alpha2") * M_PI / 180.0;
+    param::clearance = get_scalar<double>(config["tool"], "clearance") * M_PI / 180.0;
 
     {
         using namespace param;
@@ -147,6 +148,7 @@ void load(const std::string& path){
 
         tan1 = std::tan(param::alpha1);
         tan2 = std::tan(param::alpha2);
+        tanc = std::tan(param::clearance);
 
         y1 = -tan1*r/std::sqrt(tan1*tan1+1);
         y2 =  tan2*r/std::sqrt(tan2*tan2+1);
