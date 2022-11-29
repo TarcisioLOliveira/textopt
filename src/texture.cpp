@@ -82,7 +82,7 @@ void map_exact(std::vector<double>& map_z, const std::vector<double>& orig_z, do
         h = tan1*yc + b1off;
     }
 
-    const double delta_uet = vc/f_uet;
+    const double delta_uet = dimx*vc*Ax_uet/f_uet;
 
     const double over_z = Az + Az_uet*(1.0 - std::sqrt(1.0 - (delta_uet*delta_uet)/(4*Ax_uet*Ax_uet)));
 
@@ -112,8 +112,15 @@ void map_exact(std::vector<double>& map_z, const std::vector<double>& orig_z, do
             // Sinusoidal path
             const double z_uet = dimz*(Az_uet*std::sin(2*M_PI*f_uet*dimx*xcirc/(vc*Ax_uet) + M_PI/2) + Az_uet);
 
-            const double line_root1 = line_root1_const + z_uet;
-            const double line_root2 = line_root2_const + z_uet;
+            // Clearance angle
+            const double x_uet = xcirc + 0.5*delta_uet - std::floor(xcirc / delta_uet + 0.5)*delta_uet;
+            const double z_clear = tanc*(delta_uet - x_uet);
+
+            // Final UET height
+            const double z_uet_min = std::min(z_uet, z_clear);
+
+            const double line_root1 = line_root1_const + z_uet_min;
+            const double line_root2 = line_root2_const + z_uet_min;
 
             // Tool shape
             double shape_z;
@@ -121,7 +128,7 @@ void map_exact(std::vector<double>& map_z, const std::vector<double>& orig_z, do
                 shape_z = -tan1*(y - mult*f) + line_root1;
             } else if(y <= y2 + mult*f + yc){
                 const double yy = y - mult*f - yc;
-                shape_z = -std::sqrt(r*r - yy*yy) + r - ap + z_uet;
+                shape_z = -std::sqrt(r*r - yy*yy) + r - ap + z_uet_min;
             } else {
                 shape_z = tan2*(y - mult*f) + line_root2;
             }
