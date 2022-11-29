@@ -50,40 +50,6 @@ int main(int argc, char* argv[]){
     std::vector<double> map_z  (tex_width*tex_height);
     std::vector<double> orig_z (tex_width*tex_height);
 
-    // Define hard limits for parameters due to geometric constraints
-    if(opt_ap){
-        vc_max = std::min(vc_max, 2*Ax_uet*f_uet*60/1e6);
-        ap_max = std::min(ap_max, Az_uet);
-
-        vc = std::min(vc, vc_max);
-        ap = std::min(ap, ap_max);
-        f = std::min(f, f_max);
-    } else {
-        vc_max = std::min(vc_max, 2*Ax_uet*f_uet*60/1e6);
-        const double ap1 = -std::sqrt(r*r - param::y1*param::y1) + r;
-        const double ap2 = -std::sqrt(r*r - param::y2*param::y2) + r;
-        const double ap12min = std::min(ap1, ap2);
-        const double ap12max = std::max(ap1, ap2);
-        double f_max_test = 0;
-        if(ap12min > Az_uet){
-            f_max_test = 2*std::min(std::abs(param::y1), std::abs(param::y2));
-        } else if(ap12max > Az_uet){
-            f_max_test = std::max(std::abs(param::y1), std::abs(param::y2));
-            if(alpha1 <= alpha2){
-                f_max_test += (ap12max - b1off)/tan1;
-            } else {
-                f_max_test += (ap12max - b2off)/tan2;
-            }
-        } else {
-            f_max_test = (Az_uet - b1off)/tan1 + (Az_uet - b2off)/tan2;
-        }
-        f_max = std::min(f_max, f_max_test);
-
-        vc = std::min(vc, vc_max);
-        f = std::min(f, f_max);
-    }
-
-
     if(analysis_type == AnalysisType::PLOT){
         if(plot_method == PlotMethod::FXAP){
             if(opt_ap){

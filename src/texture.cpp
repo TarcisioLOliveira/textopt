@@ -86,52 +86,34 @@ void map_exact(std::vector<double>& map_z, const std::vector<double>& orig_z, do
 
     const double over_z = Az + Az_uet*(1.0 - std::sqrt(1.0 - (delta_uet*delta_uet)/(4*Ax_uet*Ax_uet)));
 
-    min_z = -(ap + Az);
+    min_z = -ap;
     // If it's greater than zero, max_z must be zero
-    max_z = std::min(0.0, h+min_z+over_z+Az);
+    max_z = std::min(0.0, h+min_z+over_z);
 
-    // Value of z for y = 0 (global)
-    const double line_root1 = -std::sqrt(r*r - y1*y1) + r - ap + tan1*(yc+y1);
-    const double line_root2 = -std::sqrt(r*r - y2*y2) + r - ap - tan2*(yc+y2);
+    const double line_root1_const = -std::sqrt(r*r - y1*y1) + r - ap + tan1*(yc+y1);
+    const double line_root2_const = -std::sqrt(r*r - y2*y2) + r - ap - tan2*(yc+y2);
 
-    #pragma omp parallel
-    {
-        std::vector<double> newz(tex_width);
-        double prev_mult = -1;
-        #pragma omp for
-        for(size_t Y = 0; Y < tex_height; ++Y){
-            const double y = static_cast<double>(Y);
+    #pragma omp parallel for
+    for(size_t Y = 0; Y < tex_height; ++Y){
+        const double y = static_cast<double>(Y);
 
-            // Calculate current row
-            // Apply `abs()` to prevent it from becoming less than zero
-            // when close to zero
-            const double mult = std::floor(y  / f);
+        // Calculate current row
+        // Apply `abs()` to prevent it from becoming less than zero
+        // when close to zero
+        const double mult = std::floor(y  / f);
 
-            // As `mult` is always exact, we can use this optimization, meaning
-            // the oscillations/ellipses along a row are calculated only once
-            // per `mult`.
-            if(mult > prev_mult){
-                prev_mult = mult;
+        const double perimeter = 2*M_PI*(cylinder_radius - max_z);
+        const double xoffset_uet = mult*perimeter;
 
-                // Phase differences
-                const double perimeter = 2*M_PI*(cylinder_radius - max_z);
-                const double xoffset_uet = mult*perimeter;
+        for(size_t X = 0; X < tex_width; ++X){
+            const double x = static_cast<double>(X);
+            const double xcirc = x + xoffset_uet;
 
-                for(size_t X = 0; X < tex_width; ++X){
-                    const double x = static_cast<double>(X);
-                    const double xcirc = x + xoffset_uet;
+            // Sinusoidal path
+            const double z_uet = dimz*(Az_uet*std::sin(2*M_PI*f_uet*dimx*xcirc/(vc*Ax_uet) + M_PI/2) + Az_uet);
 
-                    // Random oscillation
-                    const double oscillation = Az*std::sin(2*M_PI*fz*xcirc*dimx/vc + phiz);
-
-                    // Ultrasonic turning effects
-                    const double mult_uet = std::floor(xcirc / delta_uet);
-                    const double x_uet = xcirc - (mult_uet + 0.5)*delta_uet;
-                    const double uet_effect = Az_uet*(1.0 - std::sqrt(1.0 - (x_uet*x_uet)/(Ax_uet*Ax_uet)));
-
-                    newz[X] = oscillation + uet_effect;
-                }
-            }
+            const double line_root1 = line_root1_const + z_uet;
+            const double line_root2 = line_root2_const + z_uet;
 
             // Tool shape
             double shape_z;
@@ -139,25 +121,26 @@ void map_exact(std::vector<double>& map_z, const std::vector<double>& orig_z, do
                 shape_z = -tan1*(y - mult*f) + line_root1;
             } else if(y <= y2 + mult*f + yc){
                 const double yy = y - mult*f - yc;
-                shape_z = -std::sqrt(r*r - yy*yy) + r - ap;
+                shape_z = -std::sqrt(r*r - yy*yy) + r - ap + z_uet;
             } else {
                 shape_z = tan2*(y - mult*f) + line_root2;
             }
 
-            for(size_t X = 0; X < tex_width; ++X){
-                // Get pixels
-                double& z = map_z[X + Y*tex_width];
-                const double oz = orig_z[X + Y*tex_width];
+            // Get pixels
+            double& z = map_z[X + Y*tex_width];
+            const double oz = orig_z[X + Y*tex_width];
 
-                // Calculate final depth
-                const double end_z = newz[X] + shape_z;
+            // Calculate final depth
+            const double end_z = shape_z;
 
-                // Write results
-                z = std::min(oz, end_z);
-            }
+            // Write results
+            z = std::min(oz, end_z);
         }
     }
+    std::cout << "real max_z: " << *std::max_element(map_z.begin(), map_z.end()) << std::endl;
+    std::cout << "real min_z: " << *std::min_element(map_z.begin(), map_z.end()) << std::endl;
 }
+
 void map(std::vector<double>& map_z, const std::vector<double>& orig_z, double f, double ap, double vc){
     using namespace param;
     using param::y1;
