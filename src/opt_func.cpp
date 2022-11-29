@@ -61,15 +61,14 @@ double dSa(const std::vector<double>& dzd, const std::vector<double>& map_z){
     const size_t area = tex_width*tex_height;
     const double Aproj = param::dimx*param::dimy*param::base_area;
     double dSa = 0;
-    double dVd = 0;
-    #pragma omp parallel for reduction(+:dVd)
+    double const_part = 0;
+    #pragma omp parallel for reduction(+:const_part)
     for(size_t i = 0; i < area; ++i){
-        dVd += param::dV[i]*dzd[i];
+        const_part += smooth::abs_deriv(map_z[i] - param::z_avg)*(- param::dV[i]/Aproj);
     }
-    dVd /= Aproj;
     #pragma omp parallel for reduction(+:dSa)
     for(size_t i = 0; i < area; ++i){
-        dSa += smooth::abs_deriv(map_z[i] - param::z_avg)*(dzd[i] - dVd);
+        dSa += (const_part + smooth::abs_deriv(map_z[i] - param::z_avg))*dzd[i];
     }
     dSa /= area;
 
