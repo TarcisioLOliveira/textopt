@@ -33,119 +33,101 @@ void map_exact(std::vector<double>& map_z, const std::vector<double>& orig_z, do
 
     vc *= 1e6/60.0;
 
-    // Where the slope lines intersect, so that the height at the edges is the
-    // same for both
-    double yc = (tan2*f+b2off-b1off)/(tan1+tan2);
-
-    // Recalculate yc if it gets into the radius, as that skews the centering
-    double s1 = -yc;
-    double s2 = f-yc;
-    if(alpha1 < alpha2 && s2 < y2){
-        // Slope 2 must be disregarded.
-        // Height of slope 1 must be equal to height of tool radius at the
-        // other edge.
-        const double a = tan1*tan1 + 1;
-        const double b = -2*(tan1*(r-b1off)+f);
-        const double c = b1off*(b1off-2*r)+f*f;
-        yc = (-b - std::sqrt(b*b - 4*a*c))/(2*a);
-    } else if(alpha2 < alpha1 && s1 > y1){
-        // Slope 1 must be disregarded.
-        // Height of slope 2 must be equal to height of tool radius at the
-        // other edge.
-        const double a = tan2*tan2 + 1;
-        const double b = -(2*tan2*(b2off-r)+2*tan2*tan2*f);
-        const double c = tan2*tan2*f*f + 2*tan2*f*(b2off-r) + b2off*(b2off-2*r);
-        yc = (-b + std::sqrt(b*b - 4*a*c))/(2*a);
-    }
-
-    // Calculate whether the angles of the cutting tool intercept the surface
-    // first or are stopped by the feed rate.
-    //
-    // Check the intersection with the feed rate edges. If they're greater than
-    // zero, the cut line is narrower than the feed line, so max height is
-    // zero. Otherwise, it's the height at the intersection
-    //
-    // Implementation of this section is based on `texture_shallow`
-    double h = 0;
-    s1 = -yc;
-    s2 = f-yc;
-    if(s1 > y1 && s2 < y2){
-        // Width falls entirely within tool radius.
-        yc = f/2;
-        h = -std::sqrt(r*r - yc*yc) + r;
-    } else if(s1 > y1){
-        h = tan2*(f-yc) + b2off;
-    } else if(s2 < y2){
-        h = tan1*yc + b1off;
+    // Calculate maximum width
+    const double ap1 = -std::sqrt(r*r - param::y1*param::y1) + r;
+    const double ap2 = -std::sqrt(r*r - param::y2*param::y2) + r;
+    const double ap12min = std::min(ap1, ap2);
+    const double ap12max = std::max(ap1, ap2);
+    if(ap < ap12min){
+        // Depth fits entirely within tool radius
+        w_max = 2*std::sqrt(r*r - (ap - r)*(ap - r));
+    } else if(ap < ap12max){
+        // Depth fits partially within tool radius
+        // Can only happen for alpha1 != alpha2
+        w_max = std::sqrt(r*r - (ap - r)*(ap - r));
+        if(alpha1 <= alpha2){
+            w_max += (ap - b1off)/tan1;
+        } else {
+            w_max += (ap - b2off)/tan2;
+        }
     } else {
-        // Width does not intersect the radius at all.
-        h = tan1*yc + b1off;
+        // Depth encompasses tool's straight edges
+        w_max = (ap - b1off)/tan1 + (ap - b2off)/tan2;
     }
+
+    const size_t overlap = std::floor(w_max / f);
 
     const double delta_uet = dimx*vc*Ax_uet/f_uet;
 
-    const double over_z = Az + Az_uet*(1.0 - std::sqrt(1.0 - (delta_uet*delta_uet)/(4*Ax_uet*Ax_uet)));
-
     min_z = -ap;
-    // If it's greater than zero, max_z must be zero
-    max_z = std::min(0.0, h+min_z+over_z);
 
-    const double line_root1_const = -std::sqrt(r*r - y1*y1) + r - ap + tan1*(yc+y1);
-    const double line_root2_const = -std::sqrt(r*r - y2*y2) + r - ap - tan2*(yc+y2);
+    const double line_root1_const = -std::sqrt(r*r - y1*y1) + r - ap + tan1*y1;
+    const double line_root2_const = -std::sqrt(r*r - y2*y2) + r - ap - tan2*y2;
+
+    std::copy(orig_z.begin(), orig_z.end(), map_z.begin());
+
+    const double perimeter = 2*M_PI*(cylinder_radius - max_z);
 
     #pragma omp parallel for
     for(size_t Y = 0; Y < tex_height; ++Y){
         const double y = static_cast<double>(Y);
 
         // Calculate current row
-        // Apply `abs()` to prevent it from becoming less than zero
-        // when close to zero
-        const double mult = std::floor(y  / f);
+        const double _mult = std::floor((y - 0.5*w_max)  / f + 1);
 
-        const double perimeter = 2*M_PI*(cylinder_radius - max_z);
-        const double xoffset_uet = mult*perimeter;
+        for(size_t m = 0; m < overlap + 1; ++m){
 
-        for(size_t X = 0; X < tex_width; ++X){
-            const double x = static_cast<double>(X);
-            const double xcirc = x + xoffset_uet;
+            // Overlap
+            const double mult = _mult + m;
 
-            // Sinusoidal path
-            const double z_uet = dimz*(Az_uet*std::sin(2*M_PI*f_uet*dimx*xcirc/(vc*Ax_uet) + M_PI/2) + Az_uet);
+            // Distance travelled by tool
+            const double xoffset_uet = mult*perimeter;
 
-            // Clearance angle
-            const double x_uet = xcirc + 0.5*delta_uet - std::floor(xcirc / delta_uet + 0.5)*delta_uet;
-            const double z_clear = tanc*(delta_uet - x_uet);
+            for(size_t X = 0; X < tex_width; ++X){
+                const double x = static_cast<double>(X);
+                const double xcirc = x + xoffset_uet;
 
-            // Final UET height
-            const double z_uet_min = std::min(z_uet, z_clear);
+                // Sinusoidal path
+                const double z_uet = dimz*(Az_uet*std::sin(2*M_PI*f_uet*dimx*xcirc/(vc*Ax_uet) + M_PI/2) + Az_uet);
 
-            const double line_root1 = line_root1_const + z_uet_min;
-            const double line_root2 = line_root2_const + z_uet_min;
+                // Clearance angle
+                const double x_uet = xcirc + 0.5*delta_uet - std::floor(xcirc / delta_uet + 0.5)*delta_uet;
+                const double z_clear = tanc*(delta_uet - x_uet);
 
-            // Tool shape
-            double shape_z;
-            if(y <= y1 + mult*f + yc){
-                shape_z = -tan1*(y - mult*f) + line_root1;
-            } else if(y <= y2 + mult*f + yc){
-                const double yy = y - mult*f - yc;
-                shape_z = -std::sqrt(r*r - yy*yy) + r - ap + z_uet_min;
-            } else {
-                shape_z = tan2*(y - mult*f) + line_root2;
+                // Final UET height
+                const double z_uet_min = std::min(z_uet, z_clear);
+
+                const double line_root1 = line_root1_const + z_uet_min;
+                const double line_root2 = line_root2_const + z_uet_min;
+
+                // Tool shape
+                double shape_z;
+                if(y <= y1 + mult*f){
+                    shape_z = -tan1*(y - mult*f) + line_root1;
+                } else if(y <= y2 + mult*f){
+                    const double yy = y - mult*f;
+                    shape_z = -std::sqrt(r*r - yy*yy) + r - ap + z_uet_min;
+                } else {
+                    shape_z = tan2*(y - mult*f) + line_root2;
+                }
+
+                // Get pixels
+                double& z = map_z[X + Y*tex_width];
+
+                // Write results
+                z = std::min(z, shape_z);
             }
-
-            // Get pixels
-            double& z = map_z[X + Y*tex_width];
-            const double oz = orig_z[X + Y*tex_width];
-
-            // Calculate final depth
-            const double end_z = shape_z;
-
-            // Write results
-            z = std::min(oz, end_z);
         }
     }
     std::cout << "real max_z: " << *std::max_element(map_z.begin(), map_z.end()) << std::endl;
     std::cout << "real min_z: " << *std::min_element(map_z.begin(), map_z.end()) << std::endl;
+
+    if(overlap == 0){
+        // If it's greater than zero, max_z must be zero
+        max_z = 0;
+    } else {
+        max_z = *std::max_element(map_z.begin(), map_z.end());
+    }
 }
 
 void map(std::vector<double>& map_z, const std::vector<double>& orig_z, double f, double ap, double vc){

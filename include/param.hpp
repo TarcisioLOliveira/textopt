@@ -162,6 +162,9 @@ inline std::vector<double> dV;
 // Mean height of the surface
 inline double z_avg;
 
+// Maximum cutting width
+inline double w_max;
+
 }
 
 #endif
