@@ -64,11 +64,11 @@ double dSa(const std::vector<double>& dzd, const std::vector<double>& map_z){
     double const_part = 0;
     #pragma omp parallel for reduction(+:const_part)
     for(size_t i = 0; i < area; ++i){
-        const_part += smooth::abs_deriv(map_z[i] - param::z_avg)*(- param::dV[i]/Aproj);
+        const_part += smooth::abs_deriv(map_z[i] - param::z_avg);
     }
     #pragma omp parallel for reduction(+:dSa)
     for(size_t i = 0; i < area; ++i){
-        dSa += (const_part + smooth::abs_deriv(map_z[i] - param::z_avg))*dzd[i];
+        dSa += (const_part*(-param::dV[i]/Aproj) + smooth::abs_deriv(map_z[i] - param::z_avg))*dzd[i];
     }
     dSa /= area;
 
