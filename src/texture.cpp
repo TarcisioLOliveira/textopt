@@ -57,7 +57,7 @@ void map_exact(std::vector<double>& map_z, const std::vector<double>& orig_z, do
 
     const size_t overlap = std::floor(w_max / f);
 
-    const double delta_uet = dimx*vc*Ax_uet/f_uet;
+    const double delta_uet = vc/f_uet;
 
     min_z = -ap;
 
@@ -85,10 +85,15 @@ void map_exact(std::vector<double>& map_z, const std::vector<double>& orig_z, do
 
             for(size_t X = 0; X < tex_width; ++X){
                 const double x = static_cast<double>(X);
+
+                // Consider distance travelled by tool
                 const double xcirc = x + xoffset_uet;
 
+                // Consider horizontal effect from elliptical movement
+                const double xcirc_uet = xcirc + Ax_uet*std::sin(2*M_PI*f_uet*xcirc/vc);
+
                 // Sinusoidal path
-                const double z_uet = dimz*(Az_uet*std::sin(2*M_PI*f_uet*dimx*xcirc/(vc*Ax_uet) + M_PI/2) + Az_uet);
+                const double z_uet = Az_uet*std::cos(2*M_PI*f_uet*xcirc_uet/vc) + Az_uet;
 
                 // Clearance angle
                 const double x_uet = xcirc + 0.5*delta_uet - std::floor(xcirc / delta_uet + 0.5)*delta_uet;
