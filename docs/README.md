@@ -16,6 +16,6 @@ generate interactive plots of such functions.
 parameters) (v0.1.0, but still useful)
 - `plot_tool_path_param.py` plots a parametrized version of the tool path
   functions
-- `plot_tool_path.py` plots a position-based version of the tool path functions,
-  which is used for optimization. Displays a limitation of the current
-  implementation (that is, lack of support for `vc < v_crit`)
+- `plot_tool_path_sinusoid.py` plots a position-based version of the tool path 
+  functions, based on sinusoidal functions. Not used for the implementation,
+  but displays a possible approach to the modelling problem.
