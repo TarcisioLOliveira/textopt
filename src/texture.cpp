@@ -96,6 +96,7 @@ void map_exact(std::vector<double>& map_z, const std::vector<double>& orig_z, do
                 // Tool path
                 double z_uet = 0;
                 if(vc <= v_crit) {
+                    // If vc <= v_crit, model as ellipses in series
                     const double H = Az_uet*std::sin(M_PI*vc/(2*v_crit));
                     const double h1 =  H + Az_uet;
                     const double h2 = -H + Az_uet;
@@ -104,6 +105,12 @@ void map_exact(std::vector<double>& map_z, const std::vector<double>& orig_z, do
 
                     z_uet = h1*(1.0 - std::sqrt(1.0 - (4*x_uet*x_uet)/(delta_1*delta_1)));
                 } else {
+                    // If otherwise, model as alternating ellipses with
+                    // different dimensions.
+                    //
+                    // Also interpolate the ellipses with a senoidal model in
+                    // order to achieve better representation of the tool
+                    // path, especially as Ax_uet tends to 0
                     const double H = Az_uet*std::sin(M_PI*v_crit/(2*vc));
                     const double h1 =  H + Az_uet;
                     const double h2 = -H + Az_uet;
@@ -242,6 +249,7 @@ void map(std::vector<double>& map_z, const std::vector<double>& orig_z, double f
                 // Tool path
                 double z_uet = 0;
                 if(vc <= v_crit) {
+                    // If vc <= v_crit, model as ellipses in series
                     const double H = Az_uet*std::sin(M_PI*vc/(2*v_crit));
                     const double h1 =  H + Az_uet;
                     const double h2 = -H + Az_uet;
@@ -250,6 +258,12 @@ void map(std::vector<double>& map_z, const std::vector<double>& orig_z, double f
 
                     z_uet = h1*(1.0 - std::sqrt(1.0 - (4*x_uet*x_uet)/(delta_1*delta_1)));
                 } else {
+                    // If otherwise, model as alternating ellipses with
+                    // different dimensions.
+                    //
+                    // Also interpolate the ellipses with a senoidal model in
+                    // order to achieve better representation of the tool
+                    // path, especially as Ax_uet tends to 0
                     const double H = Az_uet*std::sin(M_PI*v_crit/(2*vc));
                     const double h1 =  H + Az_uet;
                     const double h2 = -H + Az_uet;
