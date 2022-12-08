@@ -165,6 +165,9 @@ inline double z_avg;
 // Maximum cutting width
 inline double w_max;
 
+// Critical cutting velocity
+inline double v_crit = 2*M_PI*f_uet*Ax_uet;
+
 }
 
 #endif

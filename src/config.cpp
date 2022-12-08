@@ -142,6 +142,17 @@ void load(const std::string& path){
     param::alpha2 = get_scalar<double>(config["tool"], "alpha2") * M_PI / 180.0;
     param::clearance = get_scalar<double>(config["tool"], "clearance") * M_PI / 180.0;
 
+    required(config, "oscillation", YAML::NodeType::Map);
+    param::Az = get_scalar<double>(config["oscillation"], "Az");
+    param::fz = get_scalar<double>(config["oscillation"], "fz");
+    param::phiz = get_scalar<double>(config["oscillation"], "phiz") * M_PI / 180.0;
+    param::cylinder_radius = 1000*get_scalar<double>(config["oscillation"], "cylinder_radius");
+
+    required(config, "ellipse", YAML::NodeType::Map);
+    param::f_uet = get_scalar<double>(config["ellipse"], "f_uet");
+    param::Ax_uet = get_scalar<double>(config["ellipse"], "Ax_uet");
+    param::Az_uet = get_scalar<double>(config["ellipse"], "Az_uet");
+
     {
         using namespace param;
         using param::y1;
@@ -155,18 +166,9 @@ void load(const std::string& path){
 
         b1off = -std::sqrt(r*r - y1*y1) + r + tan1*y1;
         b2off = -std::sqrt(r*r - y2*y2) + r - tan2*y2;
+
+        v_crit = 2*M_PI*f_uet*Ax_uet;
     }
-
-    required(config, "oscillation", YAML::NodeType::Map);
-    param::Az = get_scalar<double>(config["oscillation"], "Az");
-    param::fz = get_scalar<double>(config["oscillation"], "fz");
-    param::phiz = get_scalar<double>(config["oscillation"], "phiz") * M_PI / 180.0;
-    param::cylinder_radius = 1000*get_scalar<double>(config["oscillation"], "cylinder_radius");
-
-    required(config, "ellipse", YAML::NodeType::Map);
-    param::f_uet = get_scalar<double>(config["ellipse"], "f_uet");
-    param::Ax_uet = get_scalar<double>(config["ellipse"], "Ax_uet");
-    param::Az_uet = get_scalar<double>(config["ellipse"], "Az_uet");
 
     init_dV();
 }

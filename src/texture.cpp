@@ -89,15 +89,54 @@ void map_exact(std::vector<double>& map_z, const std::vector<double>& orig_z, do
                 // Consider distance travelled by tool
                 const double xcirc = x + xoffset_uet;
 
-                // Consider horizontal effect from elliptical movement
-                const double xcirc_uet = xcirc + Ax_uet*std::sin(2*M_PI*f_uet*xcirc/vc);
+                // Get distance relative to period
+                const double mult_uet = std::floor(xcirc / delta_uet);
+                const double x_uet = xcirc - (mult_uet + 0.5)*delta_uet;
 
-                // Sinusoidal path
-                const double z_uet = Az_uet*std::cos(2*M_PI*f_uet*xcirc_uet/vc) + Az_uet;
+                // Tool path
+                double z_uet = 0;
+                if(vc <= v_crit) {
+                    const double H = Az_uet*std::sin(M_PI*vc/(2*v_crit));
+                    const double h1 =  H + Az_uet;
+                    const double h2 = -H + Az_uet;
+                    const double K = delta_uet*(h1+h2)/(2*(h1-h2));
+                    const double delta_1 =  K + delta_uet/2;
+
+                    z_uet = h1*(1.0 - std::sqrt(1.0 - (4*x_uet*x_uet)/(delta_1*delta_1)));
+                } else {
+                    const double H = Az_uet*std::sin(M_PI*v_crit/(2*vc));
+                    const double h1 =  H + Az_uet;
+                    const double h2 = -H + Az_uet;
+                    const double K = delta_uet*(h1-h2)/(2*(h1+h2));
+                    const double delta_1 =  K + delta_uet/2;
+                    const double delta_2 = -K + delta_uet/2;
+
+                    double z_uet1 = 0;
+                    double z_uet2 = 0;
+                    if(x_uet < -delta_1/2){
+                        const double x_uet2 = x_uet + delta_uet/2;
+
+                        z_uet1 = h1 + h2*std::cos(M_PI*x_uet2/delta_2);
+                        z_uet2 = h1 + h2*std::sqrt(1.0 - (4*x_uet2*x_uet2)/(delta_2*delta_2));
+                    } else if(x_uet < delta_1/2){
+                        const double x_uet2 = x_uet;
+
+                        z_uet1 = h1*(1.0 - std::cos(M_PI*x_uet2/delta_1));
+                        z_uet2 = h1*(1.0 - std::sqrt(1.0 - (4*x_uet2*x_uet2)/(delta_1*delta_1)));
+                    } else {
+                        const double x_uet2 = x_uet - delta_uet/2;
+
+                        z_uet1 = h1 + h2*std::cos(M_PI*x_uet2/delta_2);
+                        z_uet2 = h1 + h2*std::sqrt(1.0 - (4*x_uet2*x_uet2)/(delta_2*delta_2));
+                    }
+    
+                    const double v_ratio = v_crit/vc;
+                    z_uet = z_uet1*std::sqrt(1 - v_ratio*v_ratio) + z_uet2*(1 - std::sqrt(1 - v_ratio*v_ratio));
+                }
 
                 // Clearance angle
-                const double x_uet = xcirc + 0.5*delta_uet - std::floor(xcirc / delta_uet + 0.5)*delta_uet;
-                const double z_clear = tanc*(delta_uet - x_uet);
+                const double x_uet_c = xcirc + 0.5*delta_uet - std::floor(xcirc / delta_uet + 0.5)*delta_uet;
+                const double z_clear = tanc*(delta_uet - x_uet_c);
 
                 // Final UET height
                 const double z_uet_min = std::min(z_uet, z_clear);
@@ -124,8 +163,6 @@ void map_exact(std::vector<double>& map_z, const std::vector<double>& orig_z, do
             }
         }
     }
-    std::cout << "real max_z: " << *std::max_element(map_z.begin(), map_z.end()) << std::endl;
-    std::cout << "real min_z: " << *std::min_element(map_z.begin(), map_z.end()) << std::endl;
 
     if(overlap == 0){
         // If it's greater than zero, max_z must be zero
