@@ -66,7 +66,7 @@ void map_exact(std::vector<double>& map_z, const std::vector<double>& orig_z, do
 
     std::copy(orig_z.begin(), orig_z.end(), map_z.begin());
 
-    const double perimeter = 2*M_PI*(cylinder_radius - max_z);
+    const double perimeter = 2*M_PI*cylinder_radius;
 
     #pragma omp parallel for
     for(size_t Y = 0; Y < tex_height; ++Y){
@@ -219,7 +219,7 @@ void map(std::vector<double>& map_z, const std::vector<double>& orig_z, double f
 
     std::copy(orig_z.begin(), orig_z.end(), map_z.begin());
 
-    const double perimeter = 2*M_PI*(cylinder_radius - max_z);
+    const double perimeter = 2*M_PI*cylinder_radius;
 
     #pragma omp parallel for
     for(size_t Y = 0; Y < tex_height; ++Y){
