@@ -692,11 +692,9 @@ void dzdap(const std::vector<double>& orig_z, double f, double ap, double vc, st
                     }
     
                     const double v_ratio = v_crit/vc;
-                    const double dv_ratio = -v_crit/(vc*vc);
 
-                    const double rat = std::sqrt(1 - v_ratio*v_ratio);
                     z_uet = z_uet1*std::sqrt(1 - v_ratio*v_ratio) + z_uet2*(1 - std::sqrt(1 - v_ratio*v_ratio));
-                    dz_uet = dz_uet1*rat + z_uet1*(-v_ratio*dv_ratio)/rat + dz_uet2*(1 - rat) - z_uet2*(v_ratio*dv_ratio)/rat;
+                    dz_uet = dz_uet1*std::sqrt(1 - v_ratio*v_ratio) + dz_uet2*(1 - std::sqrt(1 - v_ratio*v_ratio));
                 }
 
                 // Clearance angle
@@ -883,11 +881,9 @@ void dzdf(const std::vector<double>& orig_z, double f, double ap, double vc, std
                     }
     
                     const double v_ratio = v_crit/vc;
-                    const double dv_ratio = -v_crit/(vc*vc);
 
-                    const double rat = std::sqrt(1 - v_ratio*v_ratio);
                     z_uet = z_uet1*std::sqrt(1 - v_ratio*v_ratio) + z_uet2*(1 - std::sqrt(1 - v_ratio*v_ratio));
-                    dz_uet = dz_uet1*rat + z_uet1*(-v_ratio*dv_ratio)/rat + dz_uet2*(1 - rat) - z_uet2*(v_ratio*dv_ratio)/rat;
+                    dz_uet = dz_uet1*std::sqrt(1 - v_ratio*v_ratio) + dz_uet2*(1 - std::sqrt(1 - v_ratio*v_ratio));
                 }
 
                 // Clearance angle
