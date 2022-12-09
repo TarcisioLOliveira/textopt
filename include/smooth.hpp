@@ -30,6 +30,7 @@
 
 #include <initializer_list>
 #include <numeric>
+#include <vector>
 
 #include "param.hpp"
 
@@ -62,6 +63,32 @@ inline double min(std::initializer_list<double> x){
 };
 
 /**
+ * Smooth version of `min()`, with a vector for argument. Uses
+ * the exponential function for the calculation, as p-norm doesn't handle
+ * a mix of positive and negative numbers very well. As a result, avoid
+ * using it with multiple numbers.
+ *
+ * The exponentiation is regulated by the parameter param::MULT. Higher values
+ * lead to a better approximation of `min()`, but it can very easily end up
+ * beyond DOUBLE_MAX.
+ *
+ * @param x List of values to get the minimum value.
+ *
+ * @return Approximation of the minimum value of x.
+ */
+inline double min(std::vector<double> x){
+    double frac_top = 0;
+    double frac_bot = 0;
+    for(double xi : x){
+        double exp = std::exp(param::MULT*xi);
+        frac_top += xi*exp;
+        frac_bot += exp;
+    }
+
+    return frac_top/frac_bot;
+};
+
+/**
  * Derivative of the smooth `min` function in relation to parameter `i`.
  *
  * @param x List of values to get the minimum value.
@@ -82,6 +109,64 @@ inline double min_deriv(std::initializer_list<double> x, size_t i){
     const double xj = *(x.begin()+i);
 
     return (std::exp(param::MULT*xj)/frac_bot)*(1+param::MULT*(xj-sm));
+};
+
+/**
+ * Derivative of the smooth `min` function with multiple derivatives.
+ *
+ * @param x List of values to get the minimum value.
+ * @param dx List of derivatives.
+ *
+ * @return Derivative of smooth::min() in relation to multiple parameters.
+ */
+inline double min_deriv(std::initializer_list<double> x, std::initializer_list<double> dx){
+    double frac_top = 0;
+    double frac_bot = 0;
+    for(double xi : x){
+        double exp = std::exp(param::MULT*xi);
+        frac_top += xi*exp;
+        frac_bot += exp;
+    }
+
+    const double sm = frac_top/frac_bot;
+    double result = 0;
+    for(size_t i = 0; i < x.size(); ++i){
+        const double xj = *(x.begin()+i);
+        const double dxj = *(dx.begin()+i);
+
+        result += (std::exp(param::MULT*xj)/frac_bot)*(1+param::MULT*(xj-sm))*dxj;
+    }
+
+    return result;
+};
+
+/**
+ * Derivative of the smooth `min` function with multiple derivatives.
+ *
+ * @param x List of values to get the minimum value.
+ * @param dx List of derivatives.
+ *
+ * @return Derivative of smooth::min() in relation to multiple parameters.
+ */
+inline double min_deriv(std::vector<double> x, std::vector<double> dx){
+    double frac_top = 0;
+    double frac_bot = 0;
+    for(double xi : x){
+        double exp = std::exp(param::MULT*xi);
+        frac_top += xi*exp;
+        frac_bot += exp;
+    }
+
+    const double sm = frac_top/frac_bot;
+    double result = 0;
+    for(size_t i = 0; i < x.size(); ++i){
+        const double xj = *(x.begin()+i);
+        const double dxj = *(dx.begin()+i);
+
+        result += (std::exp(param::MULT*xj)/frac_bot)*(1+param::MULT*(xj-sm))*dxj;
+    }
+
+    return result;
 };
 
 /**
