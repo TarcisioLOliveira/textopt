@@ -702,7 +702,7 @@ void dzdap(const std::vector<double>& orig_z, double f, double ap, double vc, st
                 const double dx_uet_c = dxcirc  - smooth::floor_deriv(xcirc / delta_uet + 0.5)*dxcirc;
 
                 const double z_clear = tanc*(delta_uet - x_uet_c);
-                const double dz_clear = tanc*(delta_uet - dx_uet_c);
+                const double dz_clear = tanc*(-dx_uet_c);
 
                 // Final UET height
                 const double z_uet_min = smooth::min({z_uet, z_clear});
@@ -891,7 +891,7 @@ void dzdf(const std::vector<double>& orig_z, double f, double ap, double vc, std
                 const double dx_uet_c = dxcirc  - smooth::floor_deriv(xcirc / delta_uet + 0.5)*dxcirc;
 
                 const double z_clear = tanc*(delta_uet - x_uet_c);
-                const double dz_clear = tanc*(delta_uet - dx_uet_c);
+                const double dz_clear = tanc*(-dx_uet_c);
 
                 // Final UET height
                 const double z_uet_min = smooth::min({z_uet, z_clear});
