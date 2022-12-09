@@ -24,6 +24,7 @@
 #include "param.hpp"
 #include "smooth.hpp"
 #include <iostream>
+#include <vector>
 
 namespace texture{
 
@@ -64,27 +65,28 @@ void map_exact(std::vector<double>& map_z, const std::vector<double>& orig_z, do
     const double line_root1_const = -std::sqrt(r*r - y1*y1) + r - ap + tan1*y1;
     const double line_root2_const = -std::sqrt(r*r - y2*y2) + r - ap - tan2*y2;
 
-    std::copy(orig_z.begin(), orig_z.end(), map_z.begin());
-
     const double perimeter = 2*M_PI*cylinder_radius;
 
-    #pragma omp parallel for
+    std::vector<double> z_cand(overlap + 2, 0);
+
+    #pragma omp parallel for firstprivate(z_cand)
     for(size_t Y = 0; Y < tex_height; ++Y){
         const double y = static_cast<double>(Y);
 
         // Calculate current row
         const double _mult = std::floor((y - 0.5*w_max)  / f + 1);
 
-        for(size_t m = 0; m < overlap + 1; ++m){
+        for(size_t X = 0; X < tex_width; ++X){
+            const double x = static_cast<double>(X);
 
-            // Overlap
-            const double mult = _mult + m;
+            z_cand[0] = orig_z[X + Y*tex_width];
 
-            // Distance travelled by tool
-            const double xoffset_uet = mult*perimeter;
+            for(size_t m = 0; m < overlap + 1; ++m){
+                // Overlap
+                const double mult = _mult + m;
 
-            for(size_t X = 0; X < tex_width; ++X){
-                const double x = static_cast<double>(X);
+                // Distance travelled by tool
+                const double xoffset_uet = mult*perimeter;
 
                 // Consider distance travelled by tool
                 const double xcirc = x + xoffset_uet;
@@ -162,12 +164,12 @@ void map_exact(std::vector<double>& map_z, const std::vector<double>& orig_z, do
                     shape_z = tan2*(y - mult*f) + line_root2;
                 }
 
-                // Get pixels
-                double& z = map_z[X + Y*tex_width];
-
-                // Write results
-                z = std::min(z, shape_z);
+                z_cand[m+1] = shape_z;
             }
+            // Get pixels
+            double& z = map_z[X + Y*tex_width];
+            // Write results
+            z = *std::min_element(z_cand.begin(), z_cand.end());
         }
     }
 
@@ -217,27 +219,28 @@ void map(std::vector<double>& map_z, const std::vector<double>& orig_z, double f
     const double line_root1_const = -std::sqrt(r*r - y1*y1) + r - ap + tan1*y1;
     const double line_root2_const = -std::sqrt(r*r - y2*y2) + r - ap - tan2*y2;
 
-    std::copy(orig_z.begin(), orig_z.end(), map_z.begin());
-
     const double perimeter = 2*M_PI*cylinder_radius;
 
-    #pragma omp parallel for
+    std::vector<double> z_cand(overlap + 2, 0);
+
+    #pragma omp parallel for firstprivate(z_cand)
     for(size_t Y = 0; Y < tex_height; ++Y){
         const double y = static_cast<double>(Y);
 
         // Calculate current row
         const double _mult = smooth::floor((y - 0.5*w_max)  / f + 1);
 
-        for(size_t m = 0; m < overlap + 1; ++m){
+        for(size_t X = 0; X < tex_width; ++X){
+            const double x = static_cast<double>(X);
 
-            // Overlap
-            const double mult = _mult + m;
+            z_cand[0] = orig_z[X + Y*tex_width];
 
-            // Distance travelled by tool
-            const double xoffset_uet = mult*perimeter;
+            for(size_t m = 0; m < overlap + 1; ++m){
+                // Overlap
+                const double mult = _mult + m;
 
-            for(size_t X = 0; X < tex_width; ++X){
-                const double x = static_cast<double>(X);
+                // Distance travelled by tool
+                const double xoffset_uet = mult*perimeter;
 
                 // Consider distance travelled by tool
                 const double xcirc = x + xoffset_uet;
@@ -315,12 +318,12 @@ void map(std::vector<double>& map_z, const std::vector<double>& orig_z, double f
                     shape_z = tan2*(y - mult*f) + line_root2;
                 }
 
-                // Get pixels
-                double& z = map_z[X + Y*tex_width];
-
-                // Write results
-                z = smooth::min({z, shape_z});
+                z_cand[m+1] = shape_z;
             }
+            // Get pixels
+            double& z = map_z[X + Y*tex_width];
+            // Write results
+            z = smooth::min(z_cand);
         }
     }
 
