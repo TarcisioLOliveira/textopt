@@ -430,7 +430,7 @@ void dzdvc(const std::vector<double>& orig_z, double f, double ap, double vc, st
 
                     z_uet = h1*(1.0 - std::sqrt(1.0 - (4*x_uet*x_uet)/(delta_1*delta_1)));
                     const double ell = std::sqrt(1.0 - (4*x_uet*x_uet)/(delta_1*delta_1));
-                    dz_uet = dh1*ell - h1*(-4*(x_uet*dx_uet*delta_1*delta_1-x_uet*x_uet*delta_1*ddelta_1)/(delta_1*delta_1*delta_1*delta_1))/ell;
+                    dz_uet = dh1 - dh1*ell - h1*(-4*(x_uet*dx_uet*delta_1*delta_1-x_uet*x_uet*delta_1*ddelta_1)/(delta_1*delta_1*delta_1*delta_1))/ell;
                 } else {
                     // If otherwise, model as alternating ellipses with
                     // different dimensions.
@@ -475,11 +475,11 @@ void dzdvc(const std::vector<double>& orig_z, double f, double ap, double vc, st
                         const double dx_uet2 = dx_uet;
 
                         z_uet1 = h1*(1.0 - std::cos(M_PI*x_uet2/delta_1));
-                        dz_uet1 = dh1 + dh1*std::cos(M_PI*x_uet2/delta_1) - h1*std::sin(M_PI*x_uet2/delta_1)*M_PI*(dx_uet2*delta_1 - x_uet2*ddelta_1)/(delta_1*delta_1);
+                        dz_uet1 = dh1 - dh1*std::cos(M_PI*x_uet2/delta_1) + h1*std::sin(M_PI*x_uet2/delta_1)*M_PI*(dx_uet2*delta_1 - x_uet2*ddelta_1)/(delta_1*delta_1);
 
                         z_uet2 = h1*(1.0 - std::sqrt(1.0 - (4*x_uet2*x_uet2)/(delta_1*delta_1)));
                         const double ell = std::sqrt(1.0 - (4*x_uet2*x_uet2)/(delta_1*delta_1));
-                        dz_uet = dh1 + dh1*ell - h1*(-4*(x_uet2*dx_uet2*delta_1*delta_1-x_uet2*x_uet2*delta_1*ddelta_1)/(delta_1*delta_1*delta_1*delta_1))/ell;
+                        dz_uet = dh1 - dh1*ell - h1*(-4*(x_uet2*dx_uet2*delta_1*delta_1-x_uet2*x_uet2*delta_1*ddelta_1)/(delta_1*delta_1*delta_1*delta_1))/ell;
                     } else {
                         const double x_uet2 = x_uet - delta_uet/2;
                         const double dx_uet2 = dx_uet - ddelta_uet/2;
@@ -497,7 +497,7 @@ void dzdvc(const std::vector<double>& orig_z, double f, double ap, double vc, st
 
                     const double rat = std::sqrt(1 - v_ratio*v_ratio);
                     z_uet = z_uet1*std::sqrt(1 - v_ratio*v_ratio) + z_uet2*(1 - std::sqrt(1 - v_ratio*v_ratio));
-                    dz_uet = dz_uet1*rat + z_uet1*(-v_ratio*dv_ratio)/rat + dz_uet2*(1 - rat) - z_uet2*(v_ratio*dv_ratio)/rat;
+                    dz_uet = dz_uet1*rat + z_uet1*(-v_ratio*dv_ratio)/rat + dz_uet2*(1 - rat) + z_uet2*(-v_ratio*dv_ratio)/rat;
                 }
 
                 // Clearance angle
@@ -513,8 +513,8 @@ void dzdvc(const std::vector<double>& orig_z, double f, double ap, double vc, st
 
                 const double line_root1 = line_root1_const + z_uet_min;
                 const double line_root2 = line_root2_const + z_uet_min;
-                const double dline_root1 = line_root1_const + dz_uet_min;
-                const double dline_root2 = line_root2_const + dz_uet_min;
+                const double dline_root1 = dz_uet_min;
+                const double dline_root2 = dz_uet_min;
 
                 // Tool shape
                 double shape_z;
