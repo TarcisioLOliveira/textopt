@@ -376,7 +376,7 @@ void MMASolver::GenSub(const double *xval, const double *dfdx, const double *gx,
 			double xmami = std::max(xmamieps, xmax[i] - xmin[i]);
 
             const double mmin = 1e-13;
-            const double mmax = 1e6;
+            const double mmax = 1e-1;
 
 			low[i] = std::max(low[i], xval[i] - mmax * xmami);
 			low[i] = std::min(low[i], xval[i] - mmin * xmami);
