@@ -56,21 +56,21 @@ void map(std::vector<double>& map_z, const std::vector<double>& orig_z, double a
  * Calculate derivative of depth (z) in relation to cutting velocity (vc).
  *
  * @param orig_z Original texture.
- * @param f Feed rate.
+ * @param ap Cutting depth.
  * @param vc Cutting velocity.
  * @param dzdvc Resulting derivative at every point.
  */
-void dzdvc(double f, double vc, std::vector<double>& dzdvc);
+void dzdvc(const std::vector<double>& orig_z, double ap, double vc, std::vector<double>& dzdvc);
 
 /**
  * Calculate derivative of depth (z) in relation to feed rate (f).
  *
  * @param orig_z Original texture.
- * @param f Feed rate.
+ * @param ap Cutting depth.
  * @param vc Cutting velocity.
- * @param dzdf Resulting derivative at every point.
+ * @param dzdap Resulting derivative at every point.
  */
-void dzdf(double f, double vc, std::vector<double>& dzdf);
+void dzdap(const std::vector<double>& orig_z, double ap, double vc, std::vector<double>& dzdap);
 
 }
 

@@ -158,17 +158,17 @@ int main(int argc, char* argv[]){
                 std::cout << "dAdvc:  " << dsurareadvc << std::endl;
                 std::cout << "dSadvc: " << dSadvc << std::endl;
             } else {
-                texture_shallow::dzdf(f, vc, df);
-                texture_shallow::dzdvc(f, vc, dvc);
+                texture_shallow::dzdap(orig_z, ap, vc, dap);
+                texture_shallow::dzdvc(orig_z, ap, vc, dvc);
 
-                const double dsurareadf = -opt::surface_area_dz(map_z, df);
-                const double dSadf = opt::dSa(df, map_z);
+                const double dsurareadap = -opt::surface_area_dz(map_z, dap);
+                const double dSadap = opt::dSa(dap, map_z);
                 const double dsurareadvc = -opt::surface_area_dz(map_z, dvc);
                 const double dSadvc = opt::dSa(dvc, map_z);
 
                 std::cout << std::endl;
-                std::cout << "dAdf:   " << dsurareadf << std::endl;
-                std::cout << "dSadf:  " << dSadf << std::endl;
+                std::cout << "dAdap:   " << dsurareadap << std::endl;
+                std::cout << "dSadap:  " << dSadap << std::endl;
                 std::cout << std::endl;
                 std::cout << "dAdvc:  " << dsurareadvc << std::endl;
                 std::cout << "dSadvc: " << dSadvc << std::endl;
@@ -391,9 +391,9 @@ int main(int argc, char* argv[]){
                 double old_surarea = 1;
 
                 const size_t N = 2;
-                std::vector<double> x{f, vc};
-                std::vector<double> xmin{f_min, vc_min};
-                std::vector<double> xmax{f_max, vc_max};
+                std::vector<double> x{ap, vc};
+                std::vector<double> xmin{ap_min, vc_min};
+                std::vector<double> xmax{ap_max, vc_max};
 
                 std::vector<double> dSa_vec{0, 0};
                 std::vector<double> dsurarea_vec{0, 0};
@@ -421,18 +421,18 @@ int main(int argc, char* argv[]){
                     window.clear(sf::Color::Black);
 
                     if(ch > stop){
-                        f = x[0];
+                        ap = x[0];
                         vc = x[1];
                         texture_shallow::map(map_z, orig_z, ap, vc);
                         render::draw_texture(px, map_z, render::Colorscheme::HSV);
                         surarea = -opt::surface_area(map_z);
                         roughness = opt::Sa(map_z) - max_roughness;
 
-                        texture_shallow::dzdf(f, vc, df);
-                        texture_shallow::dzdvc(f, vc, dvc);
+                        texture_shallow::dzdap(orig_z, ap, vc, dap);
+                        texture_shallow::dzdvc(orig_z, ap, vc, dvc);
 
-                        const double dsurareadf = -opt::surface_area_dz(map_z, df);
-                        const double dSadf = opt::dSa(df, map_z);
+                        const double dsurareadap = -opt::surface_area_dz(map_z, dap);
+                        const double dSadap = opt::dSa(dap, map_z);
                         const double dsurareadvc = -opt::surface_area_dz(map_z, dvc);
                         const double dSadvc = opt::dSa(dvc, map_z);
 
@@ -442,14 +442,14 @@ int main(int argc, char* argv[]){
                         std::cout << "===========================" << std::endl;
 
                         std::cout << std::endl;
-                        std::cout << "dAdf:   " << dsurareadf << std::endl;
-                        std::cout << "dSadf:  " << dSadf << std::endl;
+                        std::cout << "dAdap:   " << dsurareadap << std::endl;
+                        std::cout << "dSadap:  " << dSadap << std::endl;
                         std::cout << std::endl;
                         std::cout << "dAdvc:  " << dsurareadvc << std::endl;
                         std::cout << "dSadvc: " << dSadvc << std::endl;
 
-                        dsurarea_vec[0] = dsurareadf;
-                        dSa_vec[0] = dSadf;
+                        dsurarea_vec[0] = dsurareadap;
+                        dSa_vec[0] = dSadap;
                         dsurarea_vec[1] = dsurareadvc;
                         dSa_vec[1] = dSadvc;
 
