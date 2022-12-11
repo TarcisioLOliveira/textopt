@@ -126,7 +126,7 @@ int main(int argc, char* argv[]){
             if(param::opt_ap){
                 texture::map(map_z, orig_z, f, ap, vc);
             } else {
-                texture_shallow::map(map_z, f, vc);
+                texture_shallow::map(map_z, orig_z, ap, vc);
             }
             if(param::single_method == param::SingleMethod::SMOOTH){
                 std::cout << "== (CURRENTLY RENDERED)  ==" << std::endl;
@@ -423,7 +423,7 @@ int main(int argc, char* argv[]){
                     if(ch > stop){
                         f = x[0];
                         vc = x[1];
-                        texture_shallow::map(map_z, f, vc);
+                        texture_shallow::map(map_z, orig_z, ap, vc);
                         render::draw_texture(px, map_z, render::Colorscheme::HSV);
                         surarea = -opt::surface_area(map_z);
                         roughness = opt::Sa(map_z) - max_roughness;
