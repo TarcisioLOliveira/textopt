@@ -55,13 +55,13 @@ int main(int argc, char* argv[]){
             if(opt_ap){
                 analysis::plot_fxap({f_min, f_max}, {ap_min, ap_max}, vc, step, map_z, orig_z);
             } else {
-                analysis::plot_f_shallow({f_min, f_max}, vc, step, map_z);
+                analysis::plot_ap_shallow({ap_min, ap_max}, vc, step, map_z, orig_z);
             }
         } else if(plot_method == PlotMethod::VC){
             if(opt_ap){
                 analysis::plot_vc(f, ap, {vc_min, vc_max}, step, map_z, orig_z);
             } else {
-                analysis::plot_vc_shallow(f, {vc_min, vc_max}, step, map_z);
+                analysis::plot_vc_shallow(ap, {vc_min, vc_max}, step, map_z, orig_z);
             }
         }
     } else {
@@ -93,7 +93,7 @@ int main(int argc, char* argv[]){
             if(param::opt_ap){
                 texture::map_exact(map_z, orig_z, f, ap, vc);
             } else {
-                texture_shallow::map_exact(map_z, f, vc);
+                texture_shallow::map_exact(map_z, orig_z, ap, vc);
             }
 
             if(param::single_method == param::SingleMethod::EXACT){
@@ -490,7 +490,7 @@ int main(int argc, char* argv[]){
                         std::cout << "===   EXACT RESULTS:   ====" << std::endl;
                         std::cout << "===========================" << std::endl;
 
-                        texture_shallow::map_exact(map_z, f, vc);
+                        texture_shallow::map_exact(map_z, orig_z, ap, vc);
 
                         const double surarea_ex = -opt::surface_area(map_z);
                         const double roughness_ex = opt::Sa(map_z) - max_roughness;

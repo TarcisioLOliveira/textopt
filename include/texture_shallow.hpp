@@ -34,11 +34,10 @@ namespace texture_shallow{
  *
  * @param map_z Resulting texture.
  * @param orig_z Original texture.
- * @param f Feed rate.
  * @param ap Cutting depth.
  * @param vc Cutting velocity.
  */
-void map_exact(std::vector<double>& map_z, double f, double vc);
+void map_exact(std::vector<double>& map_z, const std::vector<double>& orig_z, double ap, double vc);
 
 /**
  * Generate texture based on cutting parameters, parameters in param.hpp, and
