@@ -718,14 +718,15 @@ void dzdap(const std::vector<double>& orig_z, double f, double ap, double vc, st
                 double dshape_z;
                 if(y <= y1 + mult*f){
                     shape_z = -tan1*(y - mult*f) + line_root1;
-                    dshape_z = dline_root1;
+                    dshape_z = tan1*dmult*f + dline_root1;
                 } else if(y <= y2 + mult*f){
                     const double yy = y - mult*f;
+                    const double dyy = -dmult*f;
                     shape_z = -std::sqrt(r*r - yy*yy) + r - ap + z_uet_min;
-                    dshape_z = -1.0 + dz_uet_min;
+                    dshape_z = yy*dyy/std::sqrt(r*r - yy*yy) - 1.0 + dz_uet_min;
                 } else {
                     shape_z = tan2*(y - mult*f) + line_root2;
-                    dshape_z = dline_root2;
+                    dshape_z = -tan2*dmult*f + dline_root2;
                 }
 
                 z_cand[m+1] = shape_z;
@@ -912,7 +913,7 @@ void dzdf(const std::vector<double>& orig_z, double f, double ap, double vc, std
                     const double yy = y - mult*f;
                     const double dyy = -(dmult*f + mult);
                     shape_z = -std::sqrt(r*r - yy*yy) + r - ap + z_uet_min;
-                    dshape_z = -yy*dyy/std::sqrt(r*r - yy*yy) + dz_uet_min;
+                    dshape_z = yy*dyy/std::sqrt(r*r - yy*yy) + dz_uet_min;
                 } else {
                     shape_z = tan2*(y - mult*f) + line_root2;
                     dshape_z = -tan2*(dmult*f + mult) +  dline_root2;
