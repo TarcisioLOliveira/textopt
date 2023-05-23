@@ -92,11 +92,10 @@ void load(const std::string& path){
     param::dimx = param::dimy = param::dimz = param::dim;
 
     required(config, "cutting", YAML::NodeType::Map);
-    if(param::analysis_type != param::AnalysisType::PLOT){
-        param::f  = get_scalar<double>(config["cutting"], "f" );
-        param::ap = get_scalar<double>(config["cutting"], "ap");
-        param::vc = get_scalar<double>(config["cutting"], "vc");
-    }
+    param::f  = get_scalar<double>(config["cutting"], "f" );
+    param::ap = get_scalar<double>(config["cutting"], "ap");
+    param::vc = get_scalar<double>(config["cutting"], "vc");
+
     if(param::analysis_type != param::AnalysisType::SINGLE){
         required(config["cutting"], "f_range", YAML::NodeType::Sequence);
         required(config["cutting"], "ap_range", YAML::NodeType::Sequence);
