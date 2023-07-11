@@ -23,6 +23,7 @@
 #include "texture.hpp"
 #include "param.hpp"
 #include "smooth.hpp"
+#include "newton.hpp"
 #include <cmath>
 #include <iostream>
 #include <vector>
@@ -92,57 +93,10 @@ void map_exact(std::vector<double>& map_z, const std::vector<double>& orig_z, do
                 // Consider distance travelled by tool
                 const double xcirc = x + xoffset_uet;
 
-                // Get distance relative to period
-                const double mult_uet = std::floor(xcirc / delta_uet);
-                const double x_uet = xcirc - (mult_uet + 0.5)*delta_uet;
-
                 // Tool path
-                double z_uet = 0;
-                if(vc <= v_crit) {
-                    // If vc <= v_crit, model as ellipses in series
-                    const double H = Az_uet*std::sin(M_PI*vc/(2*v_crit));
-                    const double h1 =  H + Az_uet;
-                    const double h2 = -H + Az_uet;
-                    const double K = delta_uet*(h1+h2)/(2*(h1-h2));
-                    const double delta_1 =  K + delta_uet/2;
-
-                    z_uet = h1*(1.0 - std::sqrt(1.0 - (4*x_uet*x_uet)/(delta_1*delta_1)));
-                } else {
-                    // If otherwise, model as alternating ellipses with
-                    // different dimensions.
-                    //
-                    // Also interpolate the ellipses with a senoidal model in
-                    // order to achieve better representation of the tool
-                    // path, especially as Ax_uet tends to 0
-                    const double H = Az_uet*std::sin(M_PI*v_crit/(2*vc));
-                    const double h1 =  H + Az_uet;
-                    const double h2 = -H + Az_uet;
-                    const double K = delta_uet*(h1-h2)/(2*(h1+h2));
-                    const double delta_1 =  K + delta_uet/2;
-                    const double delta_2 = -K + delta_uet/2;
-
-                    double z_uet1 = 0;
-                    double z_uet2 = 0;
-                    if(x_uet < -delta_1/2){
-                        const double x_uet2 = x_uet + delta_uet/2;
-
-                        z_uet1 = h1 + h2*std::cos(M_PI*x_uet2/delta_2);
-                        z_uet2 = h1 + h2*std::sqrt(1.0 - (4*x_uet2*x_uet2)/(delta_2*delta_2));
-                    } else if(x_uet < delta_1/2){
-                        const double x_uet2 = x_uet;
-
-                        z_uet1 = h1*(1.0 - std::cos(M_PI*x_uet2/delta_1));
-                        z_uet2 = h1*(1.0 - std::sqrt(1.0 - (4*x_uet2*x_uet2)/(delta_1*delta_1)));
-                    } else {
-                        const double x_uet2 = x_uet - delta_uet/2;
-
-                        z_uet1 = h1 + h2*std::cos(M_PI*x_uet2/delta_2);
-                        z_uet2 = h1 + h2*std::sqrt(1.0 - (4*x_uet2*x_uet2)/(delta_2*delta_2));
-                    }
-    
-                    const double v_ratio = v_crit/vc;
-                    z_uet = z_uet1*std::sqrt(1 - v_ratio*v_ratio) + z_uet2*(1 - std::sqrt(1 - v_ratio*v_ratio));
-                }
+                const double t0 = (std::floor(xcirc / delta_uet) + 0.5)/(f_uet);
+                const double t = newton_t(xcirc, t0, vc);
+                double z_uet = zt(t);
 
                 // Clearance angle
                 const double x_uet_c = xcirc + 0.5*delta_uet - std::floor(xcirc / delta_uet + 0.5)*delta_uet;
@@ -246,57 +200,10 @@ void map(std::vector<double>& map_z, const std::vector<double>& orig_z, double f
                 // Consider distance travelled by tool
                 const double xcirc = x + xoffset_uet;
 
-                // Get distance relative to period
-                const double mult_uet = smooth::floor(xcirc / delta_uet);
-                const double x_uet = xcirc - (mult_uet + 0.5)*delta_uet;
-
                 // Tool path
-                double z_uet = 0;
-                if(vc <= v_crit) {
-                    // If vc <= v_crit, model as ellipses in series
-                    const double H = Az_uet*std::sin(M_PI*vc/(2*v_crit));
-                    const double h1 =  H + Az_uet;
-                    const double h2 = -H + Az_uet;
-                    const double K = delta_uet*(h1+h2)/(2*(h1-h2));
-                    const double delta_1 =  K + delta_uet/2;
-
-                    z_uet = h1*(1.0 - std::sqrt(1.0 - (4*x_uet*x_uet)/(delta_1*delta_1)));
-                } else {
-                    // If otherwise, model as alternating ellipses with
-                    // different dimensions.
-                    //
-                    // Also interpolate the ellipses with a senoidal model in
-                    // order to achieve better representation of the tool
-                    // path, especially as Ax_uet tends to 0
-                    const double H = Az_uet*std::sin(M_PI*v_crit/(2*vc));
-                    const double h1 =  H + Az_uet;
-                    const double h2 = -H + Az_uet;
-                    const double K = delta_uet*(h1-h2)/(2*(h1+h2));
-                    const double delta_1 =  K + delta_uet/2;
-                    const double delta_2 = -K + delta_uet/2;
-
-                    double z_uet1 = 0;
-                    double z_uet2 = 0;
-                    if(x_uet < -delta_1/2){
-                        const double x_uet2 = x_uet + delta_uet/2;
-
-                        z_uet1 = h1 + h2*std::cos(M_PI*x_uet2/delta_2);
-                        z_uet2 = h1 + h2*std::sqrt(1.0 - (4*x_uet2*x_uet2)/(delta_2*delta_2));
-                    } else if(x_uet < delta_1/2){
-                        const double x_uet2 = x_uet;
-
-                        z_uet1 = h1*(1.0 - std::cos(M_PI*x_uet2/delta_1));
-                        z_uet2 = h1*(1.0 - std::sqrt(1.0 - (4*x_uet2*x_uet2)/(delta_1*delta_1)));
-                    } else {
-                        const double x_uet2 = x_uet - delta_uet/2;
-
-                        z_uet1 = h1 + h2*std::cos(M_PI*x_uet2/delta_2);
-                        z_uet2 = h1 + h2*std::sqrt(1.0 - (4*x_uet2*x_uet2)/(delta_2*delta_2));
-                    }
-    
-                    const double v_ratio = v_crit/vc;
-                    z_uet = z_uet1*std::sqrt(1 - v_ratio*v_ratio) + z_uet2*(1 - std::sqrt(1 - v_ratio*v_ratio));
-                }
+                const double t0 = (std::floor(xcirc / delta_uet) + 0.5)/(f_uet); // Initial estimate of t for Newton
+                const double t = newton_t(xcirc, t0, vc);
+                double z_uet = zt(t);
 
                 // Clearance angle
                 const double x_uet_c = xcirc + 0.5*delta_uet - smooth::floor(xcirc / delta_uet + 0.5)*delta_uet;
@@ -402,103 +309,11 @@ void dzdvc(const std::vector<double>& orig_z, double f, double ap, double vc, st
                 // Consider distance travelled by tool
                 const double xcirc = x + xoffset_uet;
 
-                // Get distance relative to period
-                const double mult_uet = smooth::floor(xcirc / delta_uet);
-                const double dmult_uet = smooth::floor_deriv(xcirc / delta_uet)*(-xcirc*ddelta_uet/(delta_uet*delta_uet));
-                const double x_uet = xcirc - (mult_uet + 0.5)*delta_uet;
-                const double dx_uet = - ((mult_uet + 0.5)*ddelta_uet + dmult_uet*delta_uet);
-
                 // Tool path
-                double z_uet = 0;
-                double dz_uet = 0;
-                if(vc <= v_crit) {
-                    // If vc <= v_crit, model as ellipses in series
-                    const double H = Az_uet*std::sin(M_PI*vc/(2*v_crit));
-                    const double dH = Az_uet*std::cos(M_PI*vc/(2*v_crit))*M_PI/(2*v_crit);
-
-                    const double h1 =  H + Az_uet;
-                    const double dh1 =  dH;
-
-                    const double h2 = -H + Az_uet;
-                    const double dh2 = -dH;
-
-                    const double K = delta_uet*(h1+h2)/(2*(h1-h2));
-                    const double dK = ddelta_uet*(h1+h2)/(2*(h1-h2)) + delta_uet*((dh1+dh2)*(h1-h2) - (h1+h2)*(dh1-dh2))/(2*(h1-h2)*(h1-h2));
-
-                    const double delta_1 =  K + delta_uet/2;
-                    const double ddelta_1 = dK + ddelta_uet/2;
-
-                    z_uet = h1*(1.0 - std::sqrt(1.0 - (4*x_uet*x_uet)/(delta_1*delta_1)));
-                    const double ell = std::sqrt(1.0 - (4*x_uet*x_uet)/(delta_1*delta_1));
-                    dz_uet = dh1 - dh1*ell - h1*(-4*(x_uet*dx_uet*delta_1*delta_1-x_uet*x_uet*delta_1*ddelta_1)/(delta_1*delta_1*delta_1*delta_1))/ell;
-                } else {
-                    // If otherwise, model as alternating ellipses with
-                    // different dimensions.
-                    //
-                    // Also interpolate the ellipses with a senoidal model in
-                    // order to achieve better representation of the tool
-                    // path, especially as Ax_uet tends to 0
-                    const double H = Az_uet*std::sin(M_PI*v_crit/(2*vc));
-                    const double dH = Az_uet*std::cos(M_PI*v_crit/(2*vc))*(-M_PI*v_crit/(2*vc*vc));
-
-                    const double h1 =  H + Az_uet;
-                    const double dh1 =  dH;
-
-                    const double h2 = -H + Az_uet;
-                    const double dh2 = -dH;
-
-                    const double K = delta_uet*(h1-h2)/(2*(h1+h2));
-                    const double dK = ddelta_uet*(h1-h2)/(2*(h1+h2)) + delta_uet*((dh1-dh2)*(h1+h2) - (h1-h2)*(dh1+dh2))/(2*(h1+h2));
-
-                    const double delta_1 =  K + delta_uet/2;
-                    const double ddelta_1 =  dK + ddelta_uet/2;
-
-                    const double delta_2 = -K + delta_uet/2;
-                    const double ddelta_2 = -dK + ddelta_uet/2;
-
-                    double z_uet1 = 0;
-                    double z_uet2 = 0;
-                    double dz_uet1 = 0;
-                    double dz_uet2 = 0;
-                    if(x_uet < -delta_1/2){
-                        const double x_uet2 = x_uet + delta_uet/2;
-                        const double dx_uet2 = dx_uet + ddelta_uet/2;
-
-                        z_uet1 = h1 + h2*std::cos(M_PI*x_uet2/delta_2);
-                        dz_uet1 = dh1 + dh2*std::cos(M_PI*x_uet2/delta_2) - h2*std::sin(M_PI*x_uet2/delta_2)*M_PI*(dx_uet2*delta_2 - x_uet2*ddelta_2)/(delta_2*delta_2);
-
-                        z_uet2 = h1 + h2*std::sqrt(1.0 - (4*x_uet2*x_uet2)/(delta_2*delta_2));
-                        const double ell = std::sqrt(1.0 - (4*x_uet2*x_uet2)/(delta_2*delta_2));
-                        dz_uet2 = dh1 + dh2*ell + h2*(-4*(x_uet2*dx_uet2*delta_2*delta_2-x_uet2*x_uet2*delta_2*ddelta_2)/(delta_2*delta_2*delta_2*delta_2))/ell;
-                    } else if(x_uet < delta_1/2){
-                        const double x_uet2 = x_uet;
-                        const double dx_uet2 = dx_uet;
-
-                        z_uet1 = h1*(1.0 - std::cos(M_PI*x_uet2/delta_1));
-                        dz_uet1 = dh1 - dh1*std::cos(M_PI*x_uet2/delta_1) + h1*std::sin(M_PI*x_uet2/delta_1)*M_PI*(dx_uet2*delta_1 - x_uet2*ddelta_1)/(delta_1*delta_1);
-
-                        z_uet2 = h1*(1.0 - std::sqrt(1.0 - (4*x_uet2*x_uet2)/(delta_1*delta_1)));
-                        const double ell = std::sqrt(1.0 - (4*x_uet2*x_uet2)/(delta_1*delta_1));
-                        dz_uet = dh1 - dh1*ell - h1*(-4*(x_uet2*dx_uet2*delta_1*delta_1-x_uet2*x_uet2*delta_1*ddelta_1)/(delta_1*delta_1*delta_1*delta_1))/ell;
-                    } else {
-                        const double x_uet2 = x_uet - delta_uet/2;
-                        const double dx_uet2 = dx_uet - ddelta_uet/2;
-
-                        z_uet1 = h1 + h2*std::cos(M_PI*x_uet2/delta_2);
-                        dz_uet1 = dh1 + dh2*std::cos(M_PI*x_uet2/delta_2) - h2*std::sin(M_PI*x_uet2/delta_2)*M_PI*(dx_uet2*delta_2 - x_uet2*ddelta_2)/(delta_2*delta_2);
-
-                        z_uet2 = h1 + h2*std::sqrt(1.0 - (4*x_uet2*x_uet2)/(delta_2*delta_2));
-                        const double ell = std::sqrt(1.0 - (4*x_uet2*x_uet2)/(delta_2*delta_2));
-                        dz_uet2 = dh1 + dh2*ell + h2*(-4*(x_uet2*dx_uet2*delta_2*delta_2-x_uet2*x_uet2*delta_2*ddelta_2)/(delta_2*delta_2*delta_2*delta_2))/ell;
-                    }
-    
-                    const double v_ratio = v_crit/vc;
-                    const double dv_ratio = -v_crit/(vc*vc);
-
-                    const double rat = std::sqrt(1 - v_ratio*v_ratio);
-                    z_uet = z_uet1*std::sqrt(1 - v_ratio*v_ratio) + z_uet2*(1 - std::sqrt(1 - v_ratio*v_ratio));
-                    dz_uet = dz_uet1*rat + z_uet1*(-v_ratio*dv_ratio)/rat + dz_uet2*(1 - rat) + z_uet2*(-v_ratio*dv_ratio)/rat;
-                }
+                const double t0 = (std::floor(xcirc / delta_uet) + 0.5)/(f_uet); // Initial estimate of t for Newton
+                const double t = newton_t(xcirc, t0, vc);
+                double z_uet = zt(t);
+                double dz_uet = dzdt(t)*dtdvc(t, vc);
 
                 // Clearance angle
                 const double x_uet_c = xcirc + 0.5*delta_uet - smooth::floor(xcirc / delta_uet + 0.5)*delta_uet;
@@ -620,82 +435,12 @@ void dzdap(const std::vector<double>& orig_z, double f, double ap, double vc, st
                 const double xcirc = x + xoffset_uet;
                 const double dxcirc = dxoffset_uet;
 
-                // Get distance relative to period
-                const double mult_uet = smooth::floor(xcirc / delta_uet);
-                const double dmult_uet = smooth::floor_deriv(xcirc / delta_uet)*dxcirc/delta_uet;
-
-                const double x_uet = xcirc - (mult_uet + 0.5)*delta_uet;
-                const double dx_uet = dxcirc - dmult_uet*delta_uet;
-
                 // Tool path
-                double z_uet = 0;
-                double dz_uet = 0;
-                if(vc <= v_crit) {
-                    // If vc <= v_crit, model as ellipses in series
-                    const double H = Az_uet*std::sin(M_PI*vc/(2*v_crit));
-                    const double h1 =  H + Az_uet;
-                    const double h2 = -H + Az_uet;
-                    const double K = delta_uet*(h1+h2)/(2*(h1-h2));
-                    const double delta_1 =  K + delta_uet/2;
-
-                    z_uet = h1*(1.0 - std::sqrt(1.0 - (4*x_uet*x_uet)/(delta_1*delta_1)));
-                    const double ell = std::sqrt(1.0 - (4*x_uet*x_uet)/(delta_1*delta_1));
-                    dz_uet = h1*((4*x_uet*dx_uet)/(delta_1*delta_1))/ell;
-                } else {
-                    // If otherwise, model as alternating ellipses with
-                    // different dimensions.
-                    //
-                    // Also interpolate the ellipses with a senoidal model in
-                    // order to achieve better representation of the tool
-                    // path, especially as Ax_uet tends to 0
-                    const double H = Az_uet*std::sin(M_PI*v_crit/(2*vc));
-                    const double h1 =  H + Az_uet;
-                    const double h2 = -H + Az_uet;
-                    const double K = delta_uet*(h1-h2)/(2*(h1+h2));
-                    const double delta_1 =  K + delta_uet/2;
-                    const double delta_2 = -K + delta_uet/2;
-
-                    double z_uet1 = 0;
-                    double z_uet2 = 0;
-                    double dz_uet1 = 0;
-                    double dz_uet2 = 0;
-                    if(x_uet < -delta_1/2){
-                        const double x_uet2 = x_uet + delta_uet/2;
-                        const double dx_uet2 = dx_uet;
-
-                        z_uet1 = h1 + h2*std::cos(M_PI*x_uet2/delta_2);
-                        dz_uet1 = -h2*std::sin(M_PI*x_uet2/delta_2)*M_PI*dx_uet2/delta_2;
-
-                        z_uet2 = h1 + h2*std::sqrt(1.0 - (4*x_uet2*x_uet2)/(delta_2*delta_2));
-                        const double ell = std::sqrt(1.0 - (4*x_uet2*x_uet2)/(delta_2*delta_2));
-                        dz_uet = h2*((4*x_uet2*dx_uet2)/(delta_2*delta_2))/ell;
-                    } else if(x_uet < delta_1/2){
-                        const double x_uet2 = x_uet;
-                        const double dx_uet2 = dx_uet;
-
-                        z_uet1 = h1*(1.0 - std::cos(M_PI*x_uet2/delta_1));
-                        dz_uet1 = h1*std::sin(M_PI*x_uet2/delta_1)*M_PI*dx_uet2/delta_1;
-
-                        z_uet2 = h1*(1.0 - std::sqrt(1.0 - (4*x_uet2*x_uet2)/(delta_1*delta_1)));
-                        const double ell = std::sqrt(1.0 - (4*x_uet2*x_uet2)/(delta_1*delta_1));
-                        dz_uet = -h1*((4*x_uet2*dx_uet2)/(delta_1*delta_1))/ell;
-                    } else {
-                        const double x_uet2 = x_uet - delta_uet/2;
-                        const double dx_uet2 = dx_uet;
-
-                        z_uet1 = h1 + h2*std::cos(M_PI*x_uet2/delta_2);
-                        dz_uet1 = -h2*std::sin(M_PI*x_uet2/delta_2)*M_PI*dx_uet2/delta_2;
-
-                        z_uet2 = h1 + h2*std::sqrt(1.0 - (4*x_uet2*x_uet2)/(delta_2*delta_2));
-                        const double ell = std::sqrt(1.0 - (4*x_uet2*x_uet2)/(delta_2*delta_2));
-                        dz_uet = h2*((4*x_uet2*dx_uet2)/(delta_2*delta_2))/ell;
-                    }
-    
-                    const double v_ratio = v_crit/vc;
-
-                    z_uet = z_uet1*std::sqrt(1 - v_ratio*v_ratio) + z_uet2*(1 - std::sqrt(1 - v_ratio*v_ratio));
-                    dz_uet = dz_uet1*std::sqrt(1 - v_ratio*v_ratio) + dz_uet2*(1 - std::sqrt(1 - v_ratio*v_ratio));
-                }
+                const double t0 = (std::floor(xcirc / delta_uet) + 0.5)/(f_uet); // Initial estimate of t for Newton
+                const double t = newton_t(xcirc, t0, vc);
+                const double dtdap = dxcirc/dxdt(t, vc);
+                double z_uet = zt(t);
+                double dz_uet = dzdt(t)*dtdap;
 
                 // Clearance angle
                 const double x_uet_c = xcirc + 0.5*delta_uet - smooth::floor(xcirc / delta_uet + 0.5)*delta_uet;
@@ -810,82 +555,12 @@ void dzdf(const std::vector<double>& orig_z, double f, double ap, double vc, std
                 const double xcirc = x + xoffset_uet;
                 const double dxcirc = dxoffset_uet;
 
-                // Get distance relative to period
-                const double mult_uet = smooth::floor(xcirc / delta_uet);
-                const double dmult_uet = smooth::floor_deriv(xcirc / delta_uet)*dxcirc/delta_uet;
-
-                const double x_uet = xcirc - (mult_uet + 0.5)*delta_uet;
-                const double dx_uet = dxcirc - dmult_uet*delta_uet;
-
                 // Tool path
-                double z_uet = 0;
-                double dz_uet = 0;
-                if(vc <= v_crit) {
-                    // If vc <= v_crit, model as ellipses in series
-                    const double H = Az_uet*std::sin(M_PI*vc/(2*v_crit));
-                    const double h1 =  H + Az_uet;
-                    const double h2 = -H + Az_uet;
-                    const double K = delta_uet*(h1+h2)/(2*(h1-h2));
-                    const double delta_1 =  K + delta_uet/2;
-
-                    z_uet = h1*(1.0 - std::sqrt(1.0 - (4*x_uet*x_uet)/(delta_1*delta_1)));
-                    const double ell = std::sqrt(1.0 - (4*x_uet*x_uet)/(delta_1*delta_1));
-                    dz_uet = h1*((4*x_uet*dx_uet)/(delta_1*delta_1))/ell;
-                } else {
-                    // If otherwise, model as alternating ellipses with
-                    // different dimensions.
-                    //
-                    // Also interpolate the ellipses with a senoidal model in
-                    // order to achieve better representation of the tool
-                    // path, especially as Ax_uet tends to 0
-                    const double H = Az_uet*std::sin(M_PI*v_crit/(2*vc));
-                    const double h1 =  H + Az_uet;
-                    const double h2 = -H + Az_uet;
-                    const double K = delta_uet*(h1-h2)/(2*(h1+h2));
-                    const double delta_1 =  K + delta_uet/2;
-                    const double delta_2 = -K + delta_uet/2;
-
-                    double z_uet1 = 0;
-                    double z_uet2 = 0;
-                    double dz_uet1 = 0;
-                    double dz_uet2 = 0;
-                    if(x_uet < -delta_1/2){
-                        const double x_uet2 = x_uet + delta_uet/2;
-                        const double dx_uet2 = dx_uet;
-
-                        z_uet1 = h1 + h2*std::cos(M_PI*x_uet2/delta_2);
-                        dz_uet1 = -h2*std::sin(M_PI*x_uet2/delta_2)*M_PI*dx_uet2/delta_2;
-
-                        z_uet2 = h1 + h2*std::sqrt(1.0 - (4*x_uet2*x_uet2)/(delta_2*delta_2));
-                        const double ell = std::sqrt(1.0 - (4*x_uet2*x_uet2)/(delta_2*delta_2));
-                        dz_uet = h2*((4*x_uet2*dx_uet2)/(delta_2*delta_2))/ell;
-                    } else if(x_uet < delta_1/2){
-                        const double x_uet2 = x_uet;
-                        const double dx_uet2 = dx_uet;
-
-                        z_uet1 = h1*(1.0 - std::cos(M_PI*x_uet2/delta_1));
-                        dz_uet1 = h1*std::sin(M_PI*x_uet2/delta_1)*M_PI*dx_uet2/delta_1;
-
-                        z_uet2 = h1*(1.0 - std::sqrt(1.0 - (4*x_uet2*x_uet2)/(delta_1*delta_1)));
-                        const double ell = std::sqrt(1.0 - (4*x_uet2*x_uet2)/(delta_1*delta_1));
-                        dz_uet = -h1*((4*x_uet2*dx_uet2)/(delta_1*delta_1))/ell;
-                    } else {
-                        const double x_uet2 = x_uet - delta_uet/2;
-                        const double dx_uet2 = dx_uet;
-
-                        z_uet1 = h1 + h2*std::cos(M_PI*x_uet2/delta_2);
-                        dz_uet1 = -h2*std::sin(M_PI*x_uet2/delta_2)*M_PI*dx_uet2/delta_2;
-
-                        z_uet2 = h1 + h2*std::sqrt(1.0 - (4*x_uet2*x_uet2)/(delta_2*delta_2));
-                        const double ell = std::sqrt(1.0 - (4*x_uet2*x_uet2)/(delta_2*delta_2));
-                        dz_uet = h2*((4*x_uet2*dx_uet2)/(delta_2*delta_2))/ell;
-                    }
-    
-                    const double v_ratio = v_crit/vc;
-
-                    z_uet = z_uet1*std::sqrt(1 - v_ratio*v_ratio) + z_uet2*(1 - std::sqrt(1 - v_ratio*v_ratio));
-                    dz_uet = dz_uet1*std::sqrt(1 - v_ratio*v_ratio) + dz_uet2*(1 - std::sqrt(1 - v_ratio*v_ratio));
-                }
+                const double t0 = (std::floor(xcirc / delta_uet) + 0.5)/(f_uet); // Initial estimate of t for Newton
+                const double t = newton_t(xcirc, t0, vc);
+                const double dtdf = dxcirc/dxdt(t, vc);
+                double z_uet = zt(t);
+                double dz_uet = dzdt(t)*dtdf;
 
                 // Clearance angle
                 const double x_uet_c = xcirc + 0.5*delta_uet - smooth::floor(xcirc / delta_uet + 0.5)*delta_uet;
