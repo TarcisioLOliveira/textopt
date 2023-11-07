@@ -74,7 +74,7 @@ void map_exact(std::vector<double>& map_z, const std::vector<double>& orig_z, do
         const double y = static_cast<double>(Y);
 
         // Calculate current row
-        const double mult = std::floor((y - 0.5*w_max)  / f + 1);
+        const double mult = smooth::floor(y/w_max + 0.5);
 
         // Distance travelled by tool
         const double xoffset_uet = mult*perimeter;
@@ -168,7 +168,7 @@ void map(std::vector<double>& map_z, const std::vector<double>& orig_z, double a
         const double y = static_cast<double>(Y);
 
         // Calculate current row
-        const double mult = smooth::floor((y - 0.5*w_max)  / f + 1);
+        const double mult = smooth::floor(y/w_max + 0.5);
 
         // Distance travelled by tool
         const double xoffset_uet = mult*perimeter;
@@ -260,7 +260,7 @@ void dzdvc(const std::vector<double>& orig_z, double ap, double vc, std::vector<
         const double y = static_cast<double>(Y);
 
         // Calculate current row
-        const double mult = smooth::floor((y - 0.5*w_max)  / f + 1);
+        const double mult = smooth::floor(y/w_max + 0.5);
 
         for(size_t X = 0; X < tex_width; ++X){
             const double x = static_cast<double>(X);
@@ -372,8 +372,8 @@ void dzdap(const std::vector<double>& orig_z, double ap, double vc, std::vector<
         const double y = static_cast<double>(Y);
 
         // Calculate current row
-        const double mult = smooth::floor((y - 0.5*w_max)  / f + 1);
-        const double dmult = smooth::floor_deriv((y - 0.5*w_max)  / f + 1)*(-y*df/(f*f));
+        const double mult = smooth::floor(y/w_max + 0.5);
+        const double dmult = smooth::floor_deriv(y/w_max + 0.5)*(-y*dw_max/(w_max*w_max));
 
         // Distance travelled by tool
         const double xoffset_uet = mult*perimeter;
