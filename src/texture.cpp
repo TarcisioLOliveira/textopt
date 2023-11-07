@@ -185,7 +185,7 @@ void map(std::vector<double>& map_z, const std::vector<double>& orig_z, double f
         const double y = static_cast<double>(Y);
 
         // Calculate current row
-        const double _mult = smooth::floor((y - 0.5*w_max)  / f + 1);
+        const double _mult = std::floor((y - 0.5*w_max)  / f + 1);
 
         for(size_t X = 0; X < tex_width; ++X){
             const double x = static_cast<double>(X);
@@ -293,7 +293,7 @@ void dzdvc(const std::vector<double>& orig_z, double f, double ap, double vc, st
         const double y = static_cast<double>(Y);
 
         // Calculate current row
-        const double _mult = smooth::floor((y - 0.5*w_max)  / f + 1);
+        const double _mult = std::floor((y - 0.5*w_max)  / f + 1);
 
         for(size_t X = 0; X < tex_width; ++X){
             const double x = static_cast<double>(X);
@@ -414,8 +414,7 @@ void dzdap(const std::vector<double>& orig_z, double f, double ap, double vc, st
         const double y = static_cast<double>(Y);
 
         // Calculate current row
-        const double _mult = smooth::floor((y - 0.5*w_max)  / f + 1);
-        const double _dmult = smooth::floor_deriv((y - 0.5*w_max)  / f + 1)*(-0.5*dw_max);
+        const double _mult = std::floor((y - 0.5*w_max)  / f + 1);
 
         for(size_t X = 0; X < tex_width; ++X){
             const double x = static_cast<double>(X);
@@ -425,53 +424,44 @@ void dzdap(const std::vector<double>& orig_z, double f, double ap, double vc, st
             for(size_t m = 0; m < overlap + 1; ++m){
                 // Overlap
                 const double mult = _mult + m;
-                const double dmult = _dmult;
 
                 // Distance travelled by tool
                 const double xoffset_uet = mult*perimeter;
-                const double dxoffset_uet = dmult*perimeter;
 
                 // Consider distance travelled by tool
                 const double xcirc = x + xoffset_uet;
-                const double dxcirc = dxoffset_uet;
 
                 // Tool path
                 const double t0 = (std::floor(xcirc / delta_uet) + 0.5)/(f_uet); // Initial estimate of t for Newton
                 const double t = newton_t(xcirc, t0, vc);
-                const double dtdap = dxcirc/dxdt(t, vc);
                 double z_uet = zt(t);
-                double dz_uet = dzdt(t)*dtdap;
 
                 // Clearance angle
                 const double x_uet_c = xcirc + 0.5*delta_uet - smooth::floor(xcirc / delta_uet + 0.5)*delta_uet;
-                const double dx_uet_c = dxcirc  - smooth::floor_deriv(xcirc / delta_uet + 0.5)*dxcirc;
 
                 const double z_clear = tanc*(delta_uet - x_uet_c);
-                const double dz_clear = tanc*(-dx_uet_c);
 
                 // Final UET height
                 const double z_uet_min = smooth::min({z_uet, z_clear});
-                const double dz_uet_min = smooth::min_deriv({z_uet, z_clear},{dz_uet, dz_clear});
 
                 const double line_root1 = line_root1_const + z_uet_min;
                 const double line_root2 = line_root2_const + z_uet_min;
-                const double dline_root1 = dline_root1_const + dz_uet_min;
-                const double dline_root2 = dline_root2_const + dz_uet_min;
+                const double dline_root1 = dline_root1_const;
+                const double dline_root2 = dline_root2_const;
 
                 // Tool shape
                 double shape_z;
                 double dshape_z;
                 if(y <= y1 + mult*f){
                     shape_z = -tan1*(y - mult*f) + line_root1;
-                    dshape_z = tan1*dmult*f + dline_root1;
+                    dshape_z = dline_root1;
                 } else if(y <= y2 + mult*f){
                     const double yy = y - mult*f;
-                    const double dyy = -dmult*f;
                     shape_z = -std::sqrt(r*r - yy*yy) + r - ap + z_uet_min;
-                    dshape_z = yy*dyy/std::sqrt(r*r - yy*yy) - 1.0 + dz_uet_min;
+                    dshape_z = -1.0;
                 } else {
                     shape_z = tan2*(y - mult*f) + line_root2;
-                    dshape_z = -tan2*dmult*f + dline_root2;
+                    dshape_z = dline_root2;
                 }
 
                 z_cand[m+1] = shape_z;
@@ -532,8 +522,7 @@ void dzdf(const std::vector<double>& orig_z, double f, double ap, double vc, std
         const double y = static_cast<double>(Y);
 
         // Calculate current row
-        const double _mult = smooth::floor((y - 0.5*w_max)  / f + 1);
-        const double _dmult = smooth::floor_deriv((y - 0.5*w_max)  / f + 1)*(-(y - 0.5*w_max)  / (f*f));
+        const double _mult = std::floor((y - 0.5*w_max)  / f + 1);
 
         for(size_t X = 0; X < tex_width; ++X){
             const double x = static_cast<double>(X);
@@ -543,53 +532,43 @@ void dzdf(const std::vector<double>& orig_z, double f, double ap, double vc, std
             for(size_t m = 0; m < overlap + 1; ++m){
                 // Overlap
                 const double mult = _mult + m;
-                const double dmult = _dmult;
 
                 // Distance travelled by tool
                 const double xoffset_uet = mult*perimeter;
-                const double dxoffset_uet = dmult*perimeter;
 
                 // Consider distance travelled by tool
                 const double xcirc = x + xoffset_uet;
-                const double dxcirc = dxoffset_uet;
 
                 // Tool path
                 const double t0 = (std::floor(xcirc / delta_uet) + 0.5)/(f_uet); // Initial estimate of t for Newton
                 const double t = newton_t(xcirc, t0, vc);
-                const double dtdf = dxcirc/dxdt(t, vc);
                 double z_uet = zt(t);
-                double dz_uet = dzdt(t)*dtdf;
 
                 // Clearance angle
                 const double x_uet_c = xcirc + 0.5*delta_uet - smooth::floor(xcirc / delta_uet + 0.5)*delta_uet;
-                const double dx_uet_c = dxcirc  - smooth::floor_deriv(xcirc / delta_uet + 0.5)*dxcirc;
 
                 const double z_clear = tanc*(delta_uet - x_uet_c);
-                const double dz_clear = tanc*(-dx_uet_c);
 
                 // Final UET height
                 const double z_uet_min = smooth::min({z_uet, z_clear});
-                const double dz_uet_min = smooth::min_deriv({z_uet, z_clear},{dz_uet, dz_clear});
 
                 const double line_root1 = line_root1_const + z_uet_min;
                 const double line_root2 = line_root2_const + z_uet_min;
-                const double dline_root1 = dz_uet_min;
-                const double dline_root2 = dz_uet_min;
 
                 // Tool shape
                 double shape_z;
                 double dshape_z;
                 if(y <= y1 + mult*f){
                     shape_z = -tan1*(y - mult*f) + line_root1;
-                    dshape_z = tan1*(dmult*f + mult) +  dline_root1;
+                    dshape_z = tan1*mult;
                 } else if(y <= y2 + mult*f){
                     const double yy = y - mult*f;
-                    const double dyy = -(dmult*f + mult);
+                    const double dyy = -mult;
                     shape_z = -std::sqrt(r*r - yy*yy) + r - ap + z_uet_min;
-                    dshape_z = yy*dyy/std::sqrt(r*r - yy*yy) + dz_uet_min;
+                    dshape_z = yy*dyy/std::sqrt(r*r - yy*yy);
                 } else {
                     shape_z = tan2*(y - mult*f) + line_root2;
-                    dshape_z = -tan2*(dmult*f + mult) +  dline_root2;
+                    dshape_z = -tan2*mult;
                 }
 
                 z_cand[m+1] = shape_z;
