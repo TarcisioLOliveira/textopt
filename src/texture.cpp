@@ -37,32 +37,33 @@ void map_exact(std::vector<double>& map_z, const std::vector<double>& orig_z, do
     vc *= 1e6/60.0;
 
     // Calculate maximum width
-    const double ap1 = -std::sqrt(r*r - param::y1*param::y1) + r;
-    const double ap2 = -std::sqrt(r*r - param::y2*param::y2) + r;
-    const double ap12min = std::min(ap1, ap2);
-    const double ap12max = std::max(ap1, ap2);
-    if(ap < ap12min){
+    const double z1 = -std::sqrt(r*r - param::y1*param::y1) + r;
+    const double z2 = -std::sqrt(r*r - param::y2*param::y2) + r;
+    const double z12min = std::min(z1, z2);
+    const double z12max = std::max(z1, z2);
+    const double h_max = ap + Az_uet;
+    if(h_max < z12min){
         // Depth fits entirely within tool radius
-        w_max = 2*std::sqrt(r*r - (ap - r)*(ap - r));
-    } else if(ap < ap12max){
+        w_max = 2*std::sqrt(r*r - (h_max - r)*(h_max - r));
+    } else if(h_max < z12max){
         // Depth fits partially within tool radius
         // Can only happen for alpha1 != alpha2
-        w_max = std::sqrt(r*r - (ap - r)*(ap - r));
+        w_max = std::sqrt(r*r - (h_max - r)*(h_max - r));
         if(alpha1 <= alpha2){
-            w_max += (ap - b1off)/tan1;
+            w_max += (h_max - b1off)/tan1;
         } else {
-            w_max += (ap - b2off)/tan2;
+            w_max += (h_max - b2off)/tan2;
         }
     } else {
         // Depth encompasses tool's straight edges
-        w_max = (ap - b1off)/tan1 + (ap - b2off)/tan2;
+        w_max = (h_max - b1off)/tan1 + (h_max - b2off)/tan2;
     }
 
     const size_t overlap = std::floor(w_max / f);
 
     const double delta_uet = vc/f_uet;
 
-    min_z = -ap;
+    min_z = -h_max;
 
     const double line_root1_const = -std::sqrt(r*r - y1*y1) + r - ap + tan1*y1;
     const double line_root2_const = -std::sqrt(r*r - y2*y2) + r - ap - tan2*y2;
@@ -143,25 +144,26 @@ void map(std::vector<double>& map_z, const std::vector<double>& orig_z, double f
     vc *= 1e6/60.0;
 
     // Calculate maximum width
-    const double ap1 = -std::sqrt(r*r - param::y1*param::y1) + r;
-    const double ap2 = -std::sqrt(r*r - param::y2*param::y2) + r;
-    const double ap12min = std::min(ap1, ap2);
-    const double ap12max = std::max(ap1, ap2);
-    if(ap < ap12min){
+    const double z1 = -std::sqrt(r*r - param::y1*param::y1) + r;
+    const double z2 = -std::sqrt(r*r - param::y2*param::y2) + r;
+    const double z12min = std::min(z1, z2);
+    const double z12max = std::max(z1, z2);
+    const double h_max = ap + Az_uet;
+    if(h_max < z12min){
         // Depth fits entirely within tool radius
-        w_max = 2*std::sqrt(r*r - (ap - r)*(ap - r));
-    } else if(ap < ap12max){
+        w_max = 2*std::sqrt(r*r - (h_max - r)*(h_max - r));
+    } else if(h_max < z12max){
         // Depth fits partially within tool radius
         // Can only happen for alpha1 != alpha2
-        w_max = std::sqrt(r*r - (ap - r)*(ap - r));
+        w_max = std::sqrt(r*r - (h_max - r)*(h_max - r));
         if(alpha1 <= alpha2){
-            w_max += (ap - b1off)/tan1;
+            w_max += (h_max - b1off)/tan1;
         } else {
-            w_max += (ap - b2off)/tan2;
+            w_max += (h_max - b2off)/tan2;
         }
     } else {
         // Depth encompasses tool's straight edges
-        w_max = (ap - b1off)/tan1 + (ap - b2off)/tan2;
+        w_max = (h_max - b1off)/tan1 + (h_max - b2off)/tan2;
     }
 
     // This will not be differentiated, so it can be use std::floor()
@@ -169,7 +171,7 @@ void map(std::vector<double>& map_z, const std::vector<double>& orig_z, double f
 
     const double delta_uet = vc/f_uet;
 
-    min_z = -ap;
+    min_z = -h_max;
 
     const double line_root1_const = -std::sqrt(r*r - y1*y1) + r - ap + tan1*y1;
     const double line_root2_const = -std::sqrt(r*r - y2*y2) + r - ap - tan2*y2;
@@ -250,25 +252,26 @@ void dzdvc(const std::vector<double>& orig_z, double f, double ap, double vc, st
     vc *= 1e6/60.0;
 
     // Calculate maximum width
-    const double ap1 = -std::sqrt(r*r - param::y1*param::y1) + r;
-    const double ap2 = -std::sqrt(r*r - param::y2*param::y2) + r;
-    const double ap12min = std::min(ap1, ap2);
-    const double ap12max = std::max(ap1, ap2);
-    if(ap < ap12min){
+    const double z1 = -std::sqrt(r*r - param::y1*param::y1) + r;
+    const double z2 = -std::sqrt(r*r - param::y2*param::y2) + r;
+    const double z12min = std::min(z1, z2);
+    const double z12max = std::max(z1, z2);
+    const double h_max = ap + Az_uet;
+    if(h_max < z12min){
         // Depth fits entirely within tool radius
-        w_max = 2*std::sqrt(r*r - (ap - r)*(ap - r));
-    } else if(ap < ap12max){
+        w_max = 2*std::sqrt(r*r - (h_max - r)*(h_max - r));
+    } else if(h_max < z12max){
         // Depth fits partially within tool radius
         // Can only happen for alpha1 != alpha2
-        w_max = std::sqrt(r*r - (ap - r)*(ap - r));
+        w_max = std::sqrt(r*r - (h_max - r)*(h_max - r));
         if(alpha1 <= alpha2){
-            w_max += (ap - b1off)/tan1;
+            w_max += (h_max - b1off)/tan1;
         } else {
-            w_max += (ap - b2off)/tan2;
+            w_max += (h_max - b2off)/tan2;
         }
     } else {
         // Depth encompasses tool's straight edges
-        w_max = (ap - b1off)/tan1 + (ap - b2off)/tan2;
+        w_max = (h_max - b1off)/tan1 + (h_max - b2off)/tan2;
     }
 
     // This will not be differentiated, so it can be use std::floor()
@@ -276,8 +279,6 @@ void dzdvc(const std::vector<double>& orig_z, double f, double ap, double vc, st
 
     const double delta_uet = vc/f_uet;
     const double ddelta_uet = 1.0/f_uet;
-
-    min_z = -ap;
 
     const double line_root1_const = -std::sqrt(r*r - y1*y1) + r - ap + tan1*y1;
     const double line_root2_const = -std::sqrt(r*r - y2*y2) + r - ap - tan2*y2;
@@ -364,31 +365,32 @@ void dzdap(const std::vector<double>& orig_z, double f, double ap, double vc, st
     vc *= 1e6/60.0;
 
     // Calculate maximum width
-    const double ap1 = -std::sqrt(r*r - param::y1*param::y1) + r;
-    const double ap2 = -std::sqrt(r*r - param::y2*param::y2) + r;
-    const double ap12min = std::min(ap1, ap2);
-    const double ap12max = std::max(ap1, ap2);
+    const double z1 = -std::sqrt(r*r - param::y1*param::y1) + r;
+    const double z2 = -std::sqrt(r*r - param::y2*param::y2) + r;
+    const double z12min = std::min(z1, z2);
+    const double z12max = std::max(z1, z2);
+    const double h_max = ap + Az_uet;
 
     double dw_max;
-    if(ap < ap12min){
+    if(h_max < z12min){
         // Depth fits entirely within tool radius
-        w_max = 2*std::sqrt(r*r - (ap - r)*(ap - r));
-        dw_max = 2*(-(ap - r))/std::sqrt(r*r - (ap - r)*(ap - r));
-    } else if(ap < ap12max){
+        w_max = 2*std::sqrt(r*r - (h_max - r)*(h_max - r));
+        dw_max = 2*(-(h_max - r))/std::sqrt(r*r - (h_max - r)*(h_max - r));
+    } else if(h_max < z12max){
         // Depth fits partially within tool radius
         // Can only happen for alpha1 != alpha2
-        w_max = std::sqrt(r*r - (ap - r)*(ap - r));
-        dw_max = 2*(-(ap - r))/std::sqrt(r*r - (ap - r)*(ap - r));
+        w_max = std::sqrt(r*r - (h_max - r)*(h_max - r));
+        dw_max = 2*(-(h_max - r))/std::sqrt(r*r - (h_max - r)*(h_max - r));
         if(alpha1 <= alpha2){
-            w_max += (ap - b1off)/tan1;
+            w_max += (h_max - b1off)/tan1;
             dw_max += 1.0/tan1;
         } else {
-            w_max += (ap - b2off)/tan2;
+            w_max += (h_max - b2off)/tan2;
             dw_max += 1.0/tan2;
         }
     } else {
         // Depth encompasses tool's straight edges
-        w_max = (ap - b1off)/tan1 + (ap - b2off)/tan2;
+        w_max = (h_max - b1off)/tan1 + (h_max - b2off)/tan2;
         dw_max = 1.0/tan1 + 1.0/tan2;
     }
 
@@ -396,8 +398,6 @@ void dzdap(const std::vector<double>& orig_z, double f, double ap, double vc, st
     const size_t overlap = std::floor(w_max / f);
 
     const double delta_uet = vc/f_uet;
-
-    min_z = -ap;
 
     const double line_root1_const = -std::sqrt(r*r - y1*y1) + r - ap + tan1*y1;
     const double line_root2_const = -std::sqrt(r*r - y2*y2) + r - ap - tan2*y2;
@@ -492,34 +492,32 @@ void dzdf(const std::vector<double>& orig_z, double f, double ap, double vc, std
     vc *= 1e6/60.0;
 
     // Calculate maximum width
-    const double ap1 = -std::sqrt(r*r - param::y1*param::y1) + r;
-    const double ap2 = -std::sqrt(r*r - param::y2*param::y2) + r;
-    const double ap12min = std::min(ap1, ap2);
-    const double ap12max = std::max(ap1, ap2);
-
-    if(ap < ap12min){
+    const double z1 = -std::sqrt(r*r - param::y1*param::y1) + r;
+    const double z2 = -std::sqrt(r*r - param::y2*param::y2) + r;
+    const double z12min = std::min(z1, z2);
+    const double z12max = std::max(z1, z2);
+    const double h_max = ap + Az_uet;
+    if(h_max < z12min){
         // Depth fits entirely within tool radius
-        w_max = 2*std::sqrt(r*r - (ap - r)*(ap - r));
-    } else if(ap < ap12max){
+        w_max = 2*std::sqrt(r*r - (h_max - r)*(h_max - r));
+    } else if(h_max < z12max){
         // Depth fits partially within tool radius
         // Can only happen for alpha1 != alpha2
-        w_max = std::sqrt(r*r - (ap - r)*(ap - r));
+        w_max = std::sqrt(r*r - (h_max - r)*(h_max - r));
         if(alpha1 <= alpha2){
-            w_max += (ap - b1off)/tan1;
+            w_max += (h_max - b1off)/tan1;
         } else {
-            w_max += (ap - b2off)/tan2;
+            w_max += (h_max - b2off)/tan2;
         }
     } else {
         // Depth encompasses tool's straight edges
-        w_max = (ap - b1off)/tan1 + (ap - b2off)/tan2;
+        w_max = (h_max - b1off)/tan1 + (h_max - b2off)/tan2;
     }
 
     // This will not be differentiated, so it can be use std::floor()
     const size_t overlap = std::floor(w_max / f);
 
     const double delta_uet = vc/f_uet;
-
-    min_z = -ap;
 
     const double line_root1_const = -std::sqrt(r*r - y1*y1) + r - ap + tan1*y1;
     const double line_root2_const = -std::sqrt(r*r - y2*y2) + r - ap - tan2*y2;

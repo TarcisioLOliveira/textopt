@@ -26,7 +26,7 @@
 #include "param.hpp"
 
 inline double zt(const double t){
-    return param::Az_uet*std::cos(2*M_PI*param::f_uet*t) + param::Az_uet;
+    return param::Az_uet*std::cos(2*M_PI*param::f_uet*t);
 }
 inline double dzdt(const double t){
     return -param::Az_uet*2*M_PI*param::f_uet*std::sin(2*M_PI*param::f_uet*t);
