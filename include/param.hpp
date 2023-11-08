@@ -54,7 +54,7 @@ inline enum class SingleMethod{
     EXACT
 } single_method;
 
-inline bool opt_ap = false;
+inline bool opt_f = false;
 
 // Window dimensions
 inline size_t window_width = 600;

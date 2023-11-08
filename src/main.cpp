@@ -52,13 +52,13 @@ int main(int argc, char* argv[]){
 
     if(analysis_type == AnalysisType::PLOT){
         if(plot_method == PlotMethod::FXAP){
-            if(opt_ap){
+            if(opt_f){
                 analysis::plot_fxap({f_min, f_max}, {ap_min, ap_max}, vc, step, map_z, orig_z);
             } else {
                 analysis::plot_ap_shallow({ap_min, ap_max}, vc, step, map_z, orig_z);
             }
         } else if(plot_method == PlotMethod::VC){
-            if(opt_ap){
+            if(opt_f){
                 analysis::plot_vc(f, ap, {vc_min, vc_max}, step, map_z, orig_z);
             } else {
                 analysis::plot_vc_shallow(ap, {vc_min, vc_max}, step, map_z, orig_z);
@@ -90,7 +90,7 @@ int main(int argc, char* argv[]){
             std::cout << "========   EXACT    =======" << std::endl;
             std::cout << "===========================" << std::endl;
 
-            if(param::opt_ap){
+            if(param::opt_f){
                 texture::map_exact(map_z, orig_z, f, ap, vc);
             } else {
                 texture_shallow::map_exact(map_z, orig_z, ap, vc);
@@ -123,7 +123,7 @@ int main(int argc, char* argv[]){
             std::cout << "========   SMOOTH   =======" << std::endl;
             std::cout << "===========================" << std::endl;
 
-            if(param::opt_ap){
+            if(param::opt_f){
                 texture::map(map_z, orig_z, f, ap, vc);
             } else {
                 texture_shallow::map(map_z, orig_z, ap, vc);
@@ -136,7 +136,7 @@ int main(int argc, char* argv[]){
             const double surarea = -opt::surface_area(map_z);
             const double roughness = opt::Sa(map_z) - max_roughness;
 
-            if(param::opt_ap){
+            if(param::opt_f){
                 texture::dzdf(orig_z, f, ap, vc, df);
                 texture::dzdap(orig_z, f, ap, vc, dap);
                 texture::dzdvc(orig_z, f, ap, vc, dvc);
@@ -225,7 +225,7 @@ int main(int argc, char* argv[]){
             img.copyToImage().saveToFile("result.png");
 
         } else if(analysis_type == AnalysisType::OPT){
-            if(param::opt_ap){
+            if(param::opt_f){
                 double ch = 1;
                 size_t it = 1;
                 double old_surarea = 1;
