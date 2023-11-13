@@ -151,10 +151,10 @@ void plot_ap_shallow(const std::tuple<double, double>& ap, const double vc, cons
     }
 
     std::ofstream file;
-    file.open("plot_f_shallow.txt");
+    file.open("plot_ap_shallow.txt");
     // Write ranges
     file << 1 << std::endl;
-    file << "f [um/rev]" << std::endl;
+    file << "ap [um]" << std::endl;
     file << std::get<0>(ap) << " " << std::get<1>(ap) << " " << step << std::endl;
 
     // Write values for surface area and roughness
