@@ -279,7 +279,7 @@ void dzdvc(const std::vector<double>& orig_z, double ap, double vc, std::vector<
 
             // Clearance angle
             const double x_uet_c = xcirc + 0.5*delta_uet - smooth::floor(xcirc / delta_uet + 0.5)*delta_uet;
-            const double dx_uet_c = 0.5*ddelta_uet - (smooth::floor(xcirc / delta_uet + 0.5)*ddelta_uet + smooth::floor_deriv(xcirc / delta_uet + 0.5)*delta_uet*(-xcirc/(delta_uet*delta_uet)));
+            const double dx_uet_c = (0.5  + smooth::floor_deriv(xcirc / delta_uet + 0.5)*(xcirc/delta_uet) - smooth::floor(xcirc / delta_uet + 0.5))*ddelta_uet;
 
             const double z_clear = tanc*(delta_uet - x_uet_c);
             const double dz_clear = tanc*(ddelta_uet - dx_uet_c);
