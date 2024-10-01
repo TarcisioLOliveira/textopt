@@ -48,6 +48,8 @@ void load(const std::string& path){
             param::opt_method = param::OptMethod::SLP;
         } else if(am == "mma"){
             param::opt_method = param::OptMethod::MMA;
+        } else if(am == "newton"){
+            param::opt_method = param::OptMethod::NEWTON;
         } else {
             std::cout << std::endl << "Unknown method for " << at << ": " << am << std::endl << std::endl;
             throw;

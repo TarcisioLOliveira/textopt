@@ -41,7 +41,8 @@ inline enum class AnalysisType{
 
 inline enum class OptMethod{
     SLP,
-    MMA
+    MMA,
+    NEWTON
 } opt_method;
 
 inline enum class PlotMethod{

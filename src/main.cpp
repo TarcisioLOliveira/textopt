@@ -36,6 +36,7 @@
 #include "slp.hpp"
 #include "config.hpp"
 #include "texture_shallow.hpp"
+#include "newton_opt.hpp"
 
 int main(int argc, char* argv[]){
     using namespace param;
@@ -248,6 +249,7 @@ int main(int argc, char* argv[]){
                 SLP slp(N, 1, xmin, xmax);
                 MMASolver mma(N, 1, 0, 1e7, 1);
                 mma.SetAsymptotes(0.1, 0.7, 1.2);
+                NewtonOpt nopt(N, 1);
 
                 bool printed_finished = false;
 
@@ -312,6 +314,8 @@ int main(int argc, char* argv[]){
                             slp.update(x, dsurarea_vec, {roughness}, dSa_vec);
                         } else if(opt_method == OptMethod::MMA){
                             mma.Update(x.data(), dsurarea_vec.data(), &roughness, dSa_vec.data(), xmin.data(), xmax.data());
+                        } else if(opt_method == OptMethod::NEWTON){
+                            nopt.update(x, surarea, dsurarea_vec, {roughness}, dSa_vec);
                         }
 
                         ch = std::abs(1 - surarea/old_surarea);

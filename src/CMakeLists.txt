@@ -10,6 +10,7 @@ set(SOURCES
     slp.cpp
     config.cpp
     texture_shallow.cpp
+    newton_opt.cpp
 )
 
 add_executable(${PROJECT_NAME} ${SOURCES})
