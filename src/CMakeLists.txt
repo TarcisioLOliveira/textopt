@@ -14,7 +14,7 @@ set(SOURCES
 
 add_executable(${PROJECT_NAME} ${SOURCES})
 
-set(REQ_LIBS sfml-graphics ${YAML_CPP_LIBRARIES})
+set(REQ_LIBS sfml-graphics ${YAML_CPP_LIBRARIES} Eigen3::Eigen)
 if(OpenMP_CXX_FOUND)
     target_link_libraries(${PROJECT_NAME} ${REQ_LIBS} OpenMP::OpenMP_CXX)
 else()

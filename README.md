@@ -3,6 +3,7 @@
 Dependencies:
 - [SFML](https://www.sfml-dev.org/)
 - [yaml-cpp](https://github.com/jbeder/yaml-cpp)
+- [Eigen](https://eigen.tuxfamily.org/)
 
 Contains code from [jdumas/mma](https://github.com/jdumas/mma).
 
